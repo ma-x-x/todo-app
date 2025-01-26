@@ -1,0 +1,507 @@
+{
+    "@@locale": "en",
+    "appTitle": "Todo App",
+    "@appTitle": {
+        "description": "The title of the application"
+    },
+    
+    "login": "Login",
+    "@login": {
+        "description": "Login button text"
+    },
+    "register": "Register",
+    "@register": {
+        "description": "Register button text"
+    },
+    "username": "Username",
+    "@username": {
+        "description": "Username field label"
+    },
+    "password": "Password",
+    "@password": {
+        "description": "Password field label"
+    },
+    "email": "Email",
+    "@email": {
+        "description": "Email field label"
+    },
+    "confirmPassword": "Confirm Password",
+    "@confirmPassword": {
+        "description": "Confirm password field label"
+    },
+
+    "todoList": "Todo List",
+    "@todoList": {
+        "description": "Todo list screen title"
+    },
+    "newTodo": "New Todo",
+    "@newTodo": {
+        "description": "New todo button text"
+    },
+    "editTodo": "Edit Todo",
+    "@editTodo": {
+        "description": "Edit todo screen title"
+    },
+    "title": "Title",
+    "@title": {
+        "description": "Title field label"
+    },
+    "description": "Description",
+    "@description": {
+        "description": "Description field label"
+    },
+    "priority": "Priority",
+    "@priority": {
+        "description": "Priority field label"
+    },
+    "priorityLow": "Low",
+    "@priorityLow": {
+        "description": "Low priority"
+    },
+    "priorityMedium": "Medium",
+    "@priorityMedium": {
+        "description": "Medium priority"
+    },
+    "priorityHigh": "High",
+    "@priorityHigh": {
+        "description": "High priority"
+    },
+
+    "categories": "Categories",
+    "@categories": {
+        "description": "Categories screen title"
+    },
+    "newCategory": "New Category",
+    "@newCategory": {
+        "description": "New category button text"
+    },
+    "editCategory": "Edit Category",
+    "@editCategory": {
+        "description": "Edit category screen title"
+    },
+    "categoryName": "Category Name",
+    "@categoryName": {
+        "description": "Category name field label"
+    },
+    "categoryColor": "Category Color",
+    "@categoryColor": {
+        "description": "Category color field label"
+    },
+
+    "reminders": "Reminders",
+    "@reminders": {
+        "description": "Reminders screen title"
+    },
+    "newReminder": "New Reminder",
+    "@newReminder": {
+        "description": "New reminder button text"
+    },
+    "editReminder": "Edit Reminder",
+    "@editReminder": {
+        "description": "Edit reminder screen title"
+    },
+    "reminderTime": "Reminder Time",
+    "@reminderTime": {
+        "description": "Reminder time field label"
+    },
+    "reminderType": "Reminder Type",
+    "@reminderType": {
+        "description": "Reminder type field label"
+    },
+    "reminderOnce": "Once",
+    "@reminderOnce": {
+        "description": "Once reminder type"
+    },
+    "reminderDaily": "Daily",
+    "@reminderDaily": {
+        "description": "Daily reminder type"
+    },
+    "reminderWeekly": "Weekly",
+    "@reminderWeekly": {
+        "description": "Weekly reminder type"
+    },
+    "notifyType": "Notification Type",
+    "@notifyType": {
+        "description": "Notification type field label"
+    },
+    "notifyPush": "Push Notification",
+    "@notifyPush": {
+        "description": "Push notification type"
+    },
+    "notifyEmail": "Email",
+    "@notifyEmail": {
+        "description": "Email notification type"
+    },
+
+    "save": "Save",
+    "@save": {
+        "description": "Save button text"
+    },
+    "cancel": "Cancel",
+    "@cancel": {
+        "description": "Cancel button text"
+    },
+    "delete": "Delete",
+    "@delete": {
+        "description": "Delete button text"
+    },
+    "edit": "Edit",
+    "@edit": {
+        "description": "Edit button text"
+    },
+
+    "confirmDelete": "Confirm Delete",
+    "@confirmDelete": {
+        "description": "Confirm delete dialog title"
+    },
+    "confirmDeleteMessage": "Are you sure you want to delete this item?",
+    "@confirmDeleteMessage": {
+        "description": "Confirm delete dialog message"
+    },
+
+    "errorRequired": "{field} is required",
+    "@errorRequired": {
+        "description": "Required field error message",
+        "placeholders": {
+            "field": {
+                "type": "String",
+                "example": "Username"
+            }
+        }
+    },
+    "errorInvalid": "Invalid {field}",
+    "@errorInvalid": {
+        "description": "Invalid field error message",
+        "placeholders": {
+            "field": {
+                "type": "String",
+                "example": "email"
+            }
+        }
+    },
+    "errorMinLength": "{field} must be at least {length} characters",
+    "@errorMinLength": {
+        "description": "Minimum length error message",
+        "placeholders": {
+            "field": {
+                "type": "String",
+                "example": "Password"
+            },
+            "length": {
+                "type": "int",
+                "example": "6"
+            }
+        }
+    },
+    "errorMaxLength": "{field} cannot exceed {length} characters",
+    "@errorMaxLength": {
+        "description": "Maximum length error message",
+        "placeholders": {
+            "field": {
+                "type": "String",
+                "example": "Title"
+            },
+            "length": {
+                "type": "int",
+                "example": "128"
+            }
+        }
+    },
+    "errorPasswordMatch": "Passwords do not match",
+    "@errorPasswordMatch": {
+        "description": "Password match error message"
+    },
+
+    "themeSettings": "Theme Settings",
+    "@themeSettings": {
+        "description": "Theme settings screen title"
+    },
+    "themeSystem": "System",
+    "@themeSystem": {
+        "description": "System theme option"
+    },
+    "themeLight": "Light",
+    "@themeLight": {
+        "description": "Light theme option"
+    },
+    "themeDark": "Dark",
+    "@themeDark": {
+        "description": "Dark theme option"
+    },
+    
+    "errorNetworkTimeout": "Network timeout. Please try again.",
+    "@errorNetworkTimeout": {
+        "description": "Network timeout error message"
+    },
+    "errorNetworkConnection": "Network connection error. Please check your internet connection.",
+    "@errorNetworkConnection": {
+        "description": "Network connection error message"
+    },
+    "errorUnauthorized": "Unauthorized. Please login again.",
+    "@errorUnauthorized": {
+        "description": "Unauthorized error message"
+    },
+    "errorForbidden": "Access denied.",
+    "@errorForbidden": {
+        "description": "Forbidden error message"
+    },
+    "errorNotFound": "Resource not found.",
+    "@errorNotFound": {
+        "description": "Not found error message"
+    },
+    "errorServer": "Server error. Please try again later.",
+    "@errorServer": {
+        "description": "Server error message"
+    },
+    "errorUnknown": "Unknown error occurred.",
+    "@errorUnknown": {
+        "description": "Unknown error message"
+    },
+    "errorBadRequest": "Invalid request. Please check your input.",
+    "@errorBadRequest": {
+        "description": "Bad request error message"
+    },
+    "dismiss": "Dismiss",
+    "@dismiss": {
+        "description": "Dismiss button text"
+    },
+
+    "settings": "Settings",
+    "@settings": {
+        "description": "Settings screen title"
+    },
+    "language": "Language",
+    "@language": {
+        "description": "Language setting label"
+    },
+    "notifications": "Notifications",
+    "@notifications": {
+        "description": "Notifications setting label"
+    },
+    "about": "About",
+    "@about": {
+        "description": "About menu item"
+    },
+    "aboutContent": "A cross-platform Todo application built with Flutter.",
+    "@aboutContent": {
+        "description": "About dialog content"
+    },
+    "confirmLogout": "Confirm Logout",
+    "@confirmLogout": {
+        "description": "Confirm logout dialog title"
+    },
+    "confirmLogoutMessage": "Are you sure you want to logout?",
+    "@confirmLogoutMessage": {
+        "description": "Confirm logout dialog message"
+    },
+    "logout": "Logout",
+    "@logout": {
+        "description": "Logout button text"
+    },
+
+    "notificationSettings": "Notification Settings",
+    "@notificationSettings": {
+        "description": "Notification settings screen title"
+    },
+    "enableNotifications": "Enable Notifications",
+    "@enableNotifications": {
+        "description": "Enable notifications switch label"
+    },
+    "enableNotificationsDesc": "Receive notifications for reminders and updates",
+    "@enableNotificationsDesc": {
+        "description": "Enable notifications description"
+    },
+    "notificationSound": "Sound",
+    "@notificationSound": {
+        "description": "Notification sound switch label"
+    },
+    "notificationVibration": "Vibration",
+    "@notificationVibration": {
+        "description": "Notification vibration switch label"
+    },
+    "quietHours": "Quiet Hours",
+    "@quietHours": {
+        "description": "Quiet hours switch label"
+    },
+    "quietHoursDesc": "Don't send notifications during specified hours",
+    "@quietHoursDesc": {
+        "description": "Quiet hours description"
+    },
+    "quietHoursStart": "Start Time",
+    "@quietHoursStart": {
+        "description": "Quiet hours start time label"
+    },
+    "quietHoursEnd": "End Time",
+    "@quietHoursEnd": {
+        "description": "Quiet hours end time label"
+    },
+    "todos": "Todos",
+    "@todos": {
+        "description": "Todos navigation label"
+    },
+    "categories": "Categories",
+    "@categories": {
+        "description": "Categories navigation label"
+    },
+    "settings": "Settings",
+    "@settings": {
+        "description": "Settings navigation label"
+    },
+    "filters": "Filters",
+    "@filters": {
+        "description": "Filters screen title"
+    },
+    "clearFilters": "Clear Filters",
+    "@clearFilters": {
+        "description": "Clear filters button text"
+    },
+    "status": "Status",
+    "@status": {
+        "description": "Status filter label"
+    },
+    "all": "All",
+    "@all": {
+        "description": "All filter option"
+    },
+    "active": "Active",
+    "@active": {
+        "description": "Active filter option"
+    },
+    "completed": "Completed",
+    "@completed": {
+        "description": "Completed filter option"
+    },
+    "noTodos": "No todos found",
+    "@noTodos": {
+        "description": "Empty todo list message"
+    },
+    "searchHint": "Enter text to search todos",
+    "@searchHint": {
+        "description": "Search hint message"
+    },
+    "noResults": "No results found",
+    "@noResults": {
+        "description": "No search results message"
+    },
+    "backup": "Backup & Restore",
+    "@backup": {
+        "description": "Backup screen title"
+    },
+    "exportData": "Export Data",
+    "@exportData": {
+        "description": "Export data button text"
+    },
+    "exportDataDesc": "Export your todos, categories and reminders",
+    "@exportDataDesc": {
+        "description": "Export data description"
+    },
+    "importData": "Import Data",
+    "@importData": {
+        "description": "Import data button text"
+    },
+    "importDataDesc": "Restore your data from a backup file",
+    "@importDataDesc": {
+        "description": "Import data description"
+    },
+    "exportSuccess": "Export Successful",
+    "@exportSuccess": {
+        "description": "Export success message"
+    },
+    "shareBackupQuestion": "Do you want to share the backup file?",
+    "@shareBackupQuestion": {
+        "description": "Share backup question"
+    },
+    "confirmImport": "Confirm Import",
+    "@confirmImport": {
+        "description": "Confirm import dialog title"
+    },
+    "confirmImportMessage": "This will replace all your current data. Are you sure?",
+    "@confirmImportMessage": {
+        "description": "Confirm import dialog message"
+    },
+    "import": "Import",
+    "@import": {
+        "description": "Import button text"
+    },
+    "importSuccess": "Data imported successfully",
+    "@importSuccess": {
+        "description": "Import success message"
+    },
+    "yes": "Yes",
+    "@yes": {
+        "description": "Yes button text"
+    },
+    "no": "No",
+    "@no": {
+        "description": "No button text"
+    },
+    "statistics": "Statistics",
+    "@statistics": {
+        "description": "Statistics screen title"
+    },
+    "overview": "Overview",
+    "@overview": {
+        "description": "Overview section title"
+    },
+    "totalTodos": "Total Todos",
+    "@totalTodos": {
+        "description": "Total todos label"
+    },
+    "completedTodos": "Completed",
+    "@completedTodos": {
+        "description": "Completed todos label"
+    },
+    "activeTodos": "Active",
+    "@activeTodos": {
+        "description": "Active todos label"
+    },
+    "completionRate": "Completion Rate",
+    "@completionRate": {
+        "description": "Completion rate label"
+    },
+    "averageCompletionTime": "Average Completion Time",
+    "@averageCompletionTime": {
+        "description": "Average completion time label"
+    },
+    "hours": "hours",
+    "@hours": {
+        "description": "Hours unit"
+    },
+    "todosByPriority": "Todos by Priority",
+    "@todosByPriority": {
+        "description": "Todos by priority chart title"
+    },
+    "todosByCategory": "Todos by Category",
+    "@todosByCategory": {
+        "description": "Todos by category chart title"
+    },
+    "completionTrend": "Completion Trend",
+    "@completionTrend": {
+        "description": "Completion trend chart title"
+    },
+    "export": "Export",
+    "@export": {
+        "description": "Export screen title"
+    },
+    "exportToCsv": "Export to CSV",
+    "@exportToCsv": {
+        "description": "Export to CSV button text"
+    },
+    "exportToCsvDesc": "Export your todos to a CSV file that can be opened in Excel",
+    "@exportToCsvDesc": {
+        "description": "Export to CSV description"
+    },
+    "exportToPdf": "Export to PDF",
+    "@exportToPdf": {
+        "description": "Export to PDF button text"
+    },
+    "exportToPdfDesc": "Export your todos to a PDF document",
+    "@exportToPdfDesc": {
+        "description": "Export to PDF description"
+    },
+    "shareExportQuestion": "Do you want to share the exported file?",
+    "@shareExportQuestion": {
+        "description": "Share export question"
+    },
+    "category": "Category"
+} 

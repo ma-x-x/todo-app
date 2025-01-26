@@ -1,0 +1,1388 @@
+{
+    "produces": [
+        "application/json"
+    ],
+    "schemes": [
+        "http"
+    ],
+    "swagger": "2.0",
+    "info": {
+        "description": "这是一个待办事项管理系统的API服务",
+        "title": "Todo API",
+        "contact": {},
+        "version": "1.0"
+    },
+    "host": "localhost:8080",
+    "basePath": "/api/v1",
+    "paths": {
+        "/auth/login": {
+            "post": {
+                "description": "验证用户凭证并生成JWT令牌，用于后续请求的身份验证",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "auth"
+                ],
+                "summary": "用户登录",
+                "parameters": [
+                    {
+                        "description": "登录信息，包含用户名和密码",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/todo-demo_api_v1_dto_auth.LoginRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "登录成功返回的JWT令牌",
+                        "schema": {
+                            "$ref": "#/definitions/todo-demo_api_v1_dto_auth.LoginResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "用户名或密码错误等认证失败的情况",
+                        "schema": {
+                            "$ref": "#/definitions/todo-demo_pkg_errors.Error"
+                        }
+                    }
+                }
+            }
+        },
+        "/auth/middleware": {
+            "get": {
+                "description": "用于验证请求头中的JWT令牌,确保API的安全访问",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "middleware"
+                ],
+                "summary": "JWT认证中间件",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Bearer JWT认证令牌",
+                        "name": "Authorization",
+                        "in": "header",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "验证成功",
+                        "schema": {}
+                    },
+                    "401": {
+                        "description": "未授权访问",
+                        "schema": {
+                            "$ref": "#/definitions/todo-demo_pkg_errors.Error"
+                        }
+                    }
+                }
+            }
+        },
+        "/auth/register": {
+            "post": {
+                "description": "创建新用户账号，验证注册信息并在成功时返回确认消息",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "auth"
+                ],
+                "summary": "用户注册",
+                "parameters": [
+                    {
+                        "description": "注册信息，包含用户名和密码",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/todo-demo_api_v1_dto_auth.RegisterRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "注册成功返回信息",
+                        "schema": {
+                            "$ref": "#/definitions/todo-demo_api_v1_dto_auth.RegisterResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "请求参数错误或注册过程中的业务错误",
+                        "schema": {
+                            "$ref": "#/definitions/todo-demo_pkg_errors.Error"
+                        }
+                    }
+                }
+            }
+        },
+        "/categories": {
+            "get": {
+                "description": "获取当前用户的所有分类",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "分类管理"
+                ],
+                "summary": "获取分类列表",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Bearer JWT",
+                        "name": "Authorization",
+                        "in": "header",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/todo-demo_api_v1_dto_category.ListResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/todo-demo_pkg_errors.Error"
+                        }
+                    }
+                }
+            },
+            "post": {
+                "description": "创建一个新的待办事项分类，包含名称和可选的颜色属性",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "分类管理"
+                ],
+                "summary": "创建分类",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Bearer JWT认证令牌",
+                        "name": "Authorization",
+                        "in": "header",
+                        "required": true
+                    },
+                    {
+                        "description": "创建分类的请求参数",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/todo-demo_api_v1_dto_category.CreateRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "创建成功返回的分类信息",
+                        "schema": {
+                            "$ref": "#/definitions/todo-demo_api_v1_dto_category.CreateResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "请求参数错误",
+                        "schema": {
+                            "$ref": "#/definitions/todo-demo_pkg_errors.Error"
+                        }
+                    },
+                    "401": {
+                        "description": "未授权访问",
+                        "schema": {
+                            "$ref": "#/definitions/todo-demo_pkg_errors.Error"
+                        }
+                    }
+                }
+            }
+        },
+        "/categories/{id}": {
+            "put": {
+                "description": "更新指定的分类",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "分类管理"
+                ],
+                "summary": "更新分类",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Bearer JWT",
+                        "name": "Authorization",
+                        "in": "header",
+                        "required": true
+                    },
+                    {
+                        "type": "integer",
+                        "description": "分类ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "description": "更新分类请求参数",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/todo-demo_api_v1_dto_category.UpdateRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/todo-demo_api_v1_dto_category.UpdateResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/todo-demo_pkg_errors.Error"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/todo-demo_pkg_errors.Error"
+                        }
+                    }
+                }
+            },
+            "delete": {
+                "description": "删除指定的分类",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "分类管理"
+                ],
+                "summary": "删除分类",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Bearer JWT",
+                        "name": "Authorization",
+                        "in": "header",
+                        "required": true
+                    },
+                    {
+                        "type": "integer",
+                        "description": "分类ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/todo-demo_api_v1_dto_category.UpdateResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/todo-demo_pkg_errors.Error"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/todo-demo_pkg_errors.Error"
+                        }
+                    }
+                }
+            }
+        },
+        "/health": {
+            "get": {
+                "description": "用于监控系统运行状态的健康检查接口",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "系统"
+                ],
+                "summary": "服务健康检查",
+                "responses": {
+                    "200": {
+                        "description": "返回ok表示服务正常",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/reminders": {
+            "post": {
+                "description": "为待办事项创建定时提醒，支持单次、每日和每周重复的提醒方式",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "提醒管理"
+                ],
+                "summary": "创建提醒",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Bearer JWT认证令牌",
+                        "name": "Authorization",
+                        "in": "header",
+                        "required": true
+                    },
+                    {
+                        "description": "创建提醒的详细参数",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/todo-demo_api_v1_dto_reminder.CreateRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "创建成功的提醒信息",
+                        "schema": {
+                            "$ref": "#/definitions/todo-demo_api_v1_dto_reminder.CreateResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "参数验证失败或业务错误",
+                        "schema": {
+                            "$ref": "#/definitions/todo-demo_pkg_errors.Error"
+                        }
+                    },
+                    "401": {
+                        "description": "未授权访问",
+                        "schema": {
+                            "$ref": "#/definitions/todo-demo_pkg_errors.Error"
+                        }
+                    }
+                }
+            }
+        },
+        "/reminders/todo/{todo_id}": {
+            "get": {
+                "description": "获取指定待办事项的所有提醒",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "提醒管理"
+                ],
+                "summary": "获取待办事项的提醒列表",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Bearer JWT",
+                        "name": "Authorization",
+                        "in": "header",
+                        "required": true
+                    },
+                    {
+                        "type": "integer",
+                        "description": "待办事项ID",
+                        "name": "todo_id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/todo-demo_api_v1_dto_reminder.ListResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/todo-demo_pkg_errors.Error"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/todo-demo_pkg_errors.Error"
+                        }
+                    }
+                }
+            }
+        },
+        "/reminders/{id}": {
+            "put": {
+                "description": "更新指定的提醒",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "提醒管理"
+                ],
+                "summary": "更新提醒",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Bearer JWT",
+                        "name": "Authorization",
+                        "in": "header",
+                        "required": true
+                    },
+                    {
+                        "type": "integer",
+                        "description": "提醒ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "description": "更新提醒请求参数",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/todo-demo_api_v1_dto_reminder.UpdateRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/todo-demo_api_v1_dto_reminder.UpdateResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/todo-demo_pkg_errors.Error"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/todo-demo_pkg_errors.Error"
+                        }
+                    }
+                }
+            },
+            "delete": {
+                "description": "删除指定的提醒",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "提醒管理"
+                ],
+                "summary": "删除提醒",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Bearer JWT",
+                        "name": "Authorization",
+                        "in": "header",
+                        "required": true
+                    },
+                    {
+                        "type": "integer",
+                        "description": "提醒ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/todo-demo_api_v1_dto_reminder.UpdateResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/todo-demo_pkg_errors.Error"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/todo-demo_pkg_errors.Error"
+                        }
+                    }
+                }
+            }
+        },
+        "/todos": {
+            "get": {
+                "description": "获取当前用户的所有待办事项",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "待办事项管理"
+                ],
+                "summary": "获取待办事项列表",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Bearer JWT",
+                        "name": "Authorization",
+                        "in": "header",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/api_v1_handlers.ListTodoResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/todo-demo_pkg_errors.Error"
+                        }
+                    }
+                }
+            },
+            "post": {
+                "description": "创建一个新的待办事项，可设置标题、描述、优先级和所属分类",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "待办事项管理"
+                ],
+                "summary": "创建待办事项",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Bearer JWT认证令牌",
+                        "name": "Authorization",
+                        "in": "header",
+                        "required": true
+                    },
+                    {
+                        "description": "创建待办事项的详细参数",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/api_v1_handlers.CreateTodoRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "创建成功的待办事项信息",
+                        "schema": {
+                            "$ref": "#/definitions/api_v1_handlers.CreateTodoResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "参数验证失败或业务错误",
+                        "schema": {
+                            "$ref": "#/definitions/todo-demo_pkg_errors.Error"
+                        }
+                    },
+                    "401": {
+                        "description": "未授权访问",
+                        "schema": {
+                            "$ref": "#/definitions/todo-demo_pkg_errors.Error"
+                        }
+                    }
+                }
+            }
+        },
+        "/todos/{id}": {
+            "get": {
+                "description": "获取指定的待办事项详情",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "待办事项管理"
+                ],
+                "summary": "获取待办事项详情",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Bearer JWT",
+                        "name": "Authorization",
+                        "in": "header",
+                        "required": true
+                    },
+                    {
+                        "type": "integer",
+                        "description": "待办事项ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/todo-demo_internal_models.Todo"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/todo-demo_pkg_errors.Error"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/todo-demo_pkg_errors.Error"
+                        }
+                    }
+                }
+            },
+            "put": {
+                "description": "更新指定的待办事项",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "待办事项管理"
+                ],
+                "summary": "更新待办事项",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Bearer JWT",
+                        "name": "Authorization",
+                        "in": "header",
+                        "required": true
+                    },
+                    {
+                        "type": "integer",
+                        "description": "待办事项ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "description": "更新待办事项请求参数",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/api_v1_handlers.UpdateTodoRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/api_v1_handlers.UpdateTodoResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/todo-demo_pkg_errors.Error"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/todo-demo_pkg_errors.Error"
+                        }
+                    }
+                }
+            },
+            "delete": {
+                "description": "删除指定的待办事项",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "待办事项管理"
+                ],
+                "summary": "删除待办事项",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Bearer JWT",
+                        "name": "Authorization",
+                        "in": "header",
+                        "required": true
+                    },
+                    {
+                        "type": "integer",
+                        "description": "待办事项ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/api_v1_handlers.UpdateTodoResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/todo-demo_pkg_errors.Error"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/todo-demo_pkg_errors.Error"
+                        }
+                    }
+                }
+            }
+        }
+    },
+    "definitions": {
+        "api_v1_handlers.CreateTodoRequest": {
+            "type": "object",
+            "required": [
+                "title"
+            ],
+            "properties": {
+                "category_id": {
+                    "description": "CategoryID 所属分类ID，可选",
+                    "type": "integer"
+                },
+                "description": {
+                    "description": "Description 待办事项描述，可选，最大长度1024个字符",
+                    "type": "string",
+                    "maxLength": 1024
+                },
+                "priority": {
+                    "description": "Priority 优先级：1(低)/2(中)/3(高)",
+                    "type": "integer",
+                    "enum": [
+                        1,
+                        2,
+                        3
+                    ]
+                },
+                "title": {
+                    "description": "Title 待办事项标题，必填，最大长度128个字符",
+                    "type": "string",
+                    "maxLength": 128
+                }
+            }
+        },
+        "api_v1_handlers.CreateTodoResponse": {
+            "description": "创建待办事项响应",
+            "type": "object",
+            "properties": {
+                "todo": {
+                    "$ref": "#/definitions/todo-demo_internal_models.Todo"
+                }
+            }
+        },
+        "api_v1_handlers.ListTodoResponse": {
+            "description": "待办事项列表响应",
+            "type": "object",
+            "properties": {
+                "items": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/todo-demo_internal_models.Todo"
+                    }
+                },
+                "total": {
+                    "type": "integer"
+                }
+            }
+        },
+        "api_v1_handlers.UpdateTodoRequest": {
+            "description": "更新待办事项请求参数",
+            "type": "object",
+            "properties": {
+                "category_id": {
+                    "type": "integer"
+                },
+                "completed": {
+                    "type": "boolean"
+                },
+                "description": {
+                    "type": "string",
+                    "maxLength": 1024
+                },
+                "priority": {
+                    "type": "integer",
+                    "enum": [
+                        1,
+                        2,
+                        3
+                    ]
+                },
+                "title": {
+                    "type": "string",
+                    "maxLength": 128
+                }
+            }
+        },
+        "api_v1_handlers.UpdateTodoResponse": {
+            "description": "更新待办事项响应",
+            "type": "object",
+            "properties": {
+                "message": {
+                    "type": "string"
+                }
+            }
+        },
+        "gorm.DeletedAt": {
+            "type": "object",
+            "properties": {
+                "time": {
+                    "type": "string"
+                },
+                "valid": {
+                    "description": "Valid is true if Time is not NULL",
+                    "type": "boolean"
+                }
+            }
+        },
+        "todo-demo_api_v1_dto_auth.LoginRequest": {
+            "type": "object",
+            "required": [
+                "password",
+                "username"
+            ],
+            "properties": {
+                "password": {
+                    "description": "Password 密码",
+                    "type": "string"
+                },
+                "username": {
+                    "description": "Username 用户名",
+                    "type": "string"
+                }
+            }
+        },
+        "todo-demo_api_v1_dto_auth.LoginResponse": {
+            "type": "object",
+            "properties": {
+                "token": {
+                    "type": "string"
+                }
+            }
+        },
+        "todo-demo_api_v1_dto_auth.RegisterRequest": {
+            "type": "object",
+            "required": [
+                "email",
+                "password",
+                "username"
+            ],
+            "properties": {
+                "email": {
+                    "description": "Email 邮箱",
+                    "type": "string"
+                },
+                "password": {
+                    "description": "Password 密码",
+                    "type": "string",
+                    "maxLength": 32,
+                    "minLength": 6
+                },
+                "username": {
+                    "description": "Username 用户名",
+                    "type": "string",
+                    "maxLength": 32,
+                    "minLength": 3
+                }
+            }
+        },
+        "todo-demo_api_v1_dto_auth.RegisterResponse": {
+            "type": "object",
+            "properties": {
+                "message": {
+                    "description": "Message 响应消息",
+                    "type": "string"
+                }
+            }
+        },
+        "todo-demo_api_v1_dto_category.CreateRequest": {
+            "type": "object",
+            "required": [
+                "name"
+            ],
+            "properties": {
+                "color": {
+                    "description": "Color 分类颜色，可选，使用十六进制颜色码，如 #FF0000",
+                    "type": "string",
+                    "maxLength": 7
+                },
+                "name": {
+                    "description": "Name 分类名称，必填，最大长度32个字符",
+                    "type": "string",
+                    "maxLength": 32
+                }
+            }
+        },
+        "todo-demo_api_v1_dto_category.CreateResponse": {
+            "type": "object",
+            "properties": {
+                "category": {
+                    "description": "Category 创建成功后返回的分类信息",
+                    "allOf": [
+                        {
+                            "$ref": "#/definitions/todo-demo_internal_models.Category"
+                        }
+                    ]
+                }
+            }
+        },
+        "todo-demo_api_v1_dto_category.ListResponse": {
+            "type": "object",
+            "properties": {
+                "items": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/todo-demo_internal_models.Category"
+                    }
+                },
+                "total": {
+                    "type": "integer"
+                }
+            }
+        },
+        "todo-demo_api_v1_dto_category.UpdateRequest": {
+            "type": "object",
+            "properties": {
+                "color": {
+                    "type": "string",
+                    "maxLength": 7
+                },
+                "name": {
+                    "type": "string",
+                    "maxLength": 32
+                }
+            }
+        },
+        "todo-demo_api_v1_dto_category.UpdateResponse": {
+            "type": "object",
+            "properties": {
+                "message": {
+                    "type": "string"
+                }
+            }
+        },
+        "todo-demo_api_v1_dto_reminder.CreateRequest": {
+            "type": "object",
+            "required": [
+                "notify_type",
+                "remind_at",
+                "remind_type",
+                "todo_id"
+            ],
+            "properties": {
+                "notify_type": {
+                    "description": "NotifyType 通知方式：email(邮件)/push(推送)",
+                    "type": "string",
+                    "enum": [
+                        "email",
+                        "push"
+                    ]
+                },
+                "remind_at": {
+                    "description": "RemindAt 提醒时间",
+                    "type": "string"
+                },
+                "remind_type": {
+                    "description": "RemindType 提醒类型：once(单次)/daily(每日)/weekly(每周)",
+                    "type": "string",
+                    "enum": [
+                        "once",
+                        "daily",
+                        "weekly"
+                    ]
+                },
+                "todo_id": {
+                    "description": "TodoID 关联的待办事项ID",
+                    "type": "integer"
+                }
+            }
+        },
+        "todo-demo_api_v1_dto_reminder.CreateResponse": {
+            "type": "object",
+            "properties": {
+                "reminder": {
+                    "description": "Reminder 创建成功后返回的提醒信息",
+                    "allOf": [
+                        {
+                            "$ref": "#/definitions/todo-demo_internal_models.Reminder"
+                        }
+                    ]
+                }
+            }
+        },
+        "todo-demo_api_v1_dto_reminder.ListResponse": {
+            "type": "object",
+            "properties": {
+                "reminders": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/todo-demo_internal_models.Reminder"
+                    }
+                },
+                "total": {
+                    "type": "integer"
+                }
+            }
+        },
+        "todo-demo_api_v1_dto_reminder.UpdateRequest": {
+            "type": "object",
+            "required": [
+                "notify_type",
+                "remind_at",
+                "remind_type"
+            ],
+            "properties": {
+                "notify_type": {
+                    "description": "NotifyType 通知方式：email(邮件)/push(推送)",
+                    "type": "string",
+                    "enum": [
+                        "email",
+                        "push"
+                    ]
+                },
+                "remind_at": {
+                    "description": "RemindAt 提醒时间",
+                    "type": "string"
+                },
+                "remind_type": {
+                    "description": "RemindType 提醒类型：once(单次)/daily(每日)/weekly(每周)",
+                    "type": "string",
+                    "enum": [
+                        "once",
+                        "daily",
+                        "weekly"
+                    ]
+                }
+            }
+        },
+        "todo-demo_api_v1_dto_reminder.UpdateResponse": {
+            "type": "object",
+            "properties": {
+                "message": {
+                    "description": "Message 响应消息",
+                    "type": "string"
+                }
+            }
+        },
+        "todo-demo_internal_models.Category": {
+            "type": "object",
+            "properties": {
+                "color": {
+                    "description": "分类颜色，使用十六进制颜色码(如 #FF0000)",
+                    "type": "string"
+                },
+                "created_at": {
+                    "description": "创建时间",
+                    "type": "string"
+                },
+                "deleted_at": {
+                    "description": "软删除时间",
+                    "allOf": [
+                        {
+                            "$ref": "#/definitions/gorm.DeletedAt"
+                        }
+                    ]
+                },
+                "id": {
+                    "description": "主键ID",
+                    "type": "integer"
+                },
+                "name": {
+                    "description": "分类名称，不超过32字符",
+                    "type": "string"
+                },
+                "updated_at": {
+                    "description": "更新时间",
+                    "type": "string"
+                },
+                "user_id": {
+                    "description": "所属用户ID",
+                    "type": "integer"
+                }
+            }
+        },
+        "todo-demo_internal_models.NotifyType": {
+            "type": "integer",
+            "enum": [
+                1,
+                2
+            ],
+            "x-enum-comments": {
+                "NotifyTypeEmail": "邮件通知",
+                "NotifyTypePush": "推送通知"
+            },
+            "x-enum-varnames": [
+                "NotifyTypeEmail",
+                "NotifyTypePush"
+            ]
+        },
+        "todo-demo_internal_models.Priority": {
+            "type": "integer",
+            "enum": [
+                1,
+                2,
+                3
+            ],
+            "x-enum-comments": {
+                "PriorityHigh": "高优先级",
+                "PriorityLow": "低优先级",
+                "PriorityMedium": "中优先级"
+            },
+            "x-enum-varnames": [
+                "PriorityLow",
+                "PriorityMedium",
+                "PriorityHigh"
+            ]
+        },
+        "todo-demo_internal_models.Reminder": {
+            "type": "object",
+            "properties": {
+                "created_at": {
+                    "description": "创建时间",
+                    "type": "string"
+                },
+                "deleted_at": {
+                    "description": "软删除时间",
+                    "allOf": [
+                        {
+                            "$ref": "#/definitions/gorm.DeletedAt"
+                        }
+                    ]
+                },
+                "id": {
+                    "description": "主键ID",
+                    "type": "integer"
+                },
+                "notify_type": {
+                    "description": "通知类型",
+                    "allOf": [
+                        {
+                            "$ref": "#/definitions/todo-demo_internal_models.NotifyType"
+                        }
+                    ]
+                },
+                "remind_at": {
+                    "description": "提醒时间",
+                    "type": "string"
+                },
+                "remind_type": {
+                    "description": "提醒类型",
+                    "allOf": [
+                        {
+                            "$ref": "#/definitions/todo-demo_internal_models.ReminderType"
+                        }
+                    ]
+                },
+                "status": {
+                    "description": "提醒状态，false表示未提醒，true表示已提醒",
+                    "type": "boolean"
+                },
+                "todo_id": {
+                    "description": "关联的待办事项ID",
+                    "type": "integer"
+                },
+                "updated_at": {
+                    "description": "更新时间",
+                    "type": "string"
+                }
+            }
+        },
+        "todo-demo_internal_models.ReminderType": {
+            "type": "integer",
+            "enum": [
+                1,
+                2,
+                3
+            ],
+            "x-enum-comments": {
+                "ReminderTypeDaily": "每日提醒",
+                "ReminderTypeOnce": "一次性提醒",
+                "ReminderTypeWeekly": "每周提醒"
+            },
+            "x-enum-varnames": [
+                "ReminderTypeOnce",
+                "ReminderTypeDaily",
+                "ReminderTypeWeekly"
+            ]
+        },
+        "todo-demo_internal_models.Todo": {
+            "type": "object",
+            "properties": {
+                "category": {
+                    "description": "关联的分类信息",
+                    "allOf": [
+                        {
+                            "$ref": "#/definitions/todo-demo_internal_models.Category"
+                        }
+                    ]
+                },
+                "category_id": {
+                    "description": "所属分类ID，允许为空",
+                    "type": "integer"
+                },
+                "completed": {
+                    "description": "完成状态，默认为未完成",
+                    "type": "boolean"
+                },
+                "created_at": {
+                    "description": "创建时间",
+                    "type": "string"
+                },
+                "deleted_at": {
+                    "description": "软删除时间",
+                    "allOf": [
+                        {
+                            "$ref": "#/definitions/gorm.DeletedAt"
+                        }
+                    ]
+                },
+                "description": {
+                    "description": "待办事项描述，不超过1024字符",
+                    "type": "string"
+                },
+                "id": {
+                    "description": "主键ID",
+                    "type": "integer"
+                },
+                "priority": {
+                    "description": "优先级，默认为中优先级",
+                    "allOf": [
+                        {
+                            "$ref": "#/definitions/todo-demo_internal_models.Priority"
+                        }
+                    ]
+                },
+                "reminders": {
+                    "description": "关联的提醒列表",
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/todo-demo_internal_models.Reminder"
+                    }
+                },
+                "title": {
+                    "description": "待办事项标题，不超过128字符",
+                    "type": "string"
+                },
+                "updated_at": {
+                    "description": "更新时间",
+                    "type": "string"
+                },
+                "user_id": {
+                    "description": "所属用户ID",
+                    "type": "integer"
+                }
+            }
+        },
+        "todo-demo_pkg_errors.Error": {
+            "description": "API错误响应",
+            "type": "object",
+            "properties": {
+                "code": {
+                    "description": "HTTP状态码",
+                    "type": "integer",
+                    "example": 400
+                },
+                "detail": {
+                    "description": "详细错误信息（可选）",
+                    "type": "string"
+                },
+                "message": {
+                    "description": "错误信息",
+                    "type": "string",
+                    "example": "Invalid request parameter"
+                }
+            }
+        }
+    },
+    "securityDefinitions": {
+        "Bearer": {
+            "description": "在Authorization头部输入\"Bearer \"后跟JWT令牌",
+            "type": "apiKey",
+            "name": "Authorization",
+            "in": "header"
+        }
+    }
+}

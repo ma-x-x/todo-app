@@ -1,0 +1,55 @@
+{
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "name": "todo_app (debug mode)",
+            "request": "launch",
+            "type": "dart",
+            "flutterMode": "debug",
+            "args": [
+                "--web-port",
+                "5000"
+            ]
+        },
+        {
+            "name": "todo_app (profile mode)",
+            "request": "launch",
+            "type": "dart",
+            "flutterMode": "profile"
+        },
+        {
+            "name": "todo_app (release mode)",
+            "request": "launch",
+            "type": "dart",
+            "flutterMode": "release"
+        },
+        {
+            "name": "Chrome Debug",
+            "request": "launch",
+            "type": "dart",
+            "args": [
+                "--web-port=5000",
+                "--web-renderer=html",
+                "--web-hostname=127.0.0.1",
+                "--dart-define=FLUTTER_WEB_USE_SKIA=true",
+                "--web-browser-flag=--disable-web-security"
+            ],
+            "deviceId": "chrome"
+        },
+        {
+            "name": "All Tests",
+            "request": "launch",
+            "type": "dart",
+            "program": "./test/"
+        }
+    ],
+    "compounds": [
+        {
+            "name": "All Devices",
+            "configurations": [
+                "todo_app (debug mode)",
+                "Chrome Debug"
+            ]
+        }
+    ]
+}

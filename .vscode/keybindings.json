@@ -1,0 +1,10 @@
+{
+    "key": "ctrl+r",
+    "command": "workbench.action.debug.restart",
+    "when": "inDebugMode"
+},
+{
+    "key": "ctrl+shift+r",
+    "command": "flutter.hotReload",
+    "when": "flutterDebugSessionActive"
+}
