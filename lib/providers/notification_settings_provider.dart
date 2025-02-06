@@ -1,10 +1,11 @@
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart' show TimeOfDay;
+
 import '../services/storage_service.dart';
 
 class NotificationSettingsProvider with ChangeNotifier {
   final _storage = StorageService();
-  
+
   bool _enabled = true;
   bool _soundEnabled = true;
   bool _vibrationEnabled = true;
@@ -22,19 +23,22 @@ class NotificationSettingsProvider with ChangeNotifier {
 
   // 加载设置
   Future<void> loadSettings() async {
-    _enabled = _storage.getBool('notification_enabled') ?? true;
-    _soundEnabled = _storage.getBool('notification_sound') ?? true;
-    _vibrationEnabled = _storage.getBool('notification_vibration') ?? true;
-    _quietHoursEnabled = _storage.getBool('notification_quiet_hours') ?? false;
+    _enabled = _storage.getValue<bool>('notification_enabled') ?? true;
+    _soundEnabled = _storage.getValue<bool>('notification_sound') ?? true;
+    _vibrationEnabled =
+        _storage.getValue<bool>('notification_vibration') ?? true;
+    _quietHoursEnabled =
+        _storage.getValue<bool>('notification_quiet_hours') ?? false;
 
-    final startHour = _storage.getInt('notification_quiet_start_hour');
-    final startMinute = _storage.getInt('notification_quiet_start_minute');
+    final startHour = _storage.getValue<int>('notification_quiet_start_hour');
+    final startMinute =
+        _storage.getValue<int>('notification_quiet_start_minute');
     if (startHour != null && startMinute != null) {
       _quietHoursStart = TimeOfDay(hour: startHour, minute: startMinute);
     }
 
-    final endHour = _storage.getInt('notification_quiet_end_hour');
-    final endMinute = _storage.getInt('notification_quiet_end_minute');
+    final endHour = _storage.getValue<int>('notification_quiet_end_hour');
+    final endMinute = _storage.getValue<int>('notification_quiet_end_minute');
     if (endHour != null && endMinute != null) {
       _quietHoursEnd = TimeOfDay(hour: endHour, minute: endMinute);
     }
@@ -45,39 +49,39 @@ class NotificationSettingsProvider with ChangeNotifier {
   // Setters
   Future<void> setEnabled(bool value) async {
     _enabled = value;
-    await _storage.setBool('notification_enabled', value);
+    await _storage.setValue('notification_enabled', value);
     notifyListeners();
   }
 
   Future<void> setSoundEnabled(bool value) async {
     _soundEnabled = value;
-    await _storage.setBool('notification_sound', value);
+    await _storage.setValue('notification_sound', value);
     notifyListeners();
   }
 
   Future<void> setVibrationEnabled(bool value) async {
     _vibrationEnabled = value;
-    await _storage.setBool('notification_vibration', value);
+    await _storage.setValue('notification_vibration', value);
     notifyListeners();
   }
 
   Future<void> setQuietHoursEnabled(bool value) async {
     _quietHoursEnabled = value;
-    await _storage.setBool('notification_quiet_hours', value);
+    await _storage.setValue('notification_quiet_hours', value);
     notifyListeners();
   }
 
   Future<void> setQuietHoursStart(TimeOfDay time) async {
     _quietHoursStart = time;
-    await _storage.setInt('notification_quiet_start_hour', time.hour);
-    await _storage.setInt('notification_quiet_start_minute', time.minute);
+    await _storage.setValue('notification_quiet_start_hour', time.hour);
+    await _storage.setValue('notification_quiet_start_minute', time.minute);
     notifyListeners();
   }
 
   Future<void> setQuietHoursEnd(TimeOfDay time) async {
     _quietHoursEnd = time;
-    await _storage.setInt('notification_quiet_end_hour', time.hour);
-    await _storage.setInt('notification_quiet_end_minute', time.minute);
+    await _storage.setValue('notification_quiet_end_hour', time.hour);
+    await _storage.setValue('notification_quiet_end_minute', time.minute);
     notifyListeners();
   }
 
@@ -96,4 +100,4 @@ class NotificationSettingsProvider with ChangeNotifier {
       return currentMinutes >= startMinutes || currentMinutes <= endMinutes;
     }
   }
-} 
+}

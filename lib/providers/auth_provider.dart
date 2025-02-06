@@ -40,27 +40,15 @@ class AuthProvider with ChangeNotifier {
 
     try {
       final response = await _authApi.login(username, password);
-      print('登录响应数据: ${response.data}');
 
-      if (response.data == null || response.data is! Map<String, dynamic>) {
-        throw '无效的响应格式';
-      }
-
-      final token = response.data['token'] as String?;
-      if (token == null || token.isEmpty) {
-        throw '服务器响应中缺少有效token';
-      }
-
-      final userData = response.data['user'] as Map<String, dynamic>?;
-      if (userData == null) {
-        throw '服务器响应中缺少用户数据';
-      }
+      final token = response['token'] as String;
+      final userData = response['user'] as User;
 
       await _storage.saveToken(token);
       print('Token已保存: $token');
 
-      await _storage.saveUser(userData);
-      _currentUser = User.fromJson(userData);
+      await _storage.saveUser(userData.toJson());
+      _currentUser = userData;
       print('用户数据已保存: $_currentUser');
 
       notifyListeners();

@@ -11,23 +11,32 @@ class ApiClient {
   final StorageService _storage = StorageService();
 
   ApiClient() : _dio = Dio() {
+    _configureBaseOptions();
+    _configureInterceptors();
+  }
+
+  void _configureBaseOptions() {
     _dio.options.baseUrl = baseUrl;
     _dio.options.connectTimeout = const Duration(seconds: 5);
     _dio.options.receiveTimeout = const Duration(seconds: 3);
-
-    // 添加默认headers
     _dio.options.headers = {
       'Content-Type': 'application/json',
       'Accept': 'application/json',
     };
+  }
 
-    // 先清除所有拦截器，以防重复
+  void _configureInterceptors() {
     _dio.interceptors.clear();
+    _dio.interceptors.addAll([
+      _createAuthInterceptor(),
+      _createResponseInterceptor(),
+      _createLoggingInterceptor(),
+    ]);
+  }
 
-    // 添加自定义拦截器
-    _dio.interceptors.add(InterceptorsWrapper(
+  InterceptorsWrapper _createAuthInterceptor() {
+    return InterceptorsWrapper(
       onRequest: (options, handler) async {
-        // 对于登录请求，不需要添加 token
         if (!options.path.contains('/auth/login')) {
           try {
             final token = await _storage.getToken();
@@ -35,13 +44,16 @@ class ApiClient {
               options.headers['Authorization'] = 'Bearer $token';
             }
           } catch (e) {
-            print('【请求拦截器】读取Token时发生错误: $e');
+            print('Token读取错误: $e');
           }
-        } else {
-          print('【请求拦截器】登录请求，跳过Token验证');
         }
         return handler.next(options);
       },
+    );
+  }
+
+  InterceptorsWrapper _createResponseInterceptor() {
+    return InterceptorsWrapper(
       onResponse: (response, handler) {
         if (response.data is Map<String, dynamic>) {
           final responseData = response.data as Map<String, dynamic>;
@@ -55,21 +67,16 @@ class ApiClient {
         }
         return handler.next(response);
       },
+    );
+  }
+
+  InterceptorsWrapper _createLoggingInterceptor() {
+    return InterceptorsWrapper(
       onError: (error, handler) {
         print('API错误: ${error.message}');
         return handler.next(error);
       },
-    ));
-
-    // 添加日志拦截器
-    _dio.interceptors.add(LogInterceptor(
-      requestHeader: true,
-      requestBody: true,
-      responseHeader: true,
-      responseBody: true,
-      error: true,
-      logPrint: (obj) => print('【Dio日志】$obj'),
-    ));
+    );
   }
 
   Future<Response> get(String path, {Map<String, dynamic>? queryParameters}) {

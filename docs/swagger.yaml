@@ -140,7 +140,25 @@ definitions:
     type: object
   todo-demo_api_v1_dto_reminder.CreateResponse:
     properties:
+      createdAt:
+        type: string
       id:
+        type: integer
+      notifyType:
+        type: string
+      remindAt:
+        type: string
+      remindType:
+        type: string
+      reminder:
+        allOf:
+        - $ref: '#/definitions/todo-demo_internal_models.Reminder'
+        description: 提醒详细信息
+      todo:
+        allOf:
+        - $ref: '#/definitions/todo-demo_internal_models.Todo'
+        description: 关联的待办事项信息
+      todoId:
         type: integer
     type: object
   todo-demo_api_v1_dto_reminder.ListResponse:
@@ -154,31 +172,27 @@ definitions:
     type: object
   todo-demo_api_v1_dto_reminder.UpdateRequest:
     properties:
-      notify_type:
-        description: NotifyType 通知方式：email(邮件)/push(推送)
+      notifyType:
         enum:
         - email
         - push
         type: string
-      remind_at:
-        description: RemindAt 提醒时间
+      remindAt:
         type: string
-      remind_type:
-        description: RemindType 提醒类型：once(单次)/daily(每日)/weekly(每周)
+      remindType:
         enum:
         - once
         - daily
         - weekly
         type: string
     required:
-    - notify_type
-    - remind_at
-    - remind_type
+    - notifyType
+    - remindAt
+    - remindType
     type: object
   todo-demo_api_v1_dto_reminder.UpdateResponse:
     properties:
       message:
-        description: Message 响应消息
         type: string
     type: object
   todo-demo_api_v1_dto_todo.CreateRequest:
@@ -330,17 +344,6 @@ definitions:
         description: 所属用户ID
         type: integer
     type: object
-  todo-demo_internal_models.NotifyType:
-    enum:
-    - 1
-    - 2
-    type: integer
-    x-enum-comments:
-      NotifyTypeEmail: 邮件通知
-      NotifyTypePush: 推送通知
-    x-enum-varnames:
-    - NotifyTypeEmail
-    - NotifyTypePush
   todo-demo_internal_models.Priority:
     enum:
     - low
@@ -367,41 +370,29 @@ definitions:
       id:
         description: 主键ID
         type: integer
-      notify_type:
-        allOf:
-        - $ref: '#/definitions/todo-demo_internal_models.NotifyType'
+      notifyType:
         description: 通知类型
-      remind_at:
+        type: string
+      remindAt:
         description: 提醒时间
         type: string
-      remind_type:
-        allOf:
-        - $ref: '#/definitions/todo-demo_internal_models.ReminderType'
+      remindType:
         description: 提醒类型
+        type: string
       status:
-        description: 提醒状态，false表示未提醒，true表示已提醒
+        description: 提醒状态
         type: boolean
-      todo_id:
+      todo:
+        allOf:
+        - $ref: '#/definitions/todo-demo_internal_models.Todo'
+        description: 关联的待办事项
+      todoId:
         description: 关联的待办事项ID
         type: integer
       updatedAt:
         description: 更新时间
         type: string
     type: object
-  todo-demo_internal_models.ReminderType:
-    enum:
-    - 1
-    - 2
-    - 3
-    type: integer
-    x-enum-comments:
-      ReminderTypeDaily: 每日提醒
-      ReminderTypeOnce: 一次性提醒
-      ReminderTypeWeekly: 每周提醒
-    x-enum-varnames:
-    - ReminderTypeOnce
-    - ReminderTypeDaily
-    - ReminderTypeWeekly
   todo-demo_internal_models.Todo:
     properties:
       category:

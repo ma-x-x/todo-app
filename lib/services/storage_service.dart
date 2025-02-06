@@ -115,24 +115,36 @@ class StorageService {
     await _secureStorage.deleteAll();
   }
 
-  // 添加缺失的方法
-  Future<bool> setBool(String key, bool value) async {
-    return await _prefs.setBool(key, value);
+  // 使用泛型优化存储方法
+  Future<void> setValue<T>(String key, T value) async {
+    if (value is String) {
+      await _prefs.setString(key, value);
+    } else if (value is bool) {
+      await _prefs.setBool(key, value);
+    } else if (value is int) {
+      await _prefs.setInt(key, value);
+    } else if (value is double) {
+      await _prefs.setDouble(key, value);
+    } else {
+      throw UnsupportedError('Unsupported type: ${value.runtimeType}');
+    }
   }
 
-  bool? getBool(String key) {
-    return _prefs.getBool(key);
+  T? getValue<T>(String key) {
+    return _prefs.get(key) as T?;
   }
 
-  Future<bool> setInt(String key, int value) async {
-    return await _prefs.setInt(key, value);
+  // 优化对象存储方法
+  Future<void> saveObject<T>(
+      String key, T object, T Function(Map<String, dynamic>) fromJson) async {
+    final jsonStr = jsonEncode(object);
+    await _prefs.setString(key, jsonStr);
   }
 
-  int? getInt(String key) {
-    return _prefs.getInt(key);
-  }
-
-  Future<String?> read({required String key}) async {
-    return await _secureStorage.read(key: key);
+  T? getObject<T>(String key, T Function(Map<String, dynamic>) fromJson) {
+    final jsonStr = _prefs.getString(key);
+    if (jsonStr == null) return null;
+    final json = jsonDecode(jsonStr) as Map<String, dynamic>;
+    return fromJson(json);
   }
 }

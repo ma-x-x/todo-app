@@ -1,15 +1,17 @@
+import 'package:flutter/material.dart' show TimeOfDay;
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
-import 'package:timezone/timezone.dart' as tz;
 import 'package:timezone/data/latest.dart' as tz;
+import 'package:timezone/timezone.dart' as tz;
+
 import '../models/reminder.dart';
 import '../providers/notification_settings_provider.dart';
-import 'package:flutter/material.dart' show TimeOfDay;
 
 class NotificationService {
   static final NotificationService _instance = NotificationService._();
   factory NotificationService() => _instance;
 
-  final FlutterLocalNotificationsPlugin _notifications = FlutterLocalNotificationsPlugin();
+  final FlutterLocalNotificationsPlugin _notifications =
+      FlutterLocalNotificationsPlugin();
   late NotificationSettingsProvider _settings;
 
   NotificationService._() {
@@ -23,7 +25,8 @@ class NotificationService {
   Future<void> _init() async {
     tz.initializeTimeZones();
 
-    const androidSettings = AndroidInitializationSettings('@mipmap/ic_launcher');
+    const androidSettings =
+        AndroidInitializationSettings('@mipmap/ic_launcher');
     const iosSettings = DarwinInitializationSettings(
       requestAlertPermission: true,
       requestBadgePermission: true,
@@ -154,10 +157,10 @@ class NotificationService {
 
     final timeOfDay = TimeOfDay(hour: dateTime.hour, minute: dateTime.minute);
     final minutes = timeOfDay.hour * 60 + timeOfDay.minute;
-    final startMinutes = _settings.quietHoursStart.hour * 60 + 
-                        _settings.quietHoursStart.minute;
-    final endMinutes = _settings.quietHoursEnd.hour * 60 + 
-                      _settings.quietHoursEnd.minute;
+    final startMinutes =
+        _settings.quietHoursStart.hour * 60 + _settings.quietHoursStart.minute;
+    final endMinutes =
+        _settings.quietHoursEnd.hour * 60 + _settings.quietHoursEnd.minute;
 
     if (startMinutes <= endMinutes) {
       return minutes >= startMinutes && minutes <= endMinutes;
@@ -175,17 +178,17 @@ class NotificationService {
   }
 
   Future<void> requestPermissions() async {
-    await _notifications.resolvePlatformSpecificImplementation<
-        AndroidFlutterLocalNotificationsPlugin>()?.requestPermission();
-    await _notifications.resolvePlatformSpecificImplementation<
-        IOSFlutterLocalNotificationsPlugin>()?.requestPermissions(
-      alert: true,
-      badge: true,
-      sound: true,
-    );
+    await _notifications
+        .resolvePlatformSpecificImplementation<
+            AndroidFlutterLocalNotificationsPlugin>()
+        ?.requestPermission();
+    await _notifications
+        .resolvePlatformSpecificImplementation<
+            IOSFlutterLocalNotificationsPlugin>()
+        ?.requestPermissions(
+          alert: true,
+          badge: true,
+          sound: true,
+        );
   }
-
-  TimeOfDay _timeFromDateTime(DateTime dateTime) {
-    return TimeOfDay(hour: dateTime.hour, minute: dateTime.minute);
-  }
-} 
+}

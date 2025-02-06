@@ -46,7 +46,7 @@ dependencies:
   # 状态管理
   provider: ^6.0.5
   # 网络请求
-  dio: ^5.3.2
+  dio: ^5.0.0
   # 本地存储
   shared_preferences: ^2.2.2
   # 日期时间选择器

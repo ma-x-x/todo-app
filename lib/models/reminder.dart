@@ -2,23 +2,27 @@ import 'package:json_annotation/json_annotation.dart';
 
 part 'reminder.g.dart';
 
-@JsonSerializable()
+@JsonSerializable(
+  converters: [
+    NullableDateTimeConverter(),
+  ],
+)
 class Reminder {
   final int? id;
-  @JsonKey(name: 'todo_id')
+  @JsonKey(name: 'todoId')
   final int todoId;
-  @JsonKey(name: 'remind_at')
+  @JsonKey(name: 'remindAt')
   final DateTime remindAt;
-  @JsonKey(name: 'remind_type')
+  @JsonKey(name: 'remindType')
   final String remindType; // once/daily/weekly
-  @JsonKey(name: 'notify_type')
+  @JsonKey(name: 'notifyType')
   final String notifyType; // email/push
   final bool status;
-  @JsonKey(name: 'created_at')
-  final DateTime createdAt;
-  @JsonKey(name: 'updated_at')
-  final DateTime updatedAt;
-  @JsonKey(name: 'deleted_at')
+  @JsonKey(name: 'createdAt')
+  final DateTime? createdAt;
+  @JsonKey(name: 'updatedAt')
+  final DateTime? updatedAt;
+  @JsonKey(name: 'deletedAt')
   final DateTime? deletedAt;
 
   Reminder({
@@ -28,8 +32,8 @@ class Reminder {
     required this.remindType,
     required this.notifyType,
     this.status = false,
-    required this.createdAt,
-    required this.updatedAt,
+    this.createdAt,
+    this.updatedAt,
     this.deletedAt,
   });
 
@@ -37,11 +41,47 @@ class Reminder {
       _$ReminderFromJson(json);
   Map<String, dynamic> toJson() => _$ReminderToJson(this);
 
-  Map<String, dynamic> toRequestJson() => {
-        'todoId': todoId,
-        'remindAt': remindAt.toUtc().toIso8601String(),
-        'remindType': remindType,
-        'notifyType': notifyType,
-        'status': status,
-      };
+  Map<String, dynamic> toRequestJson() {
+    return {
+      'todoId': todoId,
+      'remindAt': remindAt.toUtc().toIso8601String(),
+      'remindType': remindType,
+      'notifyType': notifyType,
+    };
+  }
+
+  Reminder copyWith({
+    int? id,
+    int? todoId,
+    DateTime? remindAt,
+    String? remindType,
+    String? notifyType,
+    bool? status,
+    DateTime? createdAt,
+    DateTime? updatedAt,
+    DateTime? deletedAt,
+  }) {
+    return Reminder(
+      id: id ?? this.id,
+      todoId: todoId ?? this.todoId,
+      remindAt: remindAt ?? this.remindAt,
+      remindType: remindType ?? this.remindType,
+      notifyType: notifyType ?? this.notifyType,
+      status: status ?? this.status,
+      createdAt: createdAt ?? this.createdAt,
+      updatedAt: updatedAt ?? this.updatedAt,
+      deletedAt: deletedAt ?? this.deletedAt,
+    );
+  }
+}
+
+class NullableDateTimeConverter implements JsonConverter<DateTime?, String?> {
+  const NullableDateTimeConverter();
+
+  @override
+  DateTime? fromJson(String? json) =>
+      json == null ? null : DateTime.parse(json);
+
+  @override
+  String? toJson(DateTime? json) => json?.toIso8601String();
 }

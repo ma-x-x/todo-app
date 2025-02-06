@@ -28,14 +28,8 @@ class ReminderProvider with ChangeNotifier {
     notifyListeners();
 
     try {
-      final response = await _reminderApi.getReminders(todoId);
-      print('response: $response');
-      final data = response.data['data'];
-      if (data != null && data['items'] != null) {
-        final List<dynamic> items = data['items'];
-        _reminders[todoId] =
-            items.map((json) => Reminder.fromJson(json)).toList();
-      }
+      final reminders = await _reminderApi.getReminders(todoId);
+      _reminders[todoId] = reminders;
     } catch (e) {
       _error = '获取提醒列表失败：${e.toString()}';
       print(_error);
@@ -47,37 +41,32 @@ class ReminderProvider with ChangeNotifier {
 
   Future<void> createReminder(Reminder reminder, String todoTitle) async {
     try {
-      final response =
+      final newReminder =
           await _reminderApi.createReminder(reminder.toRequestJson());
 
-      // 检查响应数据
-      final responseData = response.data;
-      print('responseData: $responseData');
-      final newReminder =
-          responseData != null && responseData['reminder'] != null
-              ? Reminder.fromJson(responseData['reminder'])
-              : responseData != null
-                  ? Reminder.fromJson(responseData) // 直接使用顶层数据
-                  : reminder;
-
-      if (!_reminders.containsKey(reminder.todoId)) {
-        _reminders[reminder.todoId] = [];
-      }
-      _reminders[reminder.todoId]!.add(newReminder);
-
-      // 设置本地通知
+      _addReminderToList(reminder.todoId, newReminder);
       await _notificationService.scheduleNotification(newReminder, todoTitle);
 
       notifyListeners();
     } catch (e) {
-      print('Error creating reminder: $e');
+      print('创建提醒失败: $e');
       rethrow;
     }
   }
 
+  void _addReminderToList(int todoId, Reminder reminder) {
+    if (!_reminders.containsKey(todoId)) {
+      _reminders[todoId] = [];
+    }
+    _reminders[todoId]!.add(reminder);
+  }
+
   Future<void> updateReminder(Reminder reminder, String todoTitle) async {
     try {
-      await _reminderApi.updateReminder(reminder.id!, reminder.toRequestJson());
+      final updatedReminder = await _reminderApi.updateReminder(
+        reminder.id!,
+        reminder.toRequestJson(),
+      );
 
       final todoReminders = _reminders[reminder.todoId];
       if (todoReminders != null) {
@@ -86,14 +75,15 @@ class ReminderProvider with ChangeNotifier {
           // 取消旧的通知
           await _notificationService.cancelNotification(reminder.id!);
           // 设置新的通知
-          await _notificationService.scheduleNotification(reminder, todoTitle);
+          await _notificationService.scheduleNotification(
+              updatedReminder, todoTitle);
 
-          todoReminders[index] = reminder;
+          todoReminders[index] = updatedReminder;
           notifyListeners();
         }
       }
     } catch (e) {
-      print('Error updating reminder: $e');
+      print('更新提醒失败: $e');
       rethrow;
     }
   }
@@ -110,7 +100,7 @@ class ReminderProvider with ChangeNotifier {
         notifyListeners();
       }
     } catch (e) {
-      print('Error deleting reminder: $e');
+      print('删除提醒失败: $e');
       rethrow;
     }
   }
