@@ -4,6 +4,7 @@ import 'package:provider/provider.dart';
 
 import '../models/todo.dart';
 import '../providers/todo_provider.dart';
+import '../screens/reminder/reminder_list_screen.dart';
 import '../screens/todo/todo_form_screen.dart';
 
 class TodoItem extends StatelessWidget {
@@ -95,40 +96,49 @@ class TodoItem extends StatelessWidget {
             decoration: todo.completed ? TextDecoration.lineThrough : null,
           ),
         ),
-        subtitle: todo.description?.isNotEmpty == true
-            ? Text(
-                todo.description!,
-                maxLines: 2,
-                overflow: TextOverflow.ellipsis,
-              )
-            : null,
+        subtitle: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            if (todo.description != null && todo.description!.isNotEmpty)
+              Text(todo.description!),
+            if (todo.category != null)
+              Chip(
+                label: Text(todo.category!.name),
+                backgroundColor: todo.category!.color != null
+                    ? Color(int.parse(
+                        todo.category!.color!.replaceFirst('#', 'FF'),
+                        radix: 16))
+                    : null,
+              ),
+          ],
+        ),
         trailing: Row(
           mainAxisSize: MainAxisSize.min,
           children: [
-            if (todo.category != null)
-              Container(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 8,
-                  vertical: 4,
-                ),
-                decoration: BoxDecoration(
-                  color: todo.category!.color != null
-                      ? Color(int.parse(todo.category!.color!.substring(1, 7),
-                              radix: 16) +
-                          0xFF000000)
-                      : Colors.grey,
-                  borderRadius: BorderRadius.circular(12),
-                ),
-                child: Text(
-                  todo.category!.name,
-                  style: const TextStyle(color: Colors.white),
-                ),
+            IconButton(
+              icon: Icon(
+                Icons.notifications,
+                color: todo.hasActiveReminder() ? Colors.orange : Colors.grey,
               ),
-            const SizedBox(width: 8),
-            Icon(
-              Icons.circle,
-              color: _getPriorityColor(todo.priority),
-              size: 12,
+              onPressed: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (_) => ReminderListScreen(todo: todo),
+                  ),
+                );
+              },
+            ),
+            IconButton(
+              icon: const Icon(Icons.edit),
+              onPressed: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (_) => TodoFormScreen(todo: todo),
+                  ),
+                );
+              },
             ),
           ],
         ),

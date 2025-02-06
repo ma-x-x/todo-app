@@ -2,13 +2,13 @@ import '../models/category.dart';
 import 'api_client.dart';
 
 class CategoryApi {
-  final ApiClient _apiClient;
+  final ApiClient _client;
 
-  CategoryApi(this._apiClient);
+  CategoryApi(this._client);
 
   Future<List<Category>> getCategories() async {
     try {
-      final response = await _apiClient.get('/categories');
+      final response = await _client.get('/categories');
       return (response.data['items'] as List)
           .map((json) => Category.fromJson(json))
           .toList();
@@ -20,7 +20,7 @@ class CategoryApi {
 
   Future<Category> createCategory(Map<String, dynamic> data) async {
     try {
-      final response = await _apiClient.post('/categories', data: {
+      final response = await _client.post('/categories', data: {
         'name': data['name'],
         'color': data['color'],
       });
@@ -39,7 +39,7 @@ class CategoryApi {
 
   Future<Category> updateCategory(int id, Map<String, dynamic> data) async {
     try {
-      final response = await _apiClient.put('/categories/$id', data: data);
+      final response = await _client.put('/categories/$id', data: data);
       return Category.fromJson(response.data);
     } catch (e) {
       print('更新分类失败: $e');
@@ -49,7 +49,7 @@ class CategoryApi {
 
   Future<void> deleteCategory(int id) async {
     try {
-      await _apiClient.delete('/categories/$id');
+      await _client.delete('/categories/$id');
     } catch (e) {
       print('删除分类失败: $e');
       rethrow;

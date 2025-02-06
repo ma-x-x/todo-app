@@ -29,8 +29,13 @@ class ReminderProvider with ChangeNotifier {
 
     try {
       final response = await _reminderApi.getReminders(todoId);
-      final List<dynamic> data = response.data['reminders'];
-      _reminders[todoId] = data.map((json) => Reminder.fromJson(json)).toList();
+      print('response: $response');
+      final data = response.data['data'];
+      if (data != null && data['items'] != null) {
+        final List<dynamic> items = data['items'];
+        _reminders[todoId] =
+            items.map((json) => Reminder.fromJson(json)).toList();
+      }
     } catch (e) {
       _error = '获取提醒列表失败：${e.toString()}';
       print(_error);
@@ -42,13 +47,18 @@ class ReminderProvider with ChangeNotifier {
 
   Future<void> createReminder(Reminder reminder, String todoTitle) async {
     try {
-      final response = await _reminderApi.createReminder({
-        'todo_id': reminder.todoId,
-        'remind_at': reminder.remindAt.toIso8601String(),
-        'remind_type': reminder.remindType,
-        'notify_type': reminder.notifyType,
-      });
-      final newReminder = Reminder.fromJson(response.data['reminder']);
+      final response =
+          await _reminderApi.createReminder(reminder.toRequestJson());
+
+      // 检查响应数据
+      final responseData = response.data;
+      print('responseData: $responseData');
+      final newReminder =
+          responseData != null && responseData['reminder'] != null
+              ? Reminder.fromJson(responseData['reminder'])
+              : responseData != null
+                  ? Reminder.fromJson(responseData) // 直接使用顶层数据
+                  : reminder;
 
       if (!_reminders.containsKey(reminder.todoId)) {
         _reminders[reminder.todoId] = [];
@@ -67,11 +77,7 @@ class ReminderProvider with ChangeNotifier {
 
   Future<void> updateReminder(Reminder reminder, String todoTitle) async {
     try {
-      await _reminderApi.updateReminder(reminder.id!, {
-        'remind_at': reminder.remindAt.toIso8601String(),
-        'remind_type': reminder.remindType,
-        'notify_type': reminder.notifyType,
-      });
+      await _reminderApi.updateReminder(reminder.id!, reminder.toRequestJson());
 
       final todoReminders = _reminders[reminder.todoId];
       if (todoReminders != null) {

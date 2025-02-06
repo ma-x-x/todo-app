@@ -9,7 +9,6 @@ class TodoApi {
   Future<List<Todo>> getTodos() async {
     try {
       final response = await _apiClient.get('/todos');
-      print('获取待办事项响应: ${response.data}');
 
       if (response.data == null || response.data is! Map<String, dynamic>) {
         throw '无效的响应格式';

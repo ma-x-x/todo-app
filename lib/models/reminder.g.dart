@@ -7,27 +7,27 @@ part of 'reminder.dart';
 // **************************************************************************
 
 Reminder _$ReminderFromJson(Map<String, dynamic> json) => Reminder(
-      id: (json['id'] as num?)?.toInt(),
-      todoId: (json['todoId'] as num).toInt(),
-      remindAt: DateTime.parse(json['remindAt'] as String),
-      remindType: json['remindType'] as String,
-      notifyType: json['notifyType'] as String,
+      id: json['id'] as int?,
+      todoId: json['todo_id'] as int,
+      remindAt: DateTime.parse(json['remind_at'] as String),
+      remindType: json['remind_type'] as String,
+      notifyType: json['notify_type'] as String,
       status: json['status'] as bool? ?? false,
-      createdAt: DateTime.parse(json['createdAt'] as String),
-      updatedAt: DateTime.parse(json['updatedAt'] as String),
-      deletedAt: json['deletedAt'] == null
+      createdAt: DateTime.parse(json['created_at'] as String),
+      updatedAt: DateTime.parse(json['updated_at'] as String),
+      deletedAt: json['deleted_at'] == null
           ? null
-          : DateTime.parse(json['deletedAt'] as String),
+          : DateTime.parse(json['deleted_at'] as String),
     );
 
 Map<String, dynamic> _$ReminderToJson(Reminder instance) => <String, dynamic>{
       'id': instance.id,
-      'todoId': instance.todoId,
-      'remindAt': instance.remindAt.toIso8601String(),
-      'remindType': instance.remindType,
-      'notifyType': instance.notifyType,
+      'todo_id': instance.todoId,
+      'remind_at': instance.remindAt.toIso8601String(),
+      'remind_type': instance.remindType,
+      'notify_type': instance.notifyType,
       'status': instance.status,
-      'createdAt': instance.createdAt.toIso8601String(),
-      'updatedAt': instance.updatedAt.toIso8601String(),
-      'deletedAt': instance.deletedAt?.toIso8601String(),
+      'created_at': instance.createdAt.toIso8601String(),
+      'updated_at': instance.updatedAt.toIso8601String(),
+      'deleted_at': instance.deletedAt?.toIso8601String(),
     };

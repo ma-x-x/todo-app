@@ -46,8 +46,11 @@ class Todo {
     String? priority,
     int? categoryId,
     Category? category,
+    List<Reminder>? reminders,
     DateTime? createdAt,
     DateTime? updatedAt,
+    DateTime? dueDate,
+    DateTime? completedAt,
   }) {
     return Todo(
       id: id ?? this.id,
@@ -57,8 +60,18 @@ class Todo {
       priority: priority ?? this.priority,
       categoryId: categoryId ?? this.categoryId,
       category: category ?? this.category,
+      reminders: reminders ?? this.reminders,
       createdAt: createdAt ?? this.createdAt,
       updatedAt: updatedAt ?? this.updatedAt,
+      dueDate: dueDate ?? this.dueDate,
+      completedAt: completedAt ?? this.completedAt,
     );
+  }
+
+  bool hasActiveReminder() {
+    if (reminders == null || reminders!.isEmpty) return false;
+    final now = DateTime.now();
+    return reminders!
+        .any((reminder) => !reminder.status && reminder.remindAt.isAfter(now));
   }
 }

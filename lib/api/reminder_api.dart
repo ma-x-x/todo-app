@@ -1,4 +1,5 @@
 import 'package:dio/dio.dart';
+
 import 'api_client.dart';
 
 class ReminderApi {
@@ -21,4 +22,4 @@ class ReminderApi {
   Future<Response> deleteReminder(int id) {
     return _client.delete('/reminders/$id');
   }
-} 
+}
