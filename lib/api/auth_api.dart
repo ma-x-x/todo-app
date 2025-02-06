@@ -1,4 +1,5 @@
 import 'package:dio/dio.dart';
+
 import 'api_client.dart';
 
 class AuthApi {
@@ -7,6 +8,7 @@ class AuthApi {
   AuthApi(this._client);
 
   Future<Response> login(String username, String password) {
+    print('发送登录请求，用户名: $username'); // 调试日志
     return _client.post('/auth/login', data: {
       'username': username,
       'password': password,
@@ -20,4 +22,4 @@ class AuthApi {
       'email': email,
     });
   }
-} 
+}

@@ -1,4 +1,5 @@
 import 'package:json_annotation/json_annotation.dart';
+
 import 'category.dart';
 import 'reminder.dart';
 
@@ -36,4 +37,28 @@ class Todo {
 
   factory Todo.fromJson(Map<String, dynamic> json) => _$TodoFromJson(json);
   Map<String, dynamic> toJson() => _$TodoToJson(this);
-} 
+
+  Todo copyWith({
+    int? id,
+    String? title,
+    String? description,
+    bool? completed,
+    String? priority,
+    int? categoryId,
+    Category? category,
+    DateTime? createdAt,
+    DateTime? updatedAt,
+  }) {
+    return Todo(
+      id: id ?? this.id,
+      title: title ?? this.title,
+      description: description ?? this.description,
+      completed: completed ?? this.completed,
+      priority: priority ?? this.priority,
+      categoryId: categoryId ?? this.categoryId,
+      category: category ?? this.category,
+      createdAt: createdAt ?? this.createdAt,
+      updatedAt: updatedAt ?? this.updatedAt,
+    );
+  }
+}

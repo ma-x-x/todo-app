@@ -1,13 +1,14 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 import 'package:provider/provider.dart';
-import '../../providers/todo_provider.dart';
-import '../../providers/filter_provider.dart';
+
 import '../../models/todo_filter.dart';
+import '../../providers/filter_provider.dart';
+import '../../providers/todo_provider.dart';
 import '../../widgets/todo_item.dart';
-import 'todo_search_delegate.dart';
 import 'todo_filter_screen.dart';
 import 'todo_form_screen.dart';
-import 'package:flutter_gen/gen_l10n/app_localizations.dart';
+import 'todo_search_delegate.dart';
 
 class TodoListScreen extends StatelessWidget {
   const TodoListScreen({super.key});
@@ -40,6 +41,25 @@ class TodoListScreen extends StatelessWidget {
       ),
       body: Consumer2<TodoProvider, FilterProvider>(
         builder: (context, todoProvider, filterProvider, child) {
+          if (todoProvider.isLoading) {
+            return const Center(child: CircularProgressIndicator());
+          }
+
+          if (todoProvider.error != null) {
+            return Center(
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Text('加载失败: ${todoProvider.error}'),
+                  ElevatedButton(
+                    onPressed: () => todoProvider.loadTodos(),
+                    child: const Text('重试'),
+                  ),
+                ],
+              ),
+            );
+          }
+
           final todos = todoProvider.todos.where((todo) {
             // 应用搜索过滤
             if (filterProvider.searchQuery.isNotEmpty) {
@@ -102,4 +122,4 @@ class TodoListScreen extends StatelessWidget {
       ),
     );
   }
-} 
+}

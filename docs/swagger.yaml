@@ -1,70 +1,5 @@
 basePath: /api/v1
 definitions:
-  api_v1_handlers.CreateTodoRequest:
-    properties:
-      category_id:
-        description: CategoryID 所属分类ID，可选
-        type: integer
-      description:
-        description: Description 待办事项描述，可选，最大长度1024个字符
-        maxLength: 1024
-        type: string
-      priority:
-        description: Priority 优先级：1(低)/2(中)/3(高)
-        enum:
-        - 1
-        - 2
-        - 3
-        type: integer
-      title:
-        description: Title 待办事项标题，必填，最大长度128个字符
-        maxLength: 128
-        type: string
-    required:
-    - title
-    type: object
-  api_v1_handlers.CreateTodoResponse:
-    description: 创建待办事项响应
-    properties:
-      todo:
-        $ref: '#/definitions/todo-demo_internal_models.Todo'
-    type: object
-  api_v1_handlers.ListTodoResponse:
-    description: 待办事项列表响应
-    properties:
-      items:
-        items:
-          $ref: '#/definitions/todo-demo_internal_models.Todo'
-        type: array
-      total:
-        type: integer
-    type: object
-  api_v1_handlers.UpdateTodoRequest:
-    description: 更新待办事项请求参数
-    properties:
-      category_id:
-        type: integer
-      completed:
-        type: boolean
-      description:
-        maxLength: 1024
-        type: string
-      priority:
-        enum:
-        - 1
-        - 2
-        - 3
-        type: integer
-      title:
-        maxLength: 128
-        type: string
-    type: object
-  api_v1_handlers.UpdateTodoResponse:
-    description: 更新待办事项响应
-    properties:
-      message:
-        type: string
-    type: object
   gorm.DeletedAt:
     properties:
       time:
@@ -88,7 +23,12 @@ definitions:
   todo-demo_api_v1_dto_auth.LoginResponse:
     properties:
       token:
+        description: JWT令牌
         type: string
+      user:
+        allOf:
+        - $ref: '#/definitions/todo-demo_api_v1_dto_auth.UserInfo'
+        description: 用户信息
     type: object
   todo-demo_api_v1_dto_auth.RegisterRequest:
     properties:
@@ -116,14 +56,30 @@ definitions:
         description: Message 响应消息
         type: string
     type: object
+  todo-demo_api_v1_dto_auth.UserInfo:
+    properties:
+      createdAt:
+        description: 创建时间
+        type: string
+      email:
+        description: 邮箱
+        type: string
+      id:
+        description: 用户ID
+        type: integer
+      updatedAt:
+        description: 更新时间
+        type: string
+      username:
+        description: 用户名
+        type: string
+    type: object
   todo-demo_api_v1_dto_category.CreateRequest:
     properties:
       color:
-        description: 'Color 分类颜色，可选，使用十六进制颜色码，如 #FF0000'
         maxLength: 7
         type: string
       name:
-        description: Name 分类名称，必填，最大长度32个字符
         maxLength: 32
         type: string
     required:
@@ -131,18 +87,18 @@ definitions:
     type: object
   todo-demo_api_v1_dto_category.CreateResponse:
     properties:
-      category:
-        allOf:
-        - $ref: '#/definitions/todo-demo_internal_models.Category'
-        description: Category 创建成功后返回的分类信息
+      id:
+        type: integer
     type: object
   todo-demo_api_v1_dto_category.ListResponse:
     properties:
       items:
+        description: 分类列表
         items:
           $ref: '#/definitions/todo-demo_internal_models.Category'
         type: array
       total:
+        description: 总数
         type: integer
     type: object
   todo-demo_api_v1_dto_category.UpdateRequest:
@@ -161,41 +117,35 @@ definitions:
     type: object
   todo-demo_api_v1_dto_reminder.CreateRequest:
     properties:
-      notify_type:
-        description: NotifyType 通知方式：email(邮件)/push(推送)
+      notifyType:
         enum:
         - email
         - push
         type: string
-      remind_at:
-        description: RemindAt 提醒时间
+      remindAt:
         type: string
-      remind_type:
-        description: RemindType 提醒类型：once(单次)/daily(每日)/weekly(每周)
+      remindType:
         enum:
         - once
         - daily
         - weekly
         type: string
-      todo_id:
-        description: TodoID 关联的待办事项ID
+      todoId:
         type: integer
     required:
-    - notify_type
-    - remind_at
-    - remind_type
-    - todo_id
+    - notifyType
+    - remindAt
+    - remindType
+    - todoId
     type: object
   todo-demo_api_v1_dto_reminder.CreateResponse:
     properties:
-      reminder:
-        allOf:
-        - $ref: '#/definitions/todo-demo_internal_models.Reminder'
-        description: Reminder 创建成功后返回的提醒信息
+      id:
+        type: integer
     type: object
   todo-demo_api_v1_dto_reminder.ListResponse:
     properties:
-      reminders:
+      items:
         items:
           $ref: '#/definitions/todo-demo_internal_models.Reminder'
         type: array
@@ -231,15 +181,139 @@ definitions:
         description: Message 响应消息
         type: string
     type: object
+  todo-demo_api_v1_dto_todo.CreateRequest:
+    properties:
+      categoryId:
+        description: |-
+          CategoryID 所属分类ID
+          Required: false
+        type: integer
+      description:
+        description: |-
+          Description 待办事项描述
+          Required: false
+          Max Length: 1024
+        maxLength: 1024
+        type: string
+      priority:
+        description: |-
+          Priority 优先级
+          Required: false
+          Enum: [low medium high]
+          Example: medium
+        enum:
+        - low
+        - medium
+        - high
+        type: string
+      title:
+        description: |-
+          Title 待办事项标题
+          Required: true
+          Max Length: 128
+        maxLength: 128
+        type: string
+    required:
+    - title
+    type: object
+  todo-demo_api_v1_dto_todo.DetailResponse:
+    properties:
+      category:
+        allOf:
+        - $ref: '#/definitions/todo-demo_internal_models.Category'
+        description: 关联的分类信息
+      categoryId:
+        description: 所属分类ID，允许为空
+        type: integer
+      completed:
+        description: 完成状态，默认为未完成
+        type: boolean
+      createdAt:
+        description: 创建时间
+        type: string
+      deletedAt:
+        allOf:
+        - $ref: '#/definitions/gorm.DeletedAt'
+        description: 软删除时间
+      description:
+        description: 待办事项描述，不超过1024字符
+        type: string
+      id:
+        description: 主键ID
+        type: integer
+      priority:
+        allOf:
+        - $ref: '#/definitions/todo-demo_internal_models.Priority'
+        description: 优先级，默认为中优先级
+      reminders:
+        description: 关联的提醒列表
+        items:
+          $ref: '#/definitions/todo-demo_internal_models.Reminder'
+        type: array
+      title:
+        description: 待办事项标题，不超过128字符
+        type: string
+      updatedAt:
+        description: 更新时间
+        type: string
+      userId:
+        description: 所属用户ID
+        type: integer
+    type: object
+  todo-demo_api_v1_dto_todo.ListResponse:
+    properties:
+      items:
+        description: |-
+          待办事项列表
+          包含当前页的所有待办事项详细信息
+        items:
+          $ref: '#/definitions/todo-demo_internal_models.Todo'
+        type: array
+      total:
+        description: |-
+          总记录数
+          用于前端分页显示
+        type: integer
+    type: object
+  todo-demo_api_v1_dto_todo.UpdateRequest:
+    properties:
+      categoryId:
+        description: 分类ID
+        type: integer
+      completed:
+        description: 完成状态
+        type: boolean
+      description:
+        description: 描述
+        maxLength: 1024
+        type: string
+      priority:
+        description: 优先级
+        enum:
+        - low
+        - medium
+        - high
+        type: string
+      title:
+        description: 标题
+        maxLength: 128
+        type: string
+    type: object
+  todo-demo_api_v1_dto_todo.UpdateResponse:
+    properties:
+      message:
+        description: 响应消息
+        type: string
+    type: object
   todo-demo_internal_models.Category:
     properties:
       color:
         description: '分类颜色，使用十六进制颜色码(如 #FF0000)'
         type: string
-      created_at:
+      createdAt:
         description: 创建时间
         type: string
-      deleted_at:
+      deletedAt:
         allOf:
         - $ref: '#/definitions/gorm.DeletedAt'
         description: 软删除时间
@@ -249,10 +323,10 @@ definitions:
       name:
         description: 分类名称，不超过32字符
         type: string
-      updated_at:
+      updatedAt:
         description: 更新时间
         type: string
-      user_id:
+      userId:
         description: 所属用户ID
         type: integer
     type: object
@@ -269,10 +343,10 @@ definitions:
     - NotifyTypePush
   todo-demo_internal_models.Priority:
     enum:
-    - 1
-    - 2
-    - 3
-    type: integer
+    - low
+    - medium
+    - high
+    type: string
     x-enum-comments:
       PriorityHigh: 高优先级
       PriorityLow: 低优先级
@@ -283,10 +357,10 @@ definitions:
     - PriorityHigh
   todo-demo_internal_models.Reminder:
     properties:
-      created_at:
+      createdAt:
         description: 创建时间
         type: string
-      deleted_at:
+      deletedAt:
         allOf:
         - $ref: '#/definitions/gorm.DeletedAt'
         description: 软删除时间
@@ -310,7 +384,7 @@ definitions:
       todo_id:
         description: 关联的待办事项ID
         type: integer
-      updated_at:
+      updatedAt:
         description: 更新时间
         type: string
     type: object
@@ -334,16 +408,16 @@ definitions:
         allOf:
         - $ref: '#/definitions/todo-demo_internal_models.Category'
         description: 关联的分类信息
-      category_id:
+      categoryId:
         description: 所属分类ID，允许为空
         type: integer
       completed:
         description: 完成状态，默认为未完成
         type: boolean
-      created_at:
+      createdAt:
         description: 创建时间
         type: string
-      deleted_at:
+      deletedAt:
         allOf:
         - $ref: '#/definitions/gorm.DeletedAt'
         description: 软删除时间
@@ -365,10 +439,10 @@ definitions:
       title:
         description: 待办事项标题，不超过128字符
         type: string
-      updated_at:
+      updatedAt:
         description: 更新时间
         type: string
-      user_id:
+      userId:
         description: 所属用户ID
         type: integer
     type: object
@@ -387,6 +461,24 @@ definitions:
         example: Invalid request parameter
         type: string
     type: object
+  todo-demo_pkg_response.Response:
+    description: Standard API response structure
+    properties:
+      code:
+        description: HTTP status code
+        example: 200
+        type: integer
+      data:
+        description: Response payload
+      message:
+        description: Response message
+        example: Success
+        type: string
+      traceId:
+        description: Request trace ID for debugging
+        example: 550e8400-e29b-41d4-a716-446655440000
+        type: string
+    type: object
 host: localhost:8080
 info:
   contact: {}
@@ -398,7 +490,7 @@ paths:
     post:
       consumes:
       - application/json
-      description: 验证用户凭证并生成JWT令牌，用于后续请求的身份验证
+      description: 验证用户凭证并生成JWT令牌，返回令牌和用户信息
       parameters:
       - description: 登录信息，包含用户名和密码
         in: body
@@ -410,13 +502,22 @@ paths:
       - application/json
       responses:
         "200":
-          description: 登录成功返回的JWT令牌
+          description: 登录成功返回的JWT令牌和用户信息
           schema:
-            $ref: '#/definitions/todo-demo_api_v1_dto_auth.LoginResponse'
+            allOf:
+            - $ref: '#/definitions/todo-demo_pkg_response.Response'
+            - properties:
+                data:
+                  $ref: '#/definitions/todo-demo_api_v1_dto_auth.LoginResponse'
+              type: object
         "401":
           description: 用户名或密码错误等认证失败的情况
           schema:
-            $ref: '#/definitions/todo-demo_pkg_errors.Error'
+            $ref: '#/definitions/todo-demo_pkg_response.Response'
+        "500":
+          description: 服务器内部错误
+          schema:
+            $ref: '#/definitions/todo-demo_pkg_response.Response'
       summary: 用户登录
       tags:
       - auth
@@ -462,11 +563,20 @@ paths:
         "200":
           description: 注册成功返回信息
           schema:
-            $ref: '#/definitions/todo-demo_api_v1_dto_auth.RegisterResponse'
+            allOf:
+            - $ref: '#/definitions/todo-demo_pkg_response.Response'
+            - properties:
+                data:
+                  $ref: '#/definitions/todo-demo_api_v1_dto_auth.RegisterResponse'
+              type: object
         "400":
-          description: 请求参数错误或注册过程中的业务错误
+          description: 请求参数错误
           schema:
-            $ref: '#/definitions/todo-demo_pkg_errors.Error'
+            $ref: '#/definitions/todo-demo_pkg_response.Response'
+        "500":
+          description: 服务器内部错误
+          schema:
+            $ref: '#/definitions/todo-demo_pkg_response.Response'
       summary: 用户注册
       tags:
       - auth
@@ -485,13 +595,18 @@ paths:
       - application/json
       responses:
         "200":
-          description: OK
+          description: 获取成功
           schema:
-            $ref: '#/definitions/todo-demo_api_v1_dto_category.ListResponse'
+            allOf:
+            - $ref: '#/definitions/todo-demo_pkg_response.Response'
+            - properties:
+                data:
+                  $ref: '#/definitions/todo-demo_api_v1_dto_category.ListResponse'
+              type: object
         "401":
-          description: Unauthorized
+          description: 未授权访问
           schema:
-            $ref: '#/definitions/todo-demo_pkg_errors.Error'
+            $ref: '#/definitions/todo-demo_pkg_response.Response'
       summary: 获取分类列表
       tags:
       - 分类管理
@@ -517,15 +632,20 @@ paths:
         "200":
           description: 创建成功返回的分类信息
           schema:
-            $ref: '#/definitions/todo-demo_api_v1_dto_category.CreateResponse'
+            allOf:
+            - $ref: '#/definitions/todo-demo_pkg_response.Response'
+            - properties:
+                data:
+                  $ref: '#/definitions/todo-demo_api_v1_dto_category.CreateResponse'
+              type: object
         "400":
           description: 请求参数错误
           schema:
-            $ref: '#/definitions/todo-demo_pkg_errors.Error'
+            $ref: '#/definitions/todo-demo_pkg_response.Response'
         "401":
           description: 未授权访问
           schema:
-            $ref: '#/definitions/todo-demo_pkg_errors.Error'
+            $ref: '#/definitions/todo-demo_pkg_response.Response'
       summary: 创建分类
       tags:
       - 分类管理
@@ -549,17 +669,22 @@ paths:
       - application/json
       responses:
         "200":
-          description: OK
+          description: 删除成功
           schema:
-            $ref: '#/definitions/todo-demo_api_v1_dto_category.UpdateResponse'
+            allOf:
+            - $ref: '#/definitions/todo-demo_pkg_response.Response'
+            - properties:
+                data:
+                  $ref: '#/definitions/todo-demo_api_v1_dto_category.UpdateResponse'
+              type: object
         "400":
-          description: Bad Request
+          description: 请求参数错误
           schema:
-            $ref: '#/definitions/todo-demo_pkg_errors.Error'
+            $ref: '#/definitions/todo-demo_pkg_response.Response'
         "401":
-          description: Unauthorized
+          description: 未授权访问
           schema:
-            $ref: '#/definitions/todo-demo_pkg_errors.Error'
+            $ref: '#/definitions/todo-demo_pkg_response.Response'
       summary: 删除分类
       tags:
       - 分类管理
@@ -588,17 +713,22 @@ paths:
       - application/json
       responses:
         "200":
-          description: OK
+          description: 更新成功
           schema:
-            $ref: '#/definitions/todo-demo_api_v1_dto_category.UpdateResponse'
+            allOf:
+            - $ref: '#/definitions/todo-demo_pkg_response.Response'
+            - properties:
+                data:
+                  $ref: '#/definitions/todo-demo_api_v1_dto_category.UpdateResponse'
+              type: object
         "400":
-          description: Bad Request
+          description: 请求参数错误
           schema:
-            $ref: '#/definitions/todo-demo_pkg_errors.Error'
+            $ref: '#/definitions/todo-demo_pkg_response.Response'
         "401":
-          description: Unauthorized
+          description: 未授权访问
           schema:
-            $ref: '#/definitions/todo-demo_pkg_errors.Error'
+            $ref: '#/definitions/todo-demo_pkg_response.Response'
       summary: 更新分类
       tags:
       - 分类管理
@@ -640,15 +770,20 @@ paths:
         "200":
           description: 创建成功的提醒信息
           schema:
-            $ref: '#/definitions/todo-demo_api_v1_dto_reminder.CreateResponse'
+            allOf:
+            - $ref: '#/definitions/todo-demo_pkg_response.Response'
+            - properties:
+                data:
+                  $ref: '#/definitions/todo-demo_api_v1_dto_reminder.CreateResponse'
+              type: object
         "400":
           description: 参数验证失败或业务错误
           schema:
-            $ref: '#/definitions/todo-demo_pkg_errors.Error'
+            $ref: '#/definitions/todo-demo_pkg_response.Response'
         "401":
           description: 未授权访问
           schema:
-            $ref: '#/definitions/todo-demo_pkg_errors.Error'
+            $ref: '#/definitions/todo-demo_pkg_response.Response'
       summary: 创建提醒
       tags:
       - 提醒管理
@@ -672,17 +807,22 @@ paths:
       - application/json
       responses:
         "200":
-          description: OK
+          description: 删除成功
           schema:
-            $ref: '#/definitions/todo-demo_api_v1_dto_reminder.UpdateResponse'
+            allOf:
+            - $ref: '#/definitions/todo-demo_pkg_response.Response'
+            - properties:
+                data:
+                  $ref: '#/definitions/todo-demo_api_v1_dto_reminder.UpdateResponse'
+              type: object
         "400":
-          description: Bad Request
+          description: 请求参数错误
           schema:
-            $ref: '#/definitions/todo-demo_pkg_errors.Error'
+            $ref: '#/definitions/todo-demo_pkg_response.Response'
         "401":
-          description: Unauthorized
+          description: 未授权访问
           schema:
-            $ref: '#/definitions/todo-demo_pkg_errors.Error'
+            $ref: '#/definitions/todo-demo_pkg_response.Response'
       summary: 删除提醒
       tags:
       - 提醒管理
@@ -711,17 +851,22 @@ paths:
       - application/json
       responses:
         "200":
-          description: OK
+          description: 更新成功
           schema:
-            $ref: '#/definitions/todo-demo_api_v1_dto_reminder.UpdateResponse'
+            allOf:
+            - $ref: '#/definitions/todo-demo_pkg_response.Response'
+            - properties:
+                data:
+                  $ref: '#/definitions/todo-demo_api_v1_dto_reminder.UpdateResponse'
+              type: object
         "400":
-          description: Bad Request
+          description: 请求参数错误
           schema:
-            $ref: '#/definitions/todo-demo_pkg_errors.Error'
+            $ref: '#/definitions/todo-demo_pkg_response.Response'
         "401":
-          description: Unauthorized
+          description: 未授权访问
           schema:
-            $ref: '#/definitions/todo-demo_pkg_errors.Error'
+            $ref: '#/definitions/todo-demo_pkg_response.Response'
       summary: 更新提醒
       tags:
       - 提醒管理
@@ -745,17 +890,22 @@ paths:
       - application/json
       responses:
         "200":
-          description: OK
+          description: 获取成功
           schema:
-            $ref: '#/definitions/todo-demo_api_v1_dto_reminder.ListResponse'
+            allOf:
+            - $ref: '#/definitions/todo-demo_pkg_response.Response'
+            - properties:
+                data:
+                  $ref: '#/definitions/todo-demo_api_v1_dto_reminder.ListResponse'
+              type: object
         "400":
-          description: Bad Request
+          description: 请求参数错误
           schema:
-            $ref: '#/definitions/todo-demo_pkg_errors.Error'
+            $ref: '#/definitions/todo-demo_pkg_response.Response'
         "401":
-          description: Unauthorized
+          description: 未授权访问
           schema:
-            $ref: '#/definitions/todo-demo_pkg_errors.Error'
+            $ref: '#/definitions/todo-demo_pkg_response.Response'
       summary: 获取待办事项的提醒列表
       tags:
       - 提醒管理
@@ -774,13 +924,18 @@ paths:
       - application/json
       responses:
         "200":
-          description: OK
+          description: 获取成功
           schema:
-            $ref: '#/definitions/api_v1_handlers.ListTodoResponse'
+            allOf:
+            - $ref: '#/definitions/todo-demo_pkg_response.Response'
+            - properties:
+                data:
+                  $ref: '#/definitions/todo-demo_api_v1_dto_todo.ListResponse'
+              type: object
         "401":
-          description: Unauthorized
+          description: 未授权访问
           schema:
-            $ref: '#/definitions/todo-demo_pkg_errors.Error'
+            $ref: '#/definitions/todo-demo_pkg_response.Response'
       summary: 获取待办事项列表
       tags:
       - 待办事项管理
@@ -799,22 +954,27 @@ paths:
         name: request
         required: true
         schema:
-          $ref: '#/definitions/api_v1_handlers.CreateTodoRequest'
+          $ref: '#/definitions/todo-demo_api_v1_dto_todo.CreateRequest'
       produces:
       - application/json
       responses:
         "200":
-          description: 创建成功的待办事项信息
+          description: 创建成功返回待办事项信息
           schema:
-            $ref: '#/definitions/api_v1_handlers.CreateTodoResponse'
+            allOf:
+            - $ref: '#/definitions/todo-demo_pkg_response.Response'
+            - properties:
+                data:
+                  $ref: '#/definitions/todo-demo_api_v1_dto_todo.DetailResponse'
+              type: object
         "400":
           description: 参数验证失败或业务错误
           schema:
-            $ref: '#/definitions/todo-demo_pkg_errors.Error'
+            $ref: '#/definitions/todo-demo_pkg_response.Response'
         "401":
           description: 未授权访问
           schema:
-            $ref: '#/definitions/todo-demo_pkg_errors.Error'
+            $ref: '#/definitions/todo-demo_pkg_response.Response'
       summary: 创建待办事项
       tags:
       - 待办事项管理
@@ -838,17 +998,22 @@ paths:
       - application/json
       responses:
         "200":
-          description: OK
+          description: 删除成功
           schema:
-            $ref: '#/definitions/api_v1_handlers.UpdateTodoResponse'
+            allOf:
+            - $ref: '#/definitions/todo-demo_pkg_response.Response'
+            - properties:
+                data:
+                  $ref: '#/definitions/todo-demo_api_v1_dto_todo.UpdateResponse'
+              type: object
         "400":
-          description: Bad Request
+          description: 请求参数错误
           schema:
-            $ref: '#/definitions/todo-demo_pkg_errors.Error'
+            $ref: '#/definitions/todo-demo_pkg_response.Response'
         "401":
-          description: Unauthorized
+          description: 未授权访问
           schema:
-            $ref: '#/definitions/todo-demo_pkg_errors.Error'
+            $ref: '#/definitions/todo-demo_pkg_response.Response'
       summary: 删除待办事项
       tags:
       - 待办事项管理
@@ -871,17 +1036,22 @@ paths:
       - application/json
       responses:
         "200":
-          description: OK
+          description: 获取成功
           schema:
-            $ref: '#/definitions/todo-demo_internal_models.Todo'
+            allOf:
+            - $ref: '#/definitions/todo-demo_pkg_response.Response'
+            - properties:
+                data:
+                  $ref: '#/definitions/todo-demo_api_v1_dto_todo.DetailResponse'
+              type: object
         "400":
-          description: Bad Request
+          description: 请求参数错误
           schema:
-            $ref: '#/definitions/todo-demo_pkg_errors.Error'
+            $ref: '#/definitions/todo-demo_pkg_response.Response'
         "401":
-          description: Unauthorized
+          description: 未授权访问
           schema:
-            $ref: '#/definitions/todo-demo_pkg_errors.Error'
+            $ref: '#/definitions/todo-demo_pkg_response.Response'
       summary: 获取待办事项详情
       tags:
       - 待办事项管理
@@ -905,22 +1075,27 @@ paths:
         name: request
         required: true
         schema:
-          $ref: '#/definitions/api_v1_handlers.UpdateTodoRequest'
+          $ref: '#/definitions/todo-demo_api_v1_dto_todo.UpdateRequest'
       produces:
       - application/json
       responses:
         "200":
-          description: OK
+          description: 更新成功
           schema:
-            $ref: '#/definitions/api_v1_handlers.UpdateTodoResponse'
+            allOf:
+            - $ref: '#/definitions/todo-demo_pkg_response.Response'
+            - properties:
+                data:
+                  $ref: '#/definitions/todo-demo_api_v1_dto_todo.DetailResponse'
+              type: object
         "400":
-          description: Bad Request
+          description: 请求参数错误
           schema:
-            $ref: '#/definitions/todo-demo_pkg_errors.Error'
+            $ref: '#/definitions/todo-demo_pkg_response.Response'
         "401":
-          description: Unauthorized
+          description: 未授权访问
           schema:
-            $ref: '#/definitions/todo-demo_pkg_errors.Error'
+            $ref: '#/definitions/todo-demo_pkg_response.Response'
       summary: 更新待办事项
       tags:
       - 待办事项管理

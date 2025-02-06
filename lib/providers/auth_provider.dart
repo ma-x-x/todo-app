@@ -6,7 +6,6 @@ import '../models/user.dart';
 import '../services/storage_service.dart';
 
 class AuthProvider with ChangeNotifier {
-  final ApiClient _apiClient = ApiClient();
   final AuthApi _authApi;
   final StorageService _storage = StorageService();
 
@@ -41,25 +40,32 @@ class AuthProvider with ChangeNotifier {
 
     try {
       final response = await _authApi.login(username, password);
+      print('登录响应数据: ${response.data}');
 
-      // 添加调试输出
-      print('Login response: ${response.data}');
-
-      final token = response.data['token'] as String;
-      await _storage.saveToken(token);
-
-      // 保存用户信息
-      if (response.data['user'] != null) {
-        print('User data received: ${response.data['user']}');
-        _currentUser = User.fromJson(response.data['user']);
-        await _storage.saveUser(response.data['user']);
-      } else {
-        print('No user data in response');
+      if (response.data == null || response.data is! Map<String, dynamic>) {
+        throw '无效的响应格式';
       }
+
+      final token = response.data['token'] as String?;
+      if (token == null || token.isEmpty) {
+        throw '服务器响应中缺少有效token';
+      }
+
+      final userData = response.data['user'] as Map<String, dynamic>?;
+      if (userData == null) {
+        throw '服务器响应中缺少用户数据';
+      }
+
+      await _storage.saveToken(token);
+      print('Token已保存: $token');
+
+      await _storage.saveUser(userData);
+      _currentUser = User.fromJson(userData);
+      print('用户数据已保存: $_currentUser');
 
       notifyListeners();
     } catch (e) {
-      print('Login error in provider: $e');
+      print('登录处理错误: $e');
       _error = '登录失败：${e.toString()}';
       notifyListeners();
       rethrow;

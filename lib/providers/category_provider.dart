@@ -1,6 +1,7 @@
 import 'package:flutter/foundation.dart' hide Category;
-import '../api/category_api.dart';
+
 import '../api/api_client.dart';
+import '../api/category_api.dart';
 import '../models/category.dart';
 import '../services/storage_service.dart';
 
@@ -12,7 +13,33 @@ class CategoryProvider with ChangeNotifier {
   String? _error;
 
   CategoryProvider() : _categoryApi = CategoryApi(ApiClient()) {
-    _loadCachedCategories();
+    loadCategories();
+  }
+
+  List<Category> get categories => _categories;
+  bool get isLoading => _isLoading;
+  String? get error => _error;
+
+  Future<void> loadCategories() async {
+    _isLoading = true;
+    _error = null;
+    notifyListeners();
+
+    try {
+      print('开始加载分类...');
+      _categories = await _categoryApi.getCategories();
+      await _storage.saveCategories(_categories);
+      print('成功加载分类: ${_categories.length}个项目');
+      notifyListeners();
+    } catch (e) {
+      print('加载分类失败: $e');
+      _error = e.toString();
+      _loadCachedCategories();
+      notifyListeners();
+    } finally {
+      _isLoading = false;
+      notifyListeners();
+    }
   }
 
   void _loadCachedCategories() {
@@ -23,63 +50,35 @@ class CategoryProvider with ChangeNotifier {
     }
   }
 
-  List<Category> get categories => _categories;
-  bool get isLoading => _isLoading;
-  String? get error => _error;
-
-  Future<void> fetchCategories() async {
-    _isLoading = true;
-    _error = null;
-    notifyListeners();
-
+  Future<void> createCategory(String name, {String? color}) async {
     try {
-      final response = await _categoryApi.getCategories();
-      final List<dynamic> data = response.data['items'];
-      _categories = data.map((json) => Category.fromJson(json)).toList();
-      
-      // 缓存数据
-      await _storage.saveCategories(_categories);
-      
-      notifyListeners();
-    } catch (e) {
-      _error = '获取分类列表失败：${e.toString()}';
-      print(_error);
-      // 如果网络请求失败，尝试使用缓存数据
-      _loadCachedCategories();
-    } finally {
-      _isLoading = false;
-      notifyListeners();
-    }
-  }
-
-  Future<void> createCategory(String name, String? color) async {
-    try {
-      final response = await _categoryApi.createCategory({
+      final newCategory = await _categoryApi.createCategory({
         'name': name,
         'color': color,
       });
-      final newCategory = Category.fromJson(response.data['category']);
       _categories.add(newCategory);
+      await _storage.saveCategories(_categories);
       notifyListeners();
     } catch (e) {
-      print('Error creating category: $e');
+      print('创建分类失败: $e');
       rethrow;
     }
   }
 
   Future<void> updateCategory(Category category) async {
     try {
-      await _categoryApi.updateCategory(category.id!, {
-        'name': category.name,
-        'color': category.color,
-      });
+      final updatedCategory = await _categoryApi.updateCategory(
+        category.id!,
+        category.toJson(),
+      );
       final index = _categories.indexWhere((c) => c.id == category.id);
       if (index != -1) {
-        _categories[index] = category;
+        _categories[index] = updatedCategory;
+        await _storage.saveCategories(_categories);
         notifyListeners();
       }
     } catch (e) {
-      print('Error updating category: $e');
+      print('更新分类失败: $e');
       rethrow;
     }
   }
@@ -88,16 +87,18 @@ class CategoryProvider with ChangeNotifier {
     try {
       await _categoryApi.deleteCategory(id);
       _categories.removeWhere((category) => category.id == id);
+      await _storage.saveCategories(_categories);
       notifyListeners();
     } catch (e) {
-      print('Error deleting category: $e');
+      print('删除分类失败: $e');
       rethrow;
     }
   }
 
   Future<void> importCategories(List<dynamic> categoriesData) async {
-    _categories = categoriesData.map((json) => Category.fromJson(json)).toList();
+    _categories =
+        categoriesData.map((json) => Category.fromJson(json)).toList();
     await _storage.saveCategories(_categories);
     notifyListeners();
   }
-} 
+}

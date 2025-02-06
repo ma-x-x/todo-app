@@ -1,9 +1,10 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 import 'package:provider/provider.dart';
 import 'package:share_plus/share_plus.dart';
-import 'package:flutter_gen/gen_l10n/app_localizations.dart';
-import '../../providers/todo_provider.dart';
+
 import '../../providers/category_provider.dart';
+import '../../providers/todo_provider.dart';
 import '../../services/export_service.dart';
 import '../../utils/error_handler.dart';
 
@@ -43,7 +44,7 @@ class ExportScreen extends StatelessWidget {
 
       final categoryMap = {
         for (var category in categoryProvider.categories)
-          category.id: category
+          if (category.id != null) category.id!: category
       };
 
       final filePath = await ExportService().exportToCsv(
@@ -92,7 +93,7 @@ class ExportScreen extends StatelessWidget {
 
       final categoryMap = {
         for (var category in categoryProvider.categories)
-          category.id: category
+          if (category.id != null) category.id!: category
       };
 
       final filePath = await ExportService().exportToPdf(
@@ -133,4 +134,4 @@ class ExportScreen extends StatelessWidget {
       }
     }
   }
-} 
+}

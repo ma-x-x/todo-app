@@ -1,9 +1,12 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 import 'package:provider/provider.dart';
+
+import '../../models/category.dart';
 import '../../models/todo.dart';
+import '../../providers/category_provider.dart';
 import '../../providers/todo_provider.dart';
 import '../../widgets/common/custom_text_field.dart';
-import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 
 class TodoFormScreen extends StatefulWidget {
   final Todo? todo;
@@ -19,19 +22,21 @@ class _TodoFormScreenState extends State<TodoFormScreen> {
   late TextEditingController _titleController;
   late TextEditingController _descriptionController;
   String _priority = 'medium';
-  
+  Category? _selectedCategory;
+
   @override
   void initState() {
     super.initState();
     _titleController = TextEditingController(text: widget.todo?.title);
-    _descriptionController = TextEditingController(text: widget.todo?.description);
+    _descriptionController =
+        TextEditingController(text: widget.todo?.description);
     _priority = widget.todo?.priority ?? 'medium';
   }
 
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context)!;
-    
+
     return Scaffold(
       appBar: AppBar(
         title: Text(widget.todo == null ? l10n.newTodo : l10n.editTodo),
@@ -56,6 +61,55 @@ class _TodoFormScreenState extends State<TodoFormScreen> {
               controller: _descriptionController,
               label: l10n.description,
               maxLines: 3,
+            ),
+            const SizedBox(height: 16),
+            Consumer<CategoryProvider>(
+              builder: (context, provider, child) {
+                if (provider.isLoading) {
+                  return const Center(child: CircularProgressIndicator());
+                }
+
+                return DropdownButtonFormField<Category?>(
+                  value: _selectedCategory,
+                  decoration: InputDecoration(
+                    labelText: l10n.category,
+                    border: const OutlineInputBorder(),
+                  ),
+                  items: [
+                    DropdownMenuItem(
+                      value: null,
+                      child: Text(l10n.noCategory),
+                    ),
+                    ...provider.categories.map((category) {
+                      return DropdownMenuItem(
+                        value: category,
+                        child: Row(
+                          children: [
+                            if (category.color != null)
+                              Container(
+                                width: 16,
+                                height: 16,
+                                margin: const EdgeInsets.only(right: 8),
+                                decoration: BoxDecoration(
+                                  color: Color(int.parse(
+                                      category.color!.replaceFirst('#', 'FF'),
+                                      radix: 16)),
+                                  shape: BoxShape.circle,
+                                ),
+                              ),
+                            Text(category.name),
+                          ],
+                        ),
+                      );
+                    }),
+                  ],
+                  onChanged: (value) {
+                    setState(() {
+                      _selectedCategory = value;
+                    });
+                  },
+                );
+              },
             ),
             const SizedBox(height: 16),
             DropdownButtonFormField<String>(
@@ -107,6 +161,7 @@ class _TodoFormScreenState extends State<TodoFormScreen> {
       title: _titleController.text,
       description: _descriptionController.text,
       priority: _priority,
+      categoryId: _selectedCategory?.id,
       completed: widget.todo?.completed ?? false,
       createdAt: widget.todo?.createdAt ?? DateTime.now(),
       updatedAt: DateTime.now(),
@@ -137,4 +192,4 @@ class _TodoFormScreenState extends State<TodoFormScreen> {
     _descriptionController.dispose();
     super.dispose();
   }
-} 
+}

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_colorpicker/flutter_colorpicker.dart';
 import 'package:provider/provider.dart';
+
 import '../../models/category.dart';
 import '../../providers/category_provider.dart';
 import '../../widgets/common/custom_text_field.dart';
@@ -18,7 +19,6 @@ class _CategoryFormScreenState extends State<CategoryFormScreen> {
   final _formKey = GlobalKey<FormState>();
   late TextEditingController _nameController;
   Color _selectedColor = Colors.blue;
-  bool _isLoading = false;
 
   @override
   void initState() {
@@ -26,7 +26,7 @@ class _CategoryFormScreenState extends State<CategoryFormScreen> {
     _nameController = TextEditingController(text: widget.category?.name);
     if (widget.category?.color != null) {
       _selectedColor = Color(
-        int.parse(widget.category!.color!.substring(1, 7), radix: 16) + 0xFF000000,
+        int.parse(widget.category!.color!.replaceFirst('#', 'FF'), radix: 16),
       );
     }
   }
@@ -44,13 +44,10 @@ class _CategoryFormScreenState extends State<CategoryFormScreen> {
           children: [
             CustomTextField(
               controller: _nameController,
-              label: '分类名称',
+              label: '名称',
               validator: (value) {
                 if (value?.isEmpty ?? true) {
                   return '请输入分类名称';
-                }
-                if (value!.length > 32) {
-                  return '分类名称不能超过32个字符';
                 }
                 return null;
               },
@@ -64,17 +61,36 @@ class _CategoryFormScreenState extends State<CategoryFormScreen> {
                 border: Border.all(color: Colors.grey),
                 borderRadius: BorderRadius.circular(8),
               ),
-              child: Column(
-                children: [
-                  BlockPicker(
-                    pickerColor: _selectedColor,
-                    onColorChanged: (color) {
-                      setState(() {
-                        _selectedColor = color;
-                      });
-                    },
-                  ),
-                ],
+              child: BlockPicker(
+                pickerColor: _selectedColor,
+                onColorChanged: (color) {
+                  setState(() {
+                    _selectedColor = color;
+                  });
+                },
+                itemBuilder: (color, isCurrentColor, onTap) {
+                  return Container(
+                    margin: const EdgeInsets.all(4),
+                    width: 35,
+                    height: 35,
+                    decoration: BoxDecoration(
+                      color: color,
+                      shape: BoxShape.circle,
+                      border: Border.all(
+                        color:
+                            isCurrentColor ? Colors.blue : Colors.grey.shade300,
+                        width: isCurrentColor ? 2 : 1,
+                      ),
+                    ),
+                    child: Material(
+                      color: Colors.transparent,
+                      child: InkWell(
+                        onTap: onTap,
+                        borderRadius: BorderRadius.circular(50),
+                      ),
+                    ),
+                  );
+                },
               ),
             ),
           ],
@@ -83,16 +99,8 @@ class _CategoryFormScreenState extends State<CategoryFormScreen> {
       bottomNavigationBar: Padding(
         padding: const EdgeInsets.all(16),
         child: ElevatedButton(
-          onPressed: _isLoading ? null : _submit,
-          child: _isLoading
-              ? const SizedBox(
-                  height: 20,
-                  width: 20,
-                  child: CircularProgressIndicator(
-                    strokeWidth: 2,
-                  ),
-                )
-              : const Text('保存'),
+          onPressed: _submit,
+          child: const Text('保存'),
         ),
       ),
     );
@@ -103,44 +111,34 @@ class _CategoryFormScreenState extends State<CategoryFormScreen> {
       return;
     }
 
-    setState(() {
-      _isLoading = true;
-    });
-
     try {
-      final colorString = '#${_selectedColor.value.toRadixString(16).substring(2)}';
-      
+      final colorString =
+          '#${_selectedColor.value.toRadixString(16).substring(2)}';
+      final provider = context.read<CategoryProvider>();
+
       if (widget.category == null) {
-        await context.read<CategoryProvider>().createCategory(
+        await provider.createCategory(
           _nameController.text,
-          colorString,
+          color: colorString,
         );
       } else {
         final updatedCategory = Category(
           id: widget.category!.id,
           name: _nameController.text,
           color: colorString,
-          userId: widget.category!.userId,
           createdAt: widget.category!.createdAt,
           updatedAt: DateTime.now(),
         );
-        await context.read<CategoryProvider>().updateCategory(updatedCategory);
+        await provider.updateCategory(updatedCategory);
       }
-
       if (mounted) {
         Navigator.pop(context);
       }
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('保存失败: $e')),
+          SnackBar(content: Text(e.toString())),
         );
-      }
-    } finally {
-      if (mounted) {
-        setState(() {
-          _isLoading = false;
-        });
       }
     }
   }
@@ -150,4 +148,4 @@ class _CategoryFormScreenState extends State<CategoryFormScreen> {
     _nameController.dispose();
     super.dispose();
   }
-} 
+}

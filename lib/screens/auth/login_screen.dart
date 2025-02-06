@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:provider/provider.dart';
 
 import '../../providers/auth_provider.dart';
@@ -17,6 +18,7 @@ class _LoginScreenState extends State<LoginScreen> {
   final _formKey = GlobalKey<FormState>();
   final _usernameController = TextEditingController();
   final _passwordController = TextEditingController();
+  final _storage = const FlutterSecureStorage();
 
   @override
   Widget build(BuildContext context) {
@@ -92,32 +94,46 @@ class _LoginScreenState extends State<LoginScreen> {
     }
 
     try {
+      print('开始登录流程...'); // 调试日志
       await context.read<AuthProvider>().login(
             _usernameController.text,
             _passwordController.text,
           );
 
-      // 添加调试输出
-      print('Login successful');
-      print('isAuthenticated: ${context.read<AuthProvider>().isAuthenticated}');
-      print('currentUser: ${context.read<AuthProvider>().currentUser}');
+      print('登录成功，检查认证状态...'); // 调试日志
+      if (!mounted) return;
 
-      if (mounted && context.read<AuthProvider>().isAuthenticated) {
-        print('Navigating to home screen');
+      final authProvider = context.read<AuthProvider>();
+      print('认证状态: ${authProvider.isAuthenticated}'); // 调试日志
+      print('当前用户: ${authProvider.currentUser}'); // 调试日志
+
+      if (authProvider.isAuthenticated) {
+        print('准备导航到首页...'); // 调试日志
+        if (!mounted) return;
+
+        // 确保清除所有之前的路由
         await Navigator.of(context).pushNamedAndRemoveUntil(
           AppRouter.home,
-          (route) => false, // 清除所有路由历史
+          (route) => false,
         );
+        print('导航完成'); // 调试日志
+
+        // 登录成功后立即验证
+        final savedToken = await _storage.read(key: 'token');
+        print('保存后立即验证token: $savedToken');
       } else {
-        print('Not authenticated after login');
+        print('登录后认证状态异常'); // 调试日志
+        if (!mounted) return;
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('登录失败：认证状态无效')),
+        );
       }
     } catch (e) {
-      print('Login error: $e');
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(e.toString())),
-        );
-      }
+      print('登录错误: $e'); // 调试日志
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('登录失败：${e.toString()}')),
+      );
     }
   }
 

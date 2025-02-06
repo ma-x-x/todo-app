@@ -69,7 +69,7 @@
 
     "categories": "Categories",
     "@categories": {
-        "description": "Categories screen title"
+        "description": "Categories navigation label"
     },
     "newCategory": "New Category",
     "@newCategory": {
@@ -339,10 +339,6 @@
     "@todos": {
         "description": "Todos navigation label"
     },
-    "categories": "Categories",
-    "@categories": {
-        "description": "Categories navigation label"
-    },
     "settings": "Settings",
     "@settings": {
         "description": "Settings navigation label"
@@ -503,5 +499,7 @@
     "@shareExportQuestion": {
         "description": "Share export question"
     },
-    "category": "Category"
+    "category": "Category",
+    "selectCategory": "Select Category",
+    "noCategory": "No Category"
 } 

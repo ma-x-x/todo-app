@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_slidable/flutter_slidable.dart';
 import 'package:provider/provider.dart';
+
 import '../models/todo.dart';
 import '../providers/todo_provider.dart';
 import '../screens/todo/todo_form_screen.dart';
@@ -49,6 +50,9 @@ class TodoItem extends StatelessWidget {
                   ],
                 ),
               );
+
+              // 打印日志
+              print('confirm: $confirm');
 
               if (confirm == true && context.mounted) {
                 try {
@@ -105,7 +109,9 @@ class TodoItem extends StatelessWidget {
                 ),
                 decoration: BoxDecoration(
                   color: todo.category!.color != null
-                      ? Color(int.parse(todo.category!.color!.substring(1, 7), radix: 16) + 0xFF000000)
+                      ? Color(int.parse(todo.category!.color!.substring(1, 7),
+                              radix: 16) +
+                          0xFF000000)
                       : Colors.grey,
                   borderRadius: BorderRadius.circular(12),
                 ),
@@ -138,4 +144,4 @@ class TodoItem extends StatelessWidget {
         return Colors.grey;
     }
   }
-} 
+}

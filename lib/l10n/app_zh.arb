@@ -127,5 +127,9 @@
     "exportToCsvDesc": "导出待办事项为可在Excel中打开的CSV文件",
     "exportToPdf": "导出为PDF",
     "exportToPdfDesc": "导出待办事项为PDF文档",
-    "shareExportQuestion": "是否要分享导出的文件？"
+    "shareExportQuestion": "是否要分享导出的文件？",
+
+    "category": "分类",
+    "selectCategory": "选择分类",
+    "noCategory": "无分类"
 } 

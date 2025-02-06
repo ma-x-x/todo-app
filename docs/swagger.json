@@ -17,7 +17,7 @@
     "paths": {
         "/auth/login": {
             "post": {
-                "description": "验证用户凭证并生成JWT令牌，用于后续请求的身份验证",
+                "description": "验证用户凭证并生成JWT令牌，返回令牌和用户信息",
                 "consumes": [
                     "application/json"
                 ],
@@ -41,15 +41,33 @@
                 ],
                 "responses": {
                     "200": {
-                        "description": "登录成功返回的JWT令牌",
+                        "description": "登录成功返回的JWT令牌和用户信息",
                         "schema": {
-                            "$ref": "#/definitions/todo-demo_api_v1_dto_auth.LoginResponse"
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/todo-demo_pkg_response.Response"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/definitions/todo-demo_api_v1_dto_auth.LoginResponse"
+                                        }
+                                    }
+                                }
+                            ]
                         }
                     },
                     "401": {
                         "description": "用户名或密码错误等认证失败的情况",
                         "schema": {
-                            "$ref": "#/definitions/todo-demo_pkg_errors.Error"
+                            "$ref": "#/definitions/todo-demo_pkg_response.Response"
+                        }
+                    },
+                    "500": {
+                        "description": "服务器内部错误",
+                        "schema": {
+                            "$ref": "#/definitions/todo-demo_pkg_response.Response"
                         }
                     }
                 }
@@ -119,13 +137,31 @@
                     "200": {
                         "description": "注册成功返回信息",
                         "schema": {
-                            "$ref": "#/definitions/todo-demo_api_v1_dto_auth.RegisterResponse"
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/todo-demo_pkg_response.Response"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/definitions/todo-demo_api_v1_dto_auth.RegisterResponse"
+                                        }
+                                    }
+                                }
+                            ]
                         }
                     },
                     "400": {
-                        "description": "请求参数错误或注册过程中的业务错误",
+                        "description": "请求参数错误",
                         "schema": {
-                            "$ref": "#/definitions/todo-demo_pkg_errors.Error"
+                            "$ref": "#/definitions/todo-demo_pkg_response.Response"
+                        }
+                    },
+                    "500": {
+                        "description": "服务器内部错误",
+                        "schema": {
+                            "$ref": "#/definitions/todo-demo_pkg_response.Response"
                         }
                     }
                 }
@@ -155,15 +191,27 @@
                 ],
                 "responses": {
                     "200": {
-                        "description": "OK",
+                        "description": "获取成功",
                         "schema": {
-                            "$ref": "#/definitions/todo-demo_api_v1_dto_category.ListResponse"
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/todo-demo_pkg_response.Response"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/definitions/todo-demo_api_v1_dto_category.ListResponse"
+                                        }
+                                    }
+                                }
+                            ]
                         }
                     },
                     "401": {
-                        "description": "Unauthorized",
+                        "description": "未授权访问",
                         "schema": {
-                            "$ref": "#/definitions/todo-demo_pkg_errors.Error"
+                            "$ref": "#/definitions/todo-demo_pkg_response.Response"
                         }
                     }
                 }
@@ -202,19 +250,31 @@
                     "200": {
                         "description": "创建成功返回的分类信息",
                         "schema": {
-                            "$ref": "#/definitions/todo-demo_api_v1_dto_category.CreateResponse"
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/todo-demo_pkg_response.Response"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/definitions/todo-demo_api_v1_dto_category.CreateResponse"
+                                        }
+                                    }
+                                }
+                            ]
                         }
                     },
                     "400": {
                         "description": "请求参数错误",
                         "schema": {
-                            "$ref": "#/definitions/todo-demo_pkg_errors.Error"
+                            "$ref": "#/definitions/todo-demo_pkg_response.Response"
                         }
                     },
                     "401": {
                         "description": "未授权访问",
                         "schema": {
-                            "$ref": "#/definitions/todo-demo_pkg_errors.Error"
+                            "$ref": "#/definitions/todo-demo_pkg_response.Response"
                         }
                     }
                 }
@@ -260,21 +320,33 @@
                 ],
                 "responses": {
                     "200": {
-                        "description": "OK",
+                        "description": "更新成功",
                         "schema": {
-                            "$ref": "#/definitions/todo-demo_api_v1_dto_category.UpdateResponse"
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/todo-demo_pkg_response.Response"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/definitions/todo-demo_api_v1_dto_category.UpdateResponse"
+                                        }
+                                    }
+                                }
+                            ]
                         }
                     },
                     "400": {
-                        "description": "Bad Request",
+                        "description": "请求参数错误",
                         "schema": {
-                            "$ref": "#/definitions/todo-demo_pkg_errors.Error"
+                            "$ref": "#/definitions/todo-demo_pkg_response.Response"
                         }
                     },
                     "401": {
-                        "description": "Unauthorized",
+                        "description": "未授权访问",
                         "schema": {
-                            "$ref": "#/definitions/todo-demo_pkg_errors.Error"
+                            "$ref": "#/definitions/todo-demo_pkg_response.Response"
                         }
                     }
                 }
@@ -309,21 +381,33 @@
                 ],
                 "responses": {
                     "200": {
-                        "description": "OK",
+                        "description": "删除成功",
                         "schema": {
-                            "$ref": "#/definitions/todo-demo_api_v1_dto_category.UpdateResponse"
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/todo-demo_pkg_response.Response"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/definitions/todo-demo_api_v1_dto_category.UpdateResponse"
+                                        }
+                                    }
+                                }
+                            ]
                         }
                     },
                     "400": {
-                        "description": "Bad Request",
+                        "description": "请求参数错误",
                         "schema": {
-                            "$ref": "#/definitions/todo-demo_pkg_errors.Error"
+                            "$ref": "#/definitions/todo-demo_pkg_response.Response"
                         }
                     },
                     "401": {
-                        "description": "Unauthorized",
+                        "description": "未授权访问",
                         "schema": {
-                            "$ref": "#/definitions/todo-demo_pkg_errors.Error"
+                            "$ref": "#/definitions/todo-demo_pkg_response.Response"
                         }
                     }
                 }
@@ -387,19 +471,31 @@
                     "200": {
                         "description": "创建成功的提醒信息",
                         "schema": {
-                            "$ref": "#/definitions/todo-demo_api_v1_dto_reminder.CreateResponse"
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/todo-demo_pkg_response.Response"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/definitions/todo-demo_api_v1_dto_reminder.CreateResponse"
+                                        }
+                                    }
+                                }
+                            ]
                         }
                     },
                     "400": {
                         "description": "参数验证失败或业务错误",
                         "schema": {
-                            "$ref": "#/definitions/todo-demo_pkg_errors.Error"
+                            "$ref": "#/definitions/todo-demo_pkg_response.Response"
                         }
                     },
                     "401": {
                         "description": "未授权访问",
                         "schema": {
-                            "$ref": "#/definitions/todo-demo_pkg_errors.Error"
+                            "$ref": "#/definitions/todo-demo_pkg_response.Response"
                         }
                     }
                 }
@@ -436,21 +532,33 @@
                 ],
                 "responses": {
                     "200": {
-                        "description": "OK",
+                        "description": "获取成功",
                         "schema": {
-                            "$ref": "#/definitions/todo-demo_api_v1_dto_reminder.ListResponse"
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/todo-demo_pkg_response.Response"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/definitions/todo-demo_api_v1_dto_reminder.ListResponse"
+                                        }
+                                    }
+                                }
+                            ]
                         }
                     },
                     "400": {
-                        "description": "Bad Request",
+                        "description": "请求参数错误",
                         "schema": {
-                            "$ref": "#/definitions/todo-demo_pkg_errors.Error"
+                            "$ref": "#/definitions/todo-demo_pkg_response.Response"
                         }
                     },
                     "401": {
-                        "description": "Unauthorized",
+                        "description": "未授权访问",
                         "schema": {
-                            "$ref": "#/definitions/todo-demo_pkg_errors.Error"
+                            "$ref": "#/definitions/todo-demo_pkg_response.Response"
                         }
                     }
                 }
@@ -496,21 +604,33 @@
                 ],
                 "responses": {
                     "200": {
-                        "description": "OK",
+                        "description": "更新成功",
                         "schema": {
-                            "$ref": "#/definitions/todo-demo_api_v1_dto_reminder.UpdateResponse"
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/todo-demo_pkg_response.Response"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/definitions/todo-demo_api_v1_dto_reminder.UpdateResponse"
+                                        }
+                                    }
+                                }
+                            ]
                         }
                     },
                     "400": {
-                        "description": "Bad Request",
+                        "description": "请求参数错误",
                         "schema": {
-                            "$ref": "#/definitions/todo-demo_pkg_errors.Error"
+                            "$ref": "#/definitions/todo-demo_pkg_response.Response"
                         }
                     },
                     "401": {
-                        "description": "Unauthorized",
+                        "description": "未授权访问",
                         "schema": {
-                            "$ref": "#/definitions/todo-demo_pkg_errors.Error"
+                            "$ref": "#/definitions/todo-demo_pkg_response.Response"
                         }
                     }
                 }
@@ -545,21 +665,33 @@
                 ],
                 "responses": {
                     "200": {
-                        "description": "OK",
+                        "description": "删除成功",
                         "schema": {
-                            "$ref": "#/definitions/todo-demo_api_v1_dto_reminder.UpdateResponse"
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/todo-demo_pkg_response.Response"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/definitions/todo-demo_api_v1_dto_reminder.UpdateResponse"
+                                        }
+                                    }
+                                }
+                            ]
                         }
                     },
                     "400": {
-                        "description": "Bad Request",
+                        "description": "请求参数错误",
                         "schema": {
-                            "$ref": "#/definitions/todo-demo_pkg_errors.Error"
+                            "$ref": "#/definitions/todo-demo_pkg_response.Response"
                         }
                     },
                     "401": {
-                        "description": "Unauthorized",
+                        "description": "未授权访问",
                         "schema": {
-                            "$ref": "#/definitions/todo-demo_pkg_errors.Error"
+                            "$ref": "#/definitions/todo-demo_pkg_response.Response"
                         }
                     }
                 }
@@ -589,15 +721,27 @@
                 ],
                 "responses": {
                     "200": {
-                        "description": "OK",
+                        "description": "获取成功",
                         "schema": {
-                            "$ref": "#/definitions/api_v1_handlers.ListTodoResponse"
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/todo-demo_pkg_response.Response"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/definitions/todo-demo_api_v1_dto_todo.ListResponse"
+                                        }
+                                    }
+                                }
+                            ]
                         }
                     },
                     "401": {
-                        "description": "Unauthorized",
+                        "description": "未授权访问",
                         "schema": {
-                            "$ref": "#/definitions/todo-demo_pkg_errors.Error"
+                            "$ref": "#/definitions/todo-demo_pkg_response.Response"
                         }
                     }
                 }
@@ -628,27 +772,39 @@
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/api_v1_handlers.CreateTodoRequest"
+                            "$ref": "#/definitions/todo-demo_api_v1_dto_todo.CreateRequest"
                         }
                     }
                 ],
                 "responses": {
                     "200": {
-                        "description": "创建成功的待办事项信息",
+                        "description": "创建成功返回待办事项信息",
                         "schema": {
-                            "$ref": "#/definitions/api_v1_handlers.CreateTodoResponse"
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/todo-demo_pkg_response.Response"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/definitions/todo-demo_api_v1_dto_todo.DetailResponse"
+                                        }
+                                    }
+                                }
+                            ]
                         }
                     },
                     "400": {
                         "description": "参数验证失败或业务错误",
                         "schema": {
-                            "$ref": "#/definitions/todo-demo_pkg_errors.Error"
+                            "$ref": "#/definitions/todo-demo_pkg_response.Response"
                         }
                     },
                     "401": {
                         "description": "未授权访问",
                         "schema": {
-                            "$ref": "#/definitions/todo-demo_pkg_errors.Error"
+                            "$ref": "#/definitions/todo-demo_pkg_response.Response"
                         }
                     }
                 }
@@ -685,21 +841,33 @@
                 ],
                 "responses": {
                     "200": {
-                        "description": "OK",
+                        "description": "获取成功",
                         "schema": {
-                            "$ref": "#/definitions/todo-demo_internal_models.Todo"
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/todo-demo_pkg_response.Response"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/definitions/todo-demo_api_v1_dto_todo.DetailResponse"
+                                        }
+                                    }
+                                }
+                            ]
                         }
                     },
                     "400": {
-                        "description": "Bad Request",
+                        "description": "请求参数错误",
                         "schema": {
-                            "$ref": "#/definitions/todo-demo_pkg_errors.Error"
+                            "$ref": "#/definitions/todo-demo_pkg_response.Response"
                         }
                     },
                     "401": {
-                        "description": "Unauthorized",
+                        "description": "未授权访问",
                         "schema": {
-                            "$ref": "#/definitions/todo-demo_pkg_errors.Error"
+                            "$ref": "#/definitions/todo-demo_pkg_response.Response"
                         }
                     }
                 }
@@ -737,27 +905,39 @@
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/api_v1_handlers.UpdateTodoRequest"
+                            "$ref": "#/definitions/todo-demo_api_v1_dto_todo.UpdateRequest"
                         }
                     }
                 ],
                 "responses": {
                     "200": {
-                        "description": "OK",
+                        "description": "更新成功",
                         "schema": {
-                            "$ref": "#/definitions/api_v1_handlers.UpdateTodoResponse"
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/todo-demo_pkg_response.Response"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/definitions/todo-demo_api_v1_dto_todo.DetailResponse"
+                                        }
+                                    }
+                                }
+                            ]
                         }
                     },
                     "400": {
-                        "description": "Bad Request",
+                        "description": "请求参数错误",
                         "schema": {
-                            "$ref": "#/definitions/todo-demo_pkg_errors.Error"
+                            "$ref": "#/definitions/todo-demo_pkg_response.Response"
                         }
                     },
                     "401": {
-                        "description": "Unauthorized",
+                        "description": "未授权访问",
                         "schema": {
-                            "$ref": "#/definitions/todo-demo_pkg_errors.Error"
+                            "$ref": "#/definitions/todo-demo_pkg_response.Response"
                         }
                     }
                 }
@@ -792,21 +972,33 @@
                 ],
                 "responses": {
                     "200": {
-                        "description": "OK",
+                        "description": "删除成功",
                         "schema": {
-                            "$ref": "#/definitions/api_v1_handlers.UpdateTodoResponse"
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/todo-demo_pkg_response.Response"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/definitions/todo-demo_api_v1_dto_todo.UpdateResponse"
+                                        }
+                                    }
+                                }
+                            ]
                         }
                     },
                     "400": {
-                        "description": "Bad Request",
+                        "description": "请求参数错误",
                         "schema": {
-                            "$ref": "#/definitions/todo-demo_pkg_errors.Error"
+                            "$ref": "#/definitions/todo-demo_pkg_response.Response"
                         }
                     },
                     "401": {
-                        "description": "Unauthorized",
+                        "description": "未授权访问",
                         "schema": {
-                            "$ref": "#/definitions/todo-demo_pkg_errors.Error"
+                            "$ref": "#/definitions/todo-demo_pkg_response.Response"
                         }
                     }
                 }
@@ -814,98 +1006,6 @@
         }
     },
     "definitions": {
-        "api_v1_handlers.CreateTodoRequest": {
-            "type": "object",
-            "required": [
-                "title"
-            ],
-            "properties": {
-                "category_id": {
-                    "description": "CategoryID 所属分类ID，可选",
-                    "type": "integer"
-                },
-                "description": {
-                    "description": "Description 待办事项描述，可选，最大长度1024个字符",
-                    "type": "string",
-                    "maxLength": 1024
-                },
-                "priority": {
-                    "description": "Priority 优先级：1(低)/2(中)/3(高)",
-                    "type": "integer",
-                    "enum": [
-                        1,
-                        2,
-                        3
-                    ]
-                },
-                "title": {
-                    "description": "Title 待办事项标题，必填，最大长度128个字符",
-                    "type": "string",
-                    "maxLength": 128
-                }
-            }
-        },
-        "api_v1_handlers.CreateTodoResponse": {
-            "description": "创建待办事项响应",
-            "type": "object",
-            "properties": {
-                "todo": {
-                    "$ref": "#/definitions/todo-demo_internal_models.Todo"
-                }
-            }
-        },
-        "api_v1_handlers.ListTodoResponse": {
-            "description": "待办事项列表响应",
-            "type": "object",
-            "properties": {
-                "items": {
-                    "type": "array",
-                    "items": {
-                        "$ref": "#/definitions/todo-demo_internal_models.Todo"
-                    }
-                },
-                "total": {
-                    "type": "integer"
-                }
-            }
-        },
-        "api_v1_handlers.UpdateTodoRequest": {
-            "description": "更新待办事项请求参数",
-            "type": "object",
-            "properties": {
-                "category_id": {
-                    "type": "integer"
-                },
-                "completed": {
-                    "type": "boolean"
-                },
-                "description": {
-                    "type": "string",
-                    "maxLength": 1024
-                },
-                "priority": {
-                    "type": "integer",
-                    "enum": [
-                        1,
-                        2,
-                        3
-                    ]
-                },
-                "title": {
-                    "type": "string",
-                    "maxLength": 128
-                }
-            }
-        },
-        "api_v1_handlers.UpdateTodoResponse": {
-            "description": "更新待办事项响应",
-            "type": "object",
-            "properties": {
-                "message": {
-                    "type": "string"
-                }
-            }
-        },
         "gorm.DeletedAt": {
             "type": "object",
             "properties": {
@@ -939,7 +1039,16 @@
             "type": "object",
             "properties": {
                 "token": {
+                    "description": "JWT令牌",
                     "type": "string"
+                },
+                "user": {
+                    "description": "用户信息",
+                    "allOf": [
+                        {
+                            "$ref": "#/definitions/todo-demo_api_v1_dto_auth.UserInfo"
+                        }
+                    ]
                 }
             }
         },
@@ -978,6 +1087,31 @@
                 }
             }
         },
+        "todo-demo_api_v1_dto_auth.UserInfo": {
+            "type": "object",
+            "properties": {
+                "createdAt": {
+                    "description": "创建时间",
+                    "type": "string"
+                },
+                "email": {
+                    "description": "邮箱",
+                    "type": "string"
+                },
+                "id": {
+                    "description": "用户ID",
+                    "type": "integer"
+                },
+                "updatedAt": {
+                    "description": "更新时间",
+                    "type": "string"
+                },
+                "username": {
+                    "description": "用户名",
+                    "type": "string"
+                }
+            }
+        },
         "todo-demo_api_v1_dto_category.CreateRequest": {
             "type": "object",
             "required": [
@@ -985,12 +1119,10 @@
             ],
             "properties": {
                 "color": {
-                    "description": "Color 分类颜色，可选，使用十六进制颜色码，如 #FF0000",
                     "type": "string",
                     "maxLength": 7
                 },
                 "name": {
-                    "description": "Name 分类名称，必填，最大长度32个字符",
                     "type": "string",
                     "maxLength": 32
                 }
@@ -999,13 +1131,8 @@
         "todo-demo_api_v1_dto_category.CreateResponse": {
             "type": "object",
             "properties": {
-                "category": {
-                    "description": "Category 创建成功后返回的分类信息",
-                    "allOf": [
-                        {
-                            "$ref": "#/definitions/todo-demo_internal_models.Category"
-                        }
-                    ]
+                "id": {
+                    "type": "integer"
                 }
             }
         },
@@ -1013,12 +1140,14 @@
             "type": "object",
             "properties": {
                 "items": {
+                    "description": "分类列表",
                     "type": "array",
                     "items": {
                         "$ref": "#/definitions/todo-demo_internal_models.Category"
                     }
                 },
                 "total": {
+                    "description": "总数",
                     "type": "integer"
                 }
             }
@@ -1047,26 +1176,23 @@
         "todo-demo_api_v1_dto_reminder.CreateRequest": {
             "type": "object",
             "required": [
-                "notify_type",
-                "remind_at",
-                "remind_type",
-                "todo_id"
+                "notifyType",
+                "remindAt",
+                "remindType",
+                "todoId"
             ],
             "properties": {
-                "notify_type": {
-                    "description": "NotifyType 通知方式：email(邮件)/push(推送)",
+                "notifyType": {
                     "type": "string",
                     "enum": [
                         "email",
                         "push"
                     ]
                 },
-                "remind_at": {
-                    "description": "RemindAt 提醒时间",
+                "remindAt": {
                     "type": "string"
                 },
-                "remind_type": {
-                    "description": "RemindType 提醒类型：once(单次)/daily(每日)/weekly(每周)",
+                "remindType": {
                     "type": "string",
                     "enum": [
                         "once",
@@ -1074,8 +1200,7 @@
                         "weekly"
                     ]
                 },
-                "todo_id": {
-                    "description": "TodoID 关联的待办事项ID",
+                "todoId": {
                     "type": "integer"
                 }
             }
@@ -1083,20 +1208,15 @@
         "todo-demo_api_v1_dto_reminder.CreateResponse": {
             "type": "object",
             "properties": {
-                "reminder": {
-                    "description": "Reminder 创建成功后返回的提醒信息",
-                    "allOf": [
-                        {
-                            "$ref": "#/definitions/todo-demo_internal_models.Reminder"
-                        }
-                    ]
+                "id": {
+                    "type": "integer"
                 }
             }
         },
         "todo-demo_api_v1_dto_reminder.ListResponse": {
             "type": "object",
             "properties": {
-                "reminders": {
+                "items": {
                     "type": "array",
                     "items": {
                         "$ref": "#/definitions/todo-demo_internal_models.Reminder"
@@ -1147,6 +1267,162 @@
                 }
             }
         },
+        "todo-demo_api_v1_dto_todo.CreateRequest": {
+            "type": "object",
+            "required": [
+                "title"
+            ],
+            "properties": {
+                "categoryId": {
+                    "description": "CategoryID 所属分类ID\nRequired: false",
+                    "type": "integer"
+                },
+                "description": {
+                    "description": "Description 待办事项描述\nRequired: false\nMax Length: 1024",
+                    "type": "string",
+                    "maxLength": 1024
+                },
+                "priority": {
+                    "description": "Priority 优先级\nRequired: false\nEnum: [low medium high]\nExample: medium",
+                    "type": "string",
+                    "enum": [
+                        "low",
+                        "medium",
+                        "high"
+                    ]
+                },
+                "title": {
+                    "description": "Title 待办事项标题\nRequired: true\nMax Length: 128",
+                    "type": "string",
+                    "maxLength": 128
+                }
+            }
+        },
+        "todo-demo_api_v1_dto_todo.DetailResponse": {
+            "type": "object",
+            "properties": {
+                "category": {
+                    "description": "关联的分类信息",
+                    "allOf": [
+                        {
+                            "$ref": "#/definitions/todo-demo_internal_models.Category"
+                        }
+                    ]
+                },
+                "categoryId": {
+                    "description": "所属分类ID，允许为空",
+                    "type": "integer"
+                },
+                "completed": {
+                    "description": "完成状态，默认为未完成",
+                    "type": "boolean"
+                },
+                "createdAt": {
+                    "description": "创建时间",
+                    "type": "string"
+                },
+                "deletedAt": {
+                    "description": "软删除时间",
+                    "allOf": [
+                        {
+                            "$ref": "#/definitions/gorm.DeletedAt"
+                        }
+                    ]
+                },
+                "description": {
+                    "description": "待办事项描述，不超过1024字符",
+                    "type": "string"
+                },
+                "id": {
+                    "description": "主键ID",
+                    "type": "integer"
+                },
+                "priority": {
+                    "description": "优先级，默认为中优先级",
+                    "allOf": [
+                        {
+                            "$ref": "#/definitions/todo-demo_internal_models.Priority"
+                        }
+                    ]
+                },
+                "reminders": {
+                    "description": "关联的提醒列表",
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/todo-demo_internal_models.Reminder"
+                    }
+                },
+                "title": {
+                    "description": "待办事项标题，不超过128字符",
+                    "type": "string"
+                },
+                "updatedAt": {
+                    "description": "更新时间",
+                    "type": "string"
+                },
+                "userId": {
+                    "description": "所属用户ID",
+                    "type": "integer"
+                }
+            }
+        },
+        "todo-demo_api_v1_dto_todo.ListResponse": {
+            "type": "object",
+            "properties": {
+                "items": {
+                    "description": "待办事项列表\n包含当前页的所有待办事项详细信息",
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/todo-demo_internal_models.Todo"
+                    }
+                },
+                "total": {
+                    "description": "总记录数\n用于前端分页显示",
+                    "type": "integer"
+                }
+            }
+        },
+        "todo-demo_api_v1_dto_todo.UpdateRequest": {
+            "type": "object",
+            "properties": {
+                "categoryId": {
+                    "description": "分类ID",
+                    "type": "integer"
+                },
+                "completed": {
+                    "description": "完成状态",
+                    "type": "boolean"
+                },
+                "description": {
+                    "description": "描述",
+                    "type": "string",
+                    "maxLength": 1024
+                },
+                "priority": {
+                    "description": "优先级",
+                    "type": "string",
+                    "enum": [
+                        "low",
+                        "medium",
+                        "high"
+                    ]
+                },
+                "title": {
+                    "description": "标题",
+                    "type": "string",
+                    "maxLength": 128
+                }
+            }
+        },
+        "todo-demo_api_v1_dto_todo.UpdateResponse": {
+            "type": "object",
+            "properties": {
+                "message": {
+                    "description": "响应消息",
+                    "type": "string"
+                }
+            }
+        },
         "todo-demo_internal_models.Category": {
             "type": "object",
             "properties": {
@@ -1154,11 +1430,11 @@
                     "description": "分类颜色，使用十六进制颜色码(如 #FF0000)",
                     "type": "string"
                 },
-                "created_at": {
+                "createdAt": {
                     "description": "创建时间",
                     "type": "string"
                 },
-                "deleted_at": {
+                "deletedAt": {
                     "description": "软删除时间",
                     "allOf": [
                         {
@@ -1174,11 +1450,11 @@
                     "description": "分类名称，不超过32字符",
                     "type": "string"
                 },
-                "updated_at": {
+                "updatedAt": {
                     "description": "更新时间",
                     "type": "string"
                 },
-                "user_id": {
+                "userId": {
                     "description": "所属用户ID",
                     "type": "integer"
                 }
@@ -1200,11 +1476,11 @@
             ]
         },
         "todo-demo_internal_models.Priority": {
-            "type": "integer",
+            "type": "string",
             "enum": [
-                1,
-                2,
-                3
+                "low",
+                "medium",
+                "high"
             ],
             "x-enum-comments": {
                 "PriorityHigh": "高优先级",
@@ -1220,11 +1496,11 @@
         "todo-demo_internal_models.Reminder": {
             "type": "object",
             "properties": {
-                "created_at": {
+                "createdAt": {
                     "description": "创建时间",
                     "type": "string"
                 },
-                "deleted_at": {
+                "deletedAt": {
                     "description": "软删除时间",
                     "allOf": [
                         {
@@ -1264,7 +1540,7 @@
                     "description": "关联的待办事项ID",
                     "type": "integer"
                 },
-                "updated_at": {
+                "updatedAt": {
                     "description": "更新时间",
                     "type": "string"
                 }
@@ -1299,7 +1575,7 @@
                         }
                     ]
                 },
-                "category_id": {
+                "categoryId": {
                     "description": "所属分类ID，允许为空",
                     "type": "integer"
                 },
@@ -1307,11 +1583,11 @@
                     "description": "完成状态，默认为未完成",
                     "type": "boolean"
                 },
-                "created_at": {
+                "createdAt": {
                     "description": "创建时间",
                     "type": "string"
                 },
-                "deleted_at": {
+                "deletedAt": {
                     "description": "软删除时间",
                     "allOf": [
                         {
@@ -1346,11 +1622,11 @@
                     "description": "待办事项标题，不超过128字符",
                     "type": "string"
                 },
-                "updated_at": {
+                "updatedAt": {
                     "description": "更新时间",
                     "type": "string"
                 },
-                "user_id": {
+                "userId": {
                     "description": "所属用户ID",
                     "type": "integer"
                 }
@@ -1373,6 +1649,30 @@
                     "description": "错误信息",
                     "type": "string",
                     "example": "Invalid request parameter"
+                }
+            }
+        },
+        "todo-demo_pkg_response.Response": {
+            "description": "Standard API response structure",
+            "type": "object",
+            "properties": {
+                "code": {
+                    "description": "HTTP status code",
+                    "type": "integer",
+                    "example": 200
+                },
+                "data": {
+                    "description": "Response payload"
+                },
+                "message": {
+                    "description": "Response message",
+                    "type": "string",
+                    "example": "Success"
+                },
+                "traceId": {
+                    "description": "Request trace ID for debugging",
+                    "type": "string",
+                    "example": "550e8400-e29b-41d4-a716-446655440000"
                 }
             }
         }
