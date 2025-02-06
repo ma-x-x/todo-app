@@ -26,6 +26,7 @@ class Reminder {
     this.deletedAt,
   });
 
-  factory Reminder.fromJson(Map<String, dynamic> json) => _$ReminderFromJson(json);
+  factory Reminder.fromJson(Map<String, dynamic> json) =>
+      _$ReminderFromJson(json);
   Map<String, dynamic> toJson() => _$ReminderToJson(this);
-} 
+}

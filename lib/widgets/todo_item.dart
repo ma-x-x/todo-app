@@ -32,8 +32,8 @@ class TodoItem extends StatelessWidget {
             label: '编辑',
           ),
           SlidableAction(
-            onPressed: (context) async {
-              final confirm = await showDialog<bool>(
+            onPressed: (context) {
+              showDialog<bool>(
                 context: context,
                 builder: (context) => AlertDialog(
                   title: const Text('确认删除'),
@@ -44,32 +44,36 @@ class TodoItem extends StatelessWidget {
                       child: const Text('取消'),
                     ),
                     TextButton(
-                      onPressed: () => Navigator.pop(context, true),
+                      onPressed: () async {
+                        Navigator.pop(context, true);
+                        if (context.mounted) {
+                          final todoProvider = context.read<TodoProvider>();
+                          final slidable = Slidable.of(context);
+
+                          try {
+                            await todoProvider.deleteTodo(todo.id!);
+                            slidable?.close();
+
+                            if (context.mounted) {
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                const SnackBar(content: Text('删除成功')),
+                              );
+                            }
+                          } catch (e) {
+                            print('catch: $e');
+                            if (context.mounted) {
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                SnackBar(content: Text('删除失败: $e')),
+                              );
+                            }
+                          }
+                        }
+                      },
                       child: const Text('确定'),
                     ),
                   ],
                 ),
               );
-
-              // 打印日志
-              print('confirm: $confirm');
-
-              if (confirm == true && context.mounted) {
-                try {
-                  await context.read<TodoProvider>().deleteTodo(todo.id!);
-                  if (context.mounted) {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(content: Text('删除成功')),
-                    );
-                  }
-                } catch (e) {
-                  if (context.mounted) {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      SnackBar(content: Text('删除失败: $e')),
-                    );
-                  }
-                }
-              }
             },
             backgroundColor: Colors.red,
             foregroundColor: Colors.white,
