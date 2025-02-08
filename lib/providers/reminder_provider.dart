@@ -41,12 +41,13 @@ class ReminderProvider with ChangeNotifier {
 
   Future<void> createReminder(Reminder reminder, String todoTitle) async {
     try {
+      // 先请求权限
+      await _notificationService.requestPermissions();
+
       final newReminder =
           await _reminderApi.createReminder(reminder.toRequestJson());
-
       _addReminderToList(reminder.todoId, newReminder);
       await _notificationService.scheduleNotification(newReminder, todoTitle);
-
       notifyListeners();
     } catch (e) {
       print('创建提醒失败: $e');

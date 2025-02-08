@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+
 import '../../models/todo.dart';
 import '../../providers/reminder_provider.dart';
 import 'reminder_form_screen.dart';
@@ -45,7 +46,9 @@ class _ReminderListScreenState extends State<ReminderListScreen> {
               final reminder = reminders[index];
               return ListTile(
                 leading: Icon(
-                  reminder.notifyType == 'email' ? Icons.email : Icons.notifications,
+                  reminder.notifyType == 'email'
+                      ? Icons.email
+                      : Icons.notifications,
                   color: Theme.of(context).primaryColor,
                 ),
                 title: Text(
@@ -121,6 +124,19 @@ class _ReminderListScreenState extends State<ReminderListScreen> {
   }
 
   Future<void> _showDeleteDialog(BuildContext context, reminder) async {
+    //打印reminder和widget.todo
+    print('reminder: $reminder');
+    print('widget.todo: ${widget.todo}');
+
+    if (reminder.id == null || widget.todo.id == null) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('无法删除：提醒ID或待办ID为空')),
+        );
+      }
+      return;
+    }
+
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (context) => AlertDialog(
@@ -142,9 +158,9 @@ class _ReminderListScreenState extends State<ReminderListScreen> {
     if (confirmed == true && mounted) {
       try {
         await context.read<ReminderProvider>().deleteReminder(
-          widget.todo.id!,
-          reminder.id!,
-        );
+              widget.todo.id!,
+              reminder.id!,
+            );
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(content: Text('删除成功')),
@@ -153,10 +169,10 @@ class _ReminderListScreenState extends State<ReminderListScreen> {
       } catch (e) {
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text('删除失败: $e')),
+            SnackBar(content: Text('删除失败: ${e.toString()}')),
           );
         }
       }
     }
   }
-} 
+}

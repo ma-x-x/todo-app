@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_datetime_picker_plus/flutter_datetime_picker_plus.dart';
 import 'package:provider/provider.dart';
+
 import '../../models/reminder.dart';
 import '../../providers/reminder_provider.dart';
+import '../../services/notification_service.dart';
 
 class ReminderFormScreen extends StatefulWidget {
   final int todoId;
@@ -173,6 +175,38 @@ class _ReminderFormScreenState extends State<ReminderFormScreen> {
     });
 
     try {
+      final notificationService = NotificationService();
+      final hasPermission = await notificationService.checkPermissions();
+
+      if (!hasPermission && mounted) {
+        final requestPermission = await showDialog<bool>(
+          context: context,
+          builder: (context) => AlertDialog(
+            title: const Text('需要通知权限'),
+            content: const Text('为了发送提醒通知，我们需要获取通知和闹钟权限。是否授予权限？'),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.pop(context, false),
+                child: const Text('取消'),
+              ),
+              TextButton(
+                onPressed: () => Navigator.pop(context, true),
+                child: const Text('授权'),
+              ),
+            ],
+          ),
+        );
+
+        if (requestPermission != true) {
+          if (mounted) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(content: Text('未获得权限，无法设置提醒')),
+            );
+          }
+          return;
+        }
+      }
+
       final reminder = Reminder(
         id: widget.reminder?.id,
         todoId: widget.todoId,
@@ -186,14 +220,14 @@ class _ReminderFormScreenState extends State<ReminderFormScreen> {
 
       if (widget.reminder == null) {
         await context.read<ReminderProvider>().createReminder(
-          reminder,
-          widget.todoTitle,
-        );
+              reminder,
+              widget.todoTitle,
+            );
       } else {
         await context.read<ReminderProvider>().updateReminder(
-          reminder,
-          widget.todoTitle,
-        );
+              reminder,
+              widget.todoTitle,
+            );
       }
 
       if (mounted) {
@@ -202,7 +236,13 @@ class _ReminderFormScreenState extends State<ReminderFormScreen> {
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('保存失败: $e')),
+          SnackBar(
+            content: Text('保存失败: ${e.toString()}'),
+            action: SnackBarAction(
+              label: '重试',
+              onPressed: _submit,
+            ),
+          ),
         );
       }
     } finally {
@@ -213,4 +253,4 @@ class _ReminderFormScreenState extends State<ReminderFormScreen> {
       }
     }
   }
-} 
+}

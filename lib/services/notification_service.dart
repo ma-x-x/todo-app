@@ -91,7 +91,7 @@ class NotificationService {
           todoTitle,
           scheduledDate,
           details,
-          androidAllowWhileIdle: true,
+          androidScheduleMode: AndroidScheduleMode.exactAllowWhileIdle,
           uiLocalNotificationDateInterpretation:
               UILocalNotificationDateInterpretation.absoluteTime,
         );
@@ -104,7 +104,7 @@ class NotificationService {
           todoTitle,
           _nextInstanceOfTime(reminder.remindAt),
           details,
-          androidAllowWhileIdle: true,
+          androidScheduleMode: AndroidScheduleMode.exactAllowWhileIdle,
           uiLocalNotificationDateInterpretation:
               UILocalNotificationDateInterpretation.absoluteTime,
           matchDateTimeComponents: DateTimeComponents.time,
@@ -118,7 +118,7 @@ class NotificationService {
           todoTitle,
           _nextInstanceOfTime(reminder.remindAt),
           details,
-          androidAllowWhileIdle: true,
+          androidScheduleMode: AndroidScheduleMode.exactAllowWhileIdle,
           uiLocalNotificationDateInterpretation:
               UILocalNotificationDateInterpretation.absoluteTime,
           matchDateTimeComponents: DateTimeComponents.dayOfWeekAndTime,
@@ -186,21 +186,37 @@ class NotificationService {
     await _notifications.cancelAll();
   }
 
-  Future<void> requestPermissions() async {
-    if (kIsWeb) {
-      // Web 平台不支持本地通知
-      return;
-    }
+  Future<bool> checkPermissions() async {
+    if (kIsWeb) return false;
 
-    // 修改 Android 权限请求方式
     if (PlatformHelper.isAndroid) {
-      final AndroidFlutterLocalNotificationsPlugin? androidImplementation =
-          _notifications.resolvePlatformSpecificImplementation<
-              AndroidFlutterLocalNotificationsPlugin>();
-      await androidImplementation?.requestNotificationsPermission();
+      final platform = _notifications.resolvePlatformSpecificImplementation<
+          AndroidFlutterLocalNotificationsPlugin>();
+      if (platform != null) {
+        final hasNotificationPermission =
+            await platform.areNotificationsEnabled() ?? false;
+        return hasNotificationPermission;
+      }
     }
 
-    // iOS 权限请求保持不变
+    return true; // iOS默认返回true，因为权限是在requestPermissions时处理的
+  }
+
+  Future<void> requestPermissions() async {
+    if (kIsWeb) return;
+
+    if (PlatformHelper.isAndroid) {
+      final platform = _notifications.resolvePlatformSpecificImplementation<
+          AndroidFlutterLocalNotificationsPlugin>();
+      if (platform != null) {
+        final hasPermission = await checkPermissions();
+        if (!hasPermission) {
+          await platform.requestNotificationsPermission();
+          await platform.requestExactAlarmsPermission();
+        }
+      }
+    }
+
     if (PlatformHelper.isIOS) {
       await _notifications
           .resolvePlatformSpecificImplementation<
