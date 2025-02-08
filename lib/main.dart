@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:provider/provider.dart';
@@ -18,7 +19,16 @@ import 'services/storage_service.dart';
 import 'utils/theme.dart';
 
 void main() async {
+  // 确保 Flutter 绑定初始化
   WidgetsFlutterBinding.ensureInitialized();
+
+  // 配置 lifecycle channel 的缓冲区
+  ServicesBinding.instance.defaultBinaryMessenger.setMessageHandler(
+    "flutter/lifecycle",
+    (ByteData? message) async {
+      return null;
+    },
+  );
 
   // 初始化存储服务
   await StorageService().init();

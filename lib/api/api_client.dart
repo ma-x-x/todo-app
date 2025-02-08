@@ -4,9 +4,9 @@ import '../services/storage_service.dart';
 
 class ApiClient {
   // 对于 iOS 模拟器，使用特殊的 localhost 地址
-  static const String baseUrl = 'http://localhost:8080/api/v1';
+  // static const String baseUrl = 'http://localhost:8080/api/v1';
   // 或者使用实际的开发机器 IP 地址
-  // static const String baseUrl = 'http://192.168.1.xxx:8080/api/v1';
+  static const String baseUrl = 'http://1.92.74.47:8081/api/v1';
   final Dio _dio;
   final StorageService _storage = StorageService();
 

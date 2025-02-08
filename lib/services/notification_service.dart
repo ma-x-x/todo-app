@@ -1,3 +1,6 @@
+import 'dart:io' show Platform;
+
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart' show TimeOfDay;
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:timezone/data/latest.dart' as tz;
@@ -5,6 +8,12 @@ import 'package:timezone/timezone.dart' as tz;
 
 import '../models/reminder.dart';
 import '../providers/notification_settings_provider.dart';
+
+// 为 web 平台创建一个模拟的 Platform 类
+abstract class PlatformHelper {
+  static bool get isAndroid => !kIsWeb && Platform.operatingSystem == 'android';
+  static bool get isIOS => !kIsWeb && Platform.operatingSystem == 'ios';
+}
 
 class NotificationService {
   static final NotificationService _instance = NotificationService._();
@@ -178,17 +187,29 @@ class NotificationService {
   }
 
   Future<void> requestPermissions() async {
-    await _notifications
-        .resolvePlatformSpecificImplementation<
-            AndroidFlutterLocalNotificationsPlugin>()
-        ?.requestPermission();
-    await _notifications
-        .resolvePlatformSpecificImplementation<
-            IOSFlutterLocalNotificationsPlugin>()
-        ?.requestPermissions(
-          alert: true,
-          badge: true,
-          sound: true,
-        );
+    if (kIsWeb) {
+      // Web 平台不支持本地通知
+      return;
+    }
+
+    // 修改 Android 权限请求方式
+    if (PlatformHelper.isAndroid) {
+      final AndroidFlutterLocalNotificationsPlugin? androidImplementation =
+          _notifications.resolvePlatformSpecificImplementation<
+              AndroidFlutterLocalNotificationsPlugin>();
+      await androidImplementation?.requestNotificationsPermission();
+    }
+
+    // iOS 权限请求保持不变
+    if (PlatformHelper.isIOS) {
+      await _notifications
+          .resolvePlatformSpecificImplementation<
+              IOSFlutterLocalNotificationsPlugin>()
+          ?.requestPermissions(
+            alert: true,
+            badge: true,
+            sound: true,
+          );
+    }
   }
 }

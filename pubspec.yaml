@@ -21,12 +21,12 @@ version: 1.0.0+1
 environment:
   sdk: ">=3.0.0 <4.0.0"
 
-platforms:
-  android: null
-  ios: null
-  web: null
-  # macos: null  # 如果不需要 macOS 支持，取消注释
-  # windows: null  # 如果不需要 Windows 支持，取消注释
+# platforms:
+#   android: null
+#   ios: null
+#   web: null
+#   # macos: null  # 如果不需要 macOS 支持，取消注释
+#   # windows: null  # 如果不需要 Windows 支持，取消注释
 
 # Dependencies specify other packages that your package needs in order to work.
 # To automatically upgrade your package dependencies to the latest versions
@@ -58,7 +58,7 @@ dependencies:
   # 颜色选择器
   flutter_colorpicker: ^1.0.3
   # 本地通知
-  flutter_local_notifications: ^15.1.0+1
+  flutter_local_notifications: ^16.3.0
   # 加密存储
   flutter_secure_storage: ^8.0.0
   # 表单验证
@@ -130,3 +130,16 @@ flutter:
   # see https://flutter.dev/to/font-from-package
 
   generate: true
+
+  plugin:
+    platforms:
+      android:
+        default_package: file_picker
+      ios:
+        default_package: file_picker
+      web:
+        default_package: file_picker
+      windows:
+        default_package: file_picker
+      macos:
+        default_package: file_picker
