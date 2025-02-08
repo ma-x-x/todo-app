@@ -7,8 +7,6 @@ import '../models/todo.dart';
 class StatisticsService {
   /// 计算待办事项的统计数据
   TodoStatistics calculateStatistics(List<Todo> todos) {
-    final now = DateTime.now();
-
     // 计算基本数量统计
     final totalTodos = todos.length;
     final completedTodos = todos.where((todo) => todo.completed).length;
