@@ -19,6 +19,7 @@ class Todo {
   final DateTime? updatedAt;
   final DateTime? dueDate;
   final DateTime? completedAt;
+  final bool isOffline;
 
   Todo({
     this.id,
@@ -33,6 +34,7 @@ class Todo {
     this.updatedAt,
     this.dueDate,
     this.completedAt,
+    this.isOffline = false,
   });
 
   factory Todo.fromJson(Map<String, dynamic> json) {
@@ -52,9 +54,24 @@ class Todo {
       updatedAt: json['updatedAt'] == null
           ? null
           : DateTime.parse(json['updatedAt'] as String),
+      isOffline: json['isOffline'] as bool? ?? false,
     );
   }
-  Map<String, dynamic> toJson() => _$TodoToJson(this);
+  Map<String, dynamic> toJson() => {
+        'id': id,
+        'title': title,
+        'description': description,
+        'completed': completed,
+        'priority': priority,
+        'categoryId': categoryId,
+        'category': category?.toJson(),
+        'reminders': reminders?.map((r) => r.toJson()).toList(),
+        'createdAt': createdAt?.toIso8601String(),
+        'updatedAt': updatedAt?.toIso8601String(),
+        'dueDate': dueDate?.toIso8601String(),
+        'completedAt': completedAt?.toIso8601String(),
+        'isOffline': isOffline,
+      };
 
   Todo copyWith({
     int? id,
@@ -69,6 +86,7 @@ class Todo {
     DateTime? updatedAt,
     DateTime? dueDate,
     DateTime? completedAt,
+    bool? isOffline,
   }) {
     return Todo(
       id: id ?? this.id,
@@ -83,6 +101,7 @@ class Todo {
       updatedAt: updatedAt ?? this.updatedAt,
       dueDate: dueDate ?? this.dueDate,
       completedAt: completedAt ?? this.completedAt,
+      isOffline: isOffline ?? this.isOffline,
     );
   }
 

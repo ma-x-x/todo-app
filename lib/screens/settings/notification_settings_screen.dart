@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
-import 'package:provider/provider.dart';
 import 'package:flutter_gen/gen_l10n/app_localizations.dart';
+import 'package:provider/provider.dart';
+
 import '../../providers/notification_settings_provider.dart';
 
 class NotificationSettingsScreen extends StatelessWidget {
@@ -18,7 +19,8 @@ class NotificationSettingsScreen extends StatelessWidget {
             children: [
               SwitchListTile(
                 title: Text(AppLocalizations.of(context)!.enableNotifications),
-                subtitle: Text(AppLocalizations.of(context)!.enableNotificationsDesc),
+                subtitle:
+                    Text(AppLocalizations.of(context)!.enableNotificationsDesc),
                 value: provider.enabled,
                 onChanged: provider.setEnabled,
               ),
@@ -30,7 +32,8 @@ class NotificationSettingsScreen extends StatelessWidget {
                   onChanged: provider.setSoundEnabled,
                 ),
                 SwitchListTile(
-                  title: Text(AppLocalizations.of(context)!.notificationVibration),
+                  title:
+                      Text(AppLocalizations.of(context)!.notificationVibration),
                   value: provider.vibrationEnabled,
                   onChanged: provider.setVibrationEnabled,
                 ),
@@ -89,4 +92,30 @@ class NotificationSettingsScreen extends StatelessWidget {
       onTimeSelected(time);
     }
   }
-} 
+
+  Widget _buildSettingSection({
+    required String title,
+    required String subtitle,
+    required Widget child,
+  }) {
+    return Card(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Padding(
+            padding: const EdgeInsets.all(16),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(title, style: const TextStyle(fontSize: 18)),
+                const SizedBox(height: 4),
+                Text(subtitle, style: TextStyle(color: Colors.grey[600])),
+              ],
+            ),
+          ),
+          child,
+        ],
+      ),
+    );
+  }
+}

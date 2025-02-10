@@ -31,6 +31,7 @@ Todo _$TodoFromJson(Map<String, dynamic> json) => Todo(
       completedAt: json['completedAt'] == null
           ? null
           : DateTime.parse(json['completedAt'] as String),
+      isOffline: json['isOffline'] as bool? ?? false,
     );
 
 Map<String, dynamic> _$TodoToJson(Todo instance) => <String, dynamic>{
@@ -46,4 +47,5 @@ Map<String, dynamic> _$TodoToJson(Todo instance) => <String, dynamic>{
       'updatedAt': instance.updatedAt?.toIso8601String(),
       'dueDate': instance.dueDate?.toIso8601String(),
       'completedAt': instance.completedAt?.toIso8601String(),
+      'isOffline': instance.isOffline,
     };

@@ -35,4 +35,14 @@ class AuthApi {
       rethrow;
     }
   }
+
+  Future<User> validateToken(String token) async {
+    try {
+      final response = await _client.get('/auth/validate');
+      return User.fromJson(response.data);
+    } catch (e) {
+      print('验证token失败: $e');
+      rethrow;
+    }
+  }
 }

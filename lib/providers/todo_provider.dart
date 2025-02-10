@@ -3,6 +3,8 @@ import 'package:flutter/foundation.dart';
 import '../api/api_client.dart';
 import '../api/todo_api.dart';
 import '../models/todo.dart';
+import '../services/network_service.dart';
+import '../services/offline_manager.dart';
 import '../services/storage_service.dart';
 
 class TodoProvider with ChangeNotifier {
@@ -11,6 +13,9 @@ class TodoProvider with ChangeNotifier {
   List<Todo> _todos = [];
   bool _isLoading = false;
   String? _error;
+
+  final _offlineManager = OfflineManager();
+  final _network = NetworkService();
 
   TodoProvider() : _todoApi = TodoApi(ApiClient()) {
     loadTodos();
@@ -54,6 +59,20 @@ class TodoProvider with ChangeNotifier {
 
   Future<void> createTodo(Todo todo) async {
     try {
+      if (!_network.hasConnection) {
+        // 离线模式：保存到本地
+        final localTodo = todo.copyWith(
+          id: DateTime.now().millisecondsSinceEpoch,
+          isOffline: true,
+        );
+        _todos.add(localTodo);
+        await _storage.saveTodos(_todos);
+        _offlineManager.addPendingChange('todo_create', localTodo.toJson());
+        notifyListeners();
+        return;
+      }
+
+      // 在线模式：正常创建
       final response = await _todoApi.createTodo(todo);
       _todos.add(response);
       await _storage.saveTodos(_todos);
@@ -139,5 +158,24 @@ class TodoProvider with ChangeNotifier {
       print('获取待办详情失败: $e');
       rethrow;
     }
+  }
+
+  // 同步离线数据
+  Future<void> syncOfflineChanges() async {
+    if (!_network.hasConnection) return;
+
+    final pendingCreates = _offlineManager.getPendingChanges('todo_create');
+    for (final json in pendingCreates) {
+      try {
+        final todo = Todo.fromJson(json);
+        await _todoApi.createTodo(todo);
+      } catch (e) {
+        print('同步离线创建失败: $e');
+      }
+    }
+    _offlineManager.clearPendingChanges('todo_create');
+
+    // 重新加载数据
+    await loadTodos();
   }
 }

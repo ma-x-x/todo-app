@@ -1,6 +1,7 @@
 import 'package:dio/dio.dart';
 import 'package:flutter/foundation.dart';
 
+import '../services/network_service.dart';
 import '../services/storage_service.dart';
 
 class ApiClient {
@@ -11,6 +12,9 @@ class ApiClient {
   static const String _devBaseUrl = 'http://172.22.156.37:8080/api/v1';
 
   final StorageService _storage = StorageService();
+  final NetworkService _network = NetworkService();
+
+  final _offlineQueue = <Future<Response> Function()>[];
 
   ApiClient() {
     const baseUrl = kDebugMode ? _devBaseUrl : _prodBaseUrl;
@@ -28,6 +32,7 @@ class ApiClient {
 
     _configureBaseOptions();
     _configureInterceptors();
+    _network.onConnectionChange.listen(_handleConnectionChange);
   }
 
   void _configureBaseOptions() {
@@ -149,19 +154,118 @@ class ApiClient {
     );
   }
 
+  Future<void> _handleConnectionChange(bool hasConnection) async {
+    if (hasConnection && _offlineQueue.isNotEmpty) {
+      print('网络已恢复，处理离线队列...');
+      final queue = List<Future<Response> Function()>.from(_offlineQueue);
+      _offlineQueue.clear();
+
+      for (final request in queue) {
+        try {
+          await request();
+        } catch (e) {
+          print('处理离线请求失败: $e');
+        }
+      }
+    }
+  }
+
+  Future<Response> _executeWithOfflineSupport(
+    Future<Response> Function() request,
+    bool canQueue,
+  ) async {
+    try {
+      return await request();
+    } catch (e) {
+      if (e is DioException && !_network.hasConnection) {
+        if (canQueue) {
+          print('网络离线，将请求加入队列');
+          _offlineQueue.add(request);
+        }
+        throw const OfflineException('当前处于离线模式');
+      }
+      rethrow;
+    }
+  }
+
+  @override
   Future<Response> get(String path, {Map<String, dynamic>? queryParameters}) {
-    return _dio.get(path, queryParameters: queryParameters);
+    return _executeWithOfflineSupport(
+      () => _dio.get(path, queryParameters: queryParameters),
+      false,
+    );
   }
 
+  @override
   Future<Response> post(String path, {dynamic data}) {
-    return _dio.post(path, data: data);
+    return _executeWithOfflineSupport(
+      () => _dio.post(path, data: data),
+      true,
+    );
   }
 
+  @override
   Future<Response> put(String path, {dynamic data}) {
-    return _dio.put(path, data: data);
+    return _executeWithOfflineSupport(
+      () => _dio.put(path, data: data),
+      true,
+    );
   }
 
+  @override
   Future<Response> delete(String path) {
-    return _dio.delete(path);
+    return _executeWithOfflineSupport(
+      () => _dio.delete(path),
+      true,
+    );
   }
+
+  // 添加重试机制
+  Future<Response> _retryRequest(Future<Response> Function() request) async {
+    try {
+      return await request();
+    } on DioException catch (e) {
+      if (e.type == DioExceptionType.connectionTimeout) {
+        // 重试请求
+        return await request();
+      }
+      rethrow;
+    }
+  }
+
+  // 添加请求缓存
+  final _cache = <String, CachedResponse>{};
+
+  Future<Response> getCached(String path, {Duration? maxAge}) async {
+    final cacheKey = path;
+    final cached = _cache[cacheKey];
+
+    if (cached != null && !cached.isExpired(maxAge)) {
+      return cached.response;
+    }
+
+    final response = await get(path);
+    _cache[cacheKey] = CachedResponse(response);
+    return response;
+  }
+}
+
+class CachedResponse {
+  final Response response;
+  final DateTime timestamp;
+
+  CachedResponse(this.response) : timestamp = DateTime.now();
+
+  bool isExpired(Duration? maxAge) {
+    if (maxAge == null) return true;
+    return DateTime.now().difference(timestamp) > maxAge;
+  }
+}
+
+class OfflineException implements Exception {
+  final String message;
+  const OfflineException(this.message);
+
+  @override
+  String toString() => message;
 }

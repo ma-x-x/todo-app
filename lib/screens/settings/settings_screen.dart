@@ -6,12 +6,19 @@ import '../../l10n/l10n.dart';
 import '../../providers/auth_provider.dart';
 import '../../providers/locale_provider.dart';
 import '../../routes/app_router.dart';
+import '../../services/update_service.dart';
+import '../../widgets/update_dialog.dart';
 import 'backup_screen.dart';
 import 'export_screen.dart';
 
-class SettingsScreen extends StatelessWidget {
+class SettingsScreen extends StatefulWidget {
   const SettingsScreen({super.key});
 
+  @override
+  State<SettingsScreen> createState() => _SettingsScreenState();
+}
+
+class _SettingsScreenState extends State<SettingsScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -82,6 +89,29 @@ class SettingsScreen extends StatelessWidget {
             },
           ),
           const Divider(),
+          ListTile(
+            leading: const Icon(Icons.system_update),
+            title: const Text('检查更新'),
+            onTap: () async {
+              final updateService = context.read<UpdateService>();
+              final updateInfo = await updateService.checkForUpdates();
+
+              if (updateInfo == null && mounted) {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(content: Text('已是最新版本')),
+                );
+                return;
+              }
+
+              if (updateInfo != null && mounted) {
+                await showDialog(
+                  context: context,
+                  barrierDismissible: !updateInfo.isForced,
+                  builder: (context) => UpdateDialog(updateInfo: updateInfo),
+                );
+              }
+            },
+          ),
           ListTile(
             leading: const Icon(Icons.logout),
             title: Text(AppLocalizations.of(context)!.logout),

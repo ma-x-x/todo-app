@@ -4,6 +4,7 @@ import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:provider/provider.dart';
 
+import 'api/api_client.dart';
 import 'l10n/l10n.dart';
 import 'providers/auth_provider.dart';
 import 'providers/category_provider.dart';
@@ -16,13 +17,39 @@ import 'providers/todo_provider.dart';
 import 'routes/app_router.dart';
 import 'screens/auth/login_screen.dart';
 import 'screens/home/home_screen.dart';
+import 'services/network_service.dart';
 import 'services/notification_service.dart';
+import 'services/offline_manager.dart';
 import 'services/storage_service.dart';
+import 'services/update_service.dart';
 import 'utils/theme.dart';
+import 'widgets/error_boundary.dart';
+import 'widgets/update_dialog.dart';
 
 void main() async {
   // 确保 Flutter 绑定初始化
   WidgetsFlutterBinding.ensureInitialized();
+
+  // 设置全局错误处理
+  ErrorWidget.builder = (FlutterErrorDetails details) {
+    return Material(
+      child: Container(
+        color: Colors.white,
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            const Icon(Icons.error_outline, color: Colors.red, size: 48),
+            const SizedBox(height: 16),
+            Text(
+              details.exception.toString(),
+              textAlign: TextAlign.center,
+              style: const TextStyle(color: Colors.red),
+            ),
+          ],
+        ),
+      ),
+    );
+  };
 
   // 配置 lifecycle channel 的缓冲区
   ServicesBinding.instance.defaultBinaryMessenger.setMessageHandler(
@@ -32,13 +59,17 @@ void main() async {
     },
   );
 
-  // 初始化存储服务
+  // 初始化服务
   final storage = StorageService();
   await storage.init();
+  final apiClient = ApiClient();
+  final notificationService = NotificationService();
 
-  // 创建认证提供者并加载存储的认证状态
-  final authProvider = AuthProvider();
-  await authProvider.checkAuthStatus();
+  // 创建认证提供者
+  final authProvider = AuthProvider(
+    apiClient: apiClient,
+    storage: storage,
+  );
 
   // 创建通知设置提供者
   final notificationSettings = NotificationSettingsProvider();
@@ -46,16 +77,30 @@ void main() async {
   await notificationSettings.loadSettings();
 
   // 设置到通知服务
-  NotificationService().setSettingsProvider(notificationSettings);
+  notificationService.setSettingsProvider(notificationSettings);
+
+  // 初始化离线支持
+  final networkService = NetworkService();
+  await networkService.checkConnection();
+
+  final offlineManager = OfflineManager();
+  await offlineManager.init();
+
+  // 初始化更新服务
+  final updateService = UpdateService();
+  await updateService.init();
 
   // 使用 runApp 之前进行必要的初始化
   await Future.wait([
-    NotificationService().requestPermissions(),
+    notificationService.requestPermissions(),
     // 其他需要异步初始化的服务...
   ]);
 
   runApp(MultiProvider(
     providers: [
+      Provider<StorageService>.value(value: storage),
+      Provider<ApiClient>.value(value: apiClient),
+      Provider<NotificationService>.value(value: notificationService),
       ChangeNotifierProvider.value(value: authProvider),
       ChangeNotifierProvider(
         lazy: true,
@@ -73,13 +118,42 @@ void main() async {
       ChangeNotifierProvider(create: (_) => LocaleProvider()),
       ChangeNotifierProvider(create: (_) => FilterProvider()),
       ChangeNotifierProvider.value(value: notificationSettings),
+      Provider<NetworkService>.value(value: networkService),
+      Provider<UpdateService>.value(value: updateService),
     ],
-    child: const MyApp(),
+    child: const ErrorBoundary(
+      child: MyApp(),
+    ),
   ));
 }
 
-class MyApp extends StatelessWidget {
+class MyApp extends StatefulWidget {
   const MyApp({super.key});
+
+  @override
+  State<MyApp> createState() => _MyAppState();
+}
+
+class _MyAppState extends State<MyApp> {
+  @override
+  void initState() {
+    super.initState();
+    _checkForUpdates();
+  }
+
+  Future<void> _checkForUpdates() async {
+    final updateService = context.read<UpdateService>();
+    final updateInfo = await updateService.checkForUpdates();
+
+    if (updateInfo != null && mounted) {
+      // 显示更新对话框
+      await showDialog(
+        context: context,
+        barrierDismissible: !updateInfo.isForced,
+        builder: (context) => UpdateDialog(updateInfo: updateInfo),
+      );
+    }
+  }
 
   @override
   Widget build(BuildContext context) {

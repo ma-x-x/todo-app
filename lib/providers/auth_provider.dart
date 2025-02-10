@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/foundation.dart';
 
 import '../api/api_client.dart';
@@ -7,14 +9,21 @@ import '../services/storage_service.dart';
 
 class AuthProvider with ChangeNotifier {
   final AuthApi _authApi;
-  final StorageService _storage = StorageService();
+  final StorageService _storage;
 
   User? _currentUser;
   bool _isLoading = false;
   String? _error;
 
-  AuthProvider() : _authApi = AuthApi(ApiClient()) {
+  Timer? _refreshTimer;
+
+  AuthProvider({
+    required ApiClient apiClient,
+    required StorageService storage,
+  })  : _authApi = AuthApi(apiClient),
+        _storage = storage {
     _loadStoredAuth();
+    _setupTokenRefresh();
   }
 
   Future<void> _loadStoredAuth() async {
@@ -101,6 +110,43 @@ class AuthProvider with ChangeNotifier {
       if (userData != null) {
         _currentUser = User.fromJson(userData);
         notifyListeners();
+      }
+    }
+  }
+
+  Future<void> _setupTokenRefresh() async {
+    _refreshTimer?.cancel();
+    _refreshTimer = Timer.periodic(
+      const Duration(minutes: 30),
+      (_) => _refreshToken(),
+    );
+  }
+
+  Future<void> _refreshToken() async {
+    final token = await _storage.getToken();
+    if (token != null) {
+      try {
+        final user = await _authApi.validateToken(token);
+        _currentUser = user;
+        await _storage.saveToken(token);
+        await _storage.saveUser(user.toJson());
+        notifyListeners();
+      } catch (e) {
+        await logout();
+      }
+    }
+  }
+
+  Future<void> restoreAuthState() async {
+    final token = await _storage.getToken();
+    if (token != null) {
+      try {
+        final user = await _authApi.validateToken(token);
+        _currentUser = user;
+        _setupTokenRefresh();
+        notifyListeners();
+      } catch (e) {
+        await logout();
       }
     }
   }
