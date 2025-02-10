@@ -11,7 +11,7 @@ Todo _$TodoFromJson(Map<String, dynamic> json) => Todo(
       title: json['title'] as String,
       description: json['description'] as String?,
       completed: json['completed'] as bool? ?? false,
-      priority: json['priority'] as String,
+      priority: json['priority'] as String? ?? 'medium',
       categoryId: (json['categoryId'] as num?)?.toInt(),
       category: json['category'] == null
           ? null

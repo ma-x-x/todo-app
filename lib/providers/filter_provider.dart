@@ -1,4 +1,5 @@
 import 'package:flutter/foundation.dart' hide Category;
+
 import '../models/category.dart';
 import '../models/todo_filter.dart';
 
@@ -39,4 +40,4 @@ class FilterProvider with ChangeNotifier {
     _selectedPriority = null;
     notifyListeners();
   }
-} 
+}

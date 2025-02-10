@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
 
 import '../../models/todo.dart';
@@ -35,51 +36,94 @@ class _ReminderListScreenState extends State<ReminderListScreen> {
             return const Center(child: CircularProgressIndicator());
           }
 
+          if (provider.error != null) {
+            return Center(
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Text('加载失败: ${provider.error}'),
+                  ElevatedButton(
+                    onPressed: () => provider.fetchReminders(widget.todo.id!),
+                    child: const Text('重试'),
+                  ),
+                ],
+              ),
+            );
+          }
+
           final reminders = provider.getRemindersForTodo(widget.todo.id!);
           if (reminders.isEmpty) {
             return const Center(child: Text('暂无提醒，点击右下角添加'));
           }
 
           return ListView.builder(
+            padding: const EdgeInsets.all(16),
             itemCount: reminders.length,
             itemBuilder: (context, index) {
               final reminder = reminders[index];
-              return ListTile(
-                leading: Icon(
-                  reminder.notifyType == 'email'
-                      ? Icons.email
-                      : Icons.notifications,
-                  color: Theme.of(context).primaryColor,
-                ),
-                title: Text(
-                  '${_getRemindTypeText(reminder.remindType)} - ${_formatDateTime(reminder.remindAt)}',
-                ),
-                subtitle: Text(
-                  '通知方式: ${reminder.notifyType == 'email' ? '邮件' : '推送'}',
-                ),
-                trailing: Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    IconButton(
-                      icon: const Icon(Icons.edit),
-                      onPressed: () {
-                        Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                            builder: (_) => ReminderFormScreen(
-                              todoId: widget.todo.id!,
-                              todoTitle: widget.todo.title,
-                              reminder: reminder,
-                            ),
-                          ),
-                        );
-                      },
+              return Card(
+                elevation: 2,
+                margin: const EdgeInsets.only(bottom: 12),
+                child: ListTile(
+                  contentPadding:
+                      const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                  leading: Container(
+                    width: 40,
+                    height: 40,
+                    decoration: BoxDecoration(
+                      color: Theme.of(context).primaryColor.withOpacity(0.1),
+                      shape: BoxShape.circle,
                     ),
-                    IconButton(
-                      icon: const Icon(Icons.delete),
-                      onPressed: () => _showDeleteDialog(context, reminder),
+                    child: Icon(
+                      reminder.notifyType == 'email'
+                          ? Icons.email_outlined
+                          : Icons.notifications_outlined,
+                      color: Theme.of(context).primaryColor,
                     ),
-                  ],
+                  ),
+                  title: Text(
+                    reminder.remindType == 'once'
+                        ? '单次提醒'
+                        : reminder.remindType == 'daily'
+                            ? '每日提醒'
+                            : '每周提醒',
+                    style: const TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.w500,
+                    ),
+                  ),
+                  subtitle: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      const SizedBox(height: 4),
+                      Text(
+                        '提醒时间: ${DateFormat('yyyy-MM-dd HH:mm').format(reminder.remindAt)}',
+                        style: TextStyle(color: Colors.grey[600]),
+                      ),
+                      const SizedBox(height: 4),
+                      Text(
+                        '通知方式: ${reminder.notifyType == 'email' ? '邮件' : '推送'}',
+                        style: TextStyle(color: Colors.grey[600]),
+                      ),
+                    ],
+                  ),
+                  trailing: IconButton(
+                    icon: const Icon(Icons.delete_outline),
+                    color: Colors.red,
+                    onPressed: () =>
+                        _showDeleteConfirmation(context, reminder.id!),
+                  ),
+                  onTap: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (_) => ReminderFormScreen(
+                          todoId: widget.todo.id!,
+                          todoTitle: widget.todo.title,
+                        ),
+                      ),
+                    );
+                  },
                 ),
               );
             },
@@ -103,40 +147,8 @@ class _ReminderListScreenState extends State<ReminderListScreen> {
     );
   }
 
-  String _getRemindTypeText(String remindType) {
-    switch (remindType) {
-      case 'once':
-        return '单次提醒';
-      case 'daily':
-        return '每日提醒';
-      case 'weekly':
-        return '每周提醒';
-      default:
-        return '未知类型';
-    }
-  }
-
-  String _formatDateTime(DateTime dateTime) {
-    return '${dateTime.year}-${dateTime.month.toString().padLeft(2, '0')}-'
-        '${dateTime.day.toString().padLeft(2, '0')} '
-        '${dateTime.hour.toString().padLeft(2, '0')}:'
-        '${dateTime.minute.toString().padLeft(2, '0')}';
-  }
-
-  Future<void> _showDeleteDialog(BuildContext context, reminder) async {
-    //打印reminder和widget.todo
-    print('reminder: $reminder');
-    print('widget.todo: ${widget.todo}');
-
-    if (reminder.id == null || widget.todo.id == null) {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('无法删除：提醒ID或待办ID为空')),
-        );
-      }
-      return;
-    }
-
+  Future<void> _showDeleteConfirmation(
+      BuildContext context, int reminderId) async {
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (context) => AlertDialog(
@@ -159,7 +171,7 @@ class _ReminderListScreenState extends State<ReminderListScreen> {
       try {
         await context.read<ReminderProvider>().deleteReminder(
               widget.todo.id!,
-              reminder.id!,
+              reminderId,
             );
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(

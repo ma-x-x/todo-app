@@ -20,68 +20,103 @@ class _LoginScreenState extends State<LoginScreen> {
   final _passwordController = TextEditingController();
   final _storage = const FlutterSecureStorage();
 
+  // 添加 FocusNode
+  final _usernameFocus = FocusNode();
+  final _passwordFocus = FocusNode();
+
+  @override
+  void dispose() {
+    _usernameController.dispose();
+    _passwordController.dispose();
+    // 释放 FocusNode
+    _usernameFocus.dispose();
+    _passwordFocus.dispose();
+    super.dispose();
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(title: const Text('登录')),
       body: Padding(
         padding: const EdgeInsets.all(16),
-        child: Form(
-          key: _formKey,
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              CustomTextField(
-                controller: _usernameController,
-                label: '用户名',
-                validator: (value) {
-                  if (value?.isEmpty ?? true) {
-                    return '请输入用户名';
-                  }
-                  return null;
-                },
+        child: Center(
+          child: SingleChildScrollView(
+            child: Form(
+              key: _formKey,
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  const Icon(
+                    Icons.account_circle,
+                    size: 100,
+                    color: Colors.blue,
+                  ),
+                  const SizedBox(height: 32),
+                  CustomTextField(
+                    controller: _usernameController,
+                    focusNode: _usernameFocus,
+                    label: '用户名',
+                    keyboardType: TextInputType.text,
+                    textInputAction: TextInputAction.next,
+                    prefixIcon: const Icon(Icons.person),
+                    onSubmitted: (_) {
+                      FocusScope.of(context).requestFocus(_passwordFocus);
+                    },
+                    validator: (value) {
+                      if (value?.isEmpty ?? true) {
+                        return '请输入用户名';
+                      }
+                      return null;
+                    },
+                  ),
+                  const SizedBox(height: 16),
+                  CustomTextField(
+                    controller: _passwordController,
+                    focusNode: _passwordFocus,
+                    label: '密码',
+                    obscureText: true,
+                    keyboardType: TextInputType.visiblePassword,
+                    textInputAction: TextInputAction.done,
+                    prefixIcon: const Icon(Icons.lock),
+                    onSubmitted: (_) => _login(),
+                    validator: (value) {
+                      if (value?.isEmpty ?? true) {
+                        return '请输入密码';
+                      }
+                      return null;
+                    },
+                  ),
+                  const SizedBox(height: 24),
+                  SizedBox(
+                    width: double.infinity,
+                    child: Consumer<AuthProvider>(
+                      builder: (context, auth, _) {
+                        if (auth.isLoading) {
+                          return const Center(
+                              child: CircularProgressIndicator());
+                        }
+                        return ElevatedButton(
+                          onPressed: _login,
+                          child: const Text('登录'),
+                        );
+                      },
+                    ),
+                  ),
+                  const SizedBox(height: 16),
+                  TextButton(
+                    onPressed: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                            builder: (_) => const RegisterScreen()),
+                      );
+                    },
+                    child: const Text('还没有账号？立即注册'),
+                  ),
+                ],
               ),
-              const SizedBox(height: 16),
-              CustomTextField(
-                controller: _passwordController,
-                label: '密码',
-                obscureText: true,
-                validator: (value) {
-                  if (value?.isEmpty ?? true) {
-                    return '请输入密码';
-                  }
-                  if (value!.length < 6) {
-                    return '密码长度不能小于6位';
-                  }
-                  return null;
-                },
-              ),
-              const SizedBox(height: 24),
-              SizedBox(
-                width: double.infinity,
-                child: Consumer<AuthProvider>(
-                  builder: (context, auth, _) {
-                    if (auth.isLoading) {
-                      return const Center(child: CircularProgressIndicator());
-                    }
-                    return ElevatedButton(
-                      onPressed: _login,
-                      child: const Text('登录'),
-                    );
-                  },
-                ),
-              ),
-              const SizedBox(height: 16),
-              TextButton(
-                onPressed: () {
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(builder: (_) => const RegisterScreen()),
-                  );
-                },
-                child: const Text('还没有账号？立即注册'),
-              ),
-            ],
+            ),
           ),
         ),
       ),
@@ -135,12 +170,5 @@ class _LoginScreenState extends State<LoginScreen> {
         SnackBar(content: Text('登录失败：${e.toString()}')),
       );
     }
-  }
-
-  @override
-  void dispose() {
-    _usernameController.dispose();
-    _passwordController.dispose();
-    super.dispose();
   }
 }

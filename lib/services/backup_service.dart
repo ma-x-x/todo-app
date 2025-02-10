@@ -1,6 +1,7 @@
 import 'dart:convert';
 import 'dart:io';
 
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:path_provider/path_provider.dart';
 import 'package:share_plus/share_plus.dart';
 
@@ -19,6 +20,9 @@ class BackupService {
     required List<Category> categories,
     required List<Reminder> reminders,
   }) async {
+    if (kIsWeb) {
+      throw UnsupportedError('Web平台暂不支持备份功能');
+    }
     final data = {
       'todos': todos.map((todo) => todo.toJson()).toList(),
       'categories': categories.map((category) => category.toJson()).toList(),

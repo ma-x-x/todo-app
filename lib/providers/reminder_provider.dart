@@ -64,11 +64,25 @@ class ReminderProvider with ChangeNotifier {
 
   Future<void> updateReminder(Reminder reminder, String todoTitle) async {
     try {
-      final updatedReminder = await _reminderApi.updateReminder(
+      // 保存原有的提醒对象
+      final originalReminder = _reminders[reminder.todoId]?.firstWhere(
+        (r) => r.id == reminder.id,
+        orElse: () => reminder,
+      );
+
+      // 发送更新请求
+      await _reminderApi.updateReminder(
         reminder.id!,
         reminder.toRequestJson(),
       );
 
+      // 使用原有数据和新数据构建更新后的提醒对象
+      final updatedReminder = reminder.copyWith(
+        createdAt: originalReminder?.createdAt,
+        updatedAt: DateTime.now(),
+      );
+
+      // 更新本地数据
       final todoReminders = _reminders[reminder.todoId];
       if (todoReminders != null) {
         final index = todoReminders.indexWhere((r) => r.id == reminder.id);
@@ -77,7 +91,9 @@ class ReminderProvider with ChangeNotifier {
           await _notificationService.cancelNotification(reminder.id!);
           // 设置新的通知
           await _notificationService.scheduleNotification(
-              updatedReminder, todoTitle);
+            updatedReminder,
+            todoTitle,
+          );
 
           todoReminders[index] = updatedReminder;
           notifyListeners();

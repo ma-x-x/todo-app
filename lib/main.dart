@@ -14,6 +14,8 @@ import 'providers/reminder_provider.dart';
 import 'providers/theme_provider.dart';
 import 'providers/todo_provider.dart';
 import 'routes/app_router.dart';
+import 'screens/auth/login_screen.dart';
+import 'screens/home/home_screen.dart';
 import 'services/notification_service.dart';
 import 'services/storage_service.dart';
 import 'utils/theme.dart';
@@ -31,7 +33,8 @@ void main() async {
   );
 
   // 初始化存储服务
-  await StorageService().init();
+  final storage = StorageService();
+  await storage.init();
 
   // 创建认证提供者并加载存储的认证状态
   final authProvider = AuthProvider();
@@ -44,15 +47,28 @@ void main() async {
 
   // 设置到通知服务
   NotificationService().setSettingsProvider(notificationSettings);
-  // 请求通知权限
-  await NotificationService().requestPermissions();
+
+  // 使用 runApp 之前进行必要的初始化
+  await Future.wait([
+    NotificationService().requestPermissions(),
+    // 其他需要异步初始化的服务...
+  ]);
 
   runApp(MultiProvider(
     providers: [
       ChangeNotifierProvider.value(value: authProvider),
-      ChangeNotifierProvider(create: (_) => TodoProvider()),
-      ChangeNotifierProvider(create: (_) => CategoryProvider()),
-      ChangeNotifierProvider(create: (_) => ReminderProvider()),
+      ChangeNotifierProvider(
+        lazy: true,
+        create: (_) => TodoProvider(),
+      ),
+      ChangeNotifierProvider(
+        lazy: true,
+        create: (_) => CategoryProvider(),
+      ),
+      ChangeNotifierProvider(
+        lazy: true,
+        create: (_) => ReminderProvider(),
+      ),
       ChangeNotifierProvider(create: (_) => ThemeProvider()),
       ChangeNotifierProvider(create: (_) => LocaleProvider()),
       ChangeNotifierProvider(create: (_) => FilterProvider()),
@@ -82,12 +98,58 @@ class MyApp extends StatelessWidget {
             GlobalWidgetsLocalizations.delegate,
             GlobalCupertinoLocalizations.delegate,
           ],
-          onGenerateRoute: AppRouter.generateRoute,
-          initialRoute: context.watch<AuthProvider>().isAuthenticated
-              ? AppRouter.home
-              : AppRouter.login,
+          navigatorObservers: [
+            _AuthRouteObserver(),
+          ],
+          onGenerateRoute: (settings) {
+            // 处理根路由
+            if (settings.name == '/') {
+              return MaterialPageRoute(
+                builder: (_) => context.read<AuthProvider>().isAuthenticated
+                    ? const HomeScreen()
+                    : const LoginScreen(),
+              );
+            }
+            // 处理其他路由
+            return AppRouter.generateRoute(settings);
+          },
+          initialRoute: '/',
         );
       },
     );
+  }
+}
+
+// 添加路由观察者类
+class _AuthRouteObserver extends NavigatorObserver {
+  @override
+  void didPush(Route<dynamic> route, Route<dynamic>? previousRoute) {
+    _checkAuth(route);
+  }
+
+  @override
+  void didReplace({Route<dynamic>? newRoute, Route<dynamic>? oldRoute}) {
+    if (newRoute != null) {
+      _checkAuth(newRoute);
+    }
+  }
+
+  void _checkAuth(Route<dynamic> route) {
+    // 获取当前路由名称
+    final routeName = route.settings.name;
+    if (routeName == null) return;
+
+    // 如果不是登录或注册页面，检查认证状态
+    if (routeName != AppRouter.login && routeName != AppRouter.register) {
+      Future.delayed(Duration.zero, () {
+        final context = navigator?.context;
+        if (context != null && !context.read<AuthProvider>().isAuthenticated) {
+          navigator?.pushNamedAndRemoveUntil(
+            AppRouter.login,
+            (route) => false,
+          );
+        }
+      });
+    }
   }
 }

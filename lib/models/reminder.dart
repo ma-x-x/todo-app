@@ -37,8 +37,18 @@ class Reminder {
     this.deletedAt,
   });
 
-  factory Reminder.fromJson(Map<String, dynamic> json) =>
-      _$ReminderFromJson(json);
+  factory Reminder.fromJson(Map<String, dynamic> json) {
+    return Reminder(
+      id: json['id'] as int,
+      todoId: json['todoId'] as int,
+      remindAt: DateTime.parse(json['remindAt'] as String),
+      remindType: json['remindType'] as String,
+      notifyType: json['notifyType'] as String,
+      status: json['status'] as bool,
+      createdAt: DateTime.parse(json['createdAt'] as String),
+      updatedAt: DateTime.parse(json['updatedAt'] as String),
+    );
+  }
   Map<String, dynamic> toJson() => _$ReminderToJson(this);
 
   Map<String, dynamic> toRequestJson() {

@@ -17,6 +17,7 @@ class SettingsScreen extends StatelessWidget {
     return Scaffold(
       appBar: AppBar(
         title: Text(AppLocalizations.of(context)!.settings),
+        automaticallyImplyLeading: false,
       ),
       body: ListView(
         children: [
@@ -128,7 +129,23 @@ class SettingsScreen extends StatelessWidget {
     );
 
     if (confirmed == true && context.mounted) {
-      await context.read<AuthProvider>().logout();
+      try {
+        await context.read<AuthProvider>().logout();
+
+        if (context.mounted) {
+          // 确保清除所有路由历史并导航到登录页面
+          await Navigator.of(context).pushNamedAndRemoveUntil(
+            AppRouter.login,
+            (route) => false,
+          );
+        }
+      } catch (e) {
+        if (context.mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text('退出登录失败: $e')),
+          );
+        }
+      }
     }
   }
 

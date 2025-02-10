@@ -17,6 +17,7 @@ class StatisticsScreen extends StatelessWidget {
     return Scaffold(
       appBar: AppBar(
         title: Text(AppLocalizations.of(context)!.statistics),
+        automaticallyImplyLeading: false, // 禁用返回按钮
       ),
       // 使用 Consumer2 同时监听待办事项和分类的变化
       body: Consumer2<TodoProvider, CategoryProvider>(

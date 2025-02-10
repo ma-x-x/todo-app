@@ -19,23 +19,73 @@ class TodoFormScreen extends StatefulWidget {
 
 class _TodoFormScreenState extends State<TodoFormScreen> {
   final _formKey = GlobalKey<FormState>();
-  late TextEditingController _titleController;
-  late TextEditingController _descriptionController;
-  String _priority = 'medium';
+  final _titleController = TextEditingController();
+  final _descriptionController = TextEditingController();
   Category? _selectedCategory;
+  late String _priority;
+  bool _isLoading = false;
 
   @override
   void initState() {
     super.initState();
-    _titleController = TextEditingController(text: widget.todo?.title);
-    _descriptionController =
-        TextEditingController(text: widget.todo?.description);
-    _priority = widget.todo?.priority ?? 'medium';
+    _priority = 'medium';
+    if (widget.todo != null) {
+      _loadTodoDetail();
+    }
+  }
+
+  Future<void> _loadTodoDetail() async {
+    setState(() {
+      _isLoading = true;
+    });
+
+    try {
+      final todo =
+          await context.read<TodoProvider>().getTodoDetail(widget.todo!.id!);
+      print('获取到的待办详情: ${todo.toJson()}');
+      print('优先级值: ${todo.priority}');
+
+      _titleController.text = todo.title;
+      _descriptionController.text = todo.description ?? '';
+      _selectedCategory = todo.category;
+
+      setState(() {
+        _priority = ['low', 'medium', 'high'].contains(todo.priority)
+            ? todo.priority
+            : 'medium';
+      });
+      print('设置的优先级值: $_priority');
+    } catch (e) {
+      print('加载待办详情失败: $e');
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('加载失败: $e')),
+        );
+      }
+    } finally {
+      if (mounted) {
+        setState(() {
+          _isLoading = false;
+        });
+      }
+    }
   }
 
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context)!;
+    print('构建表单，当前优先级: $_priority');
+
+    if (_isLoading) {
+      return Scaffold(
+        appBar: AppBar(
+          title: Text(widget.todo == null ? l10n.newTodo : l10n.editTodo),
+        ),
+        body: const Center(
+          child: CircularProgressIndicator(),
+        ),
+      );
+    }
 
     return Scaffold(
       appBar: AppBar(
@@ -51,7 +101,7 @@ class _TodoFormScreenState extends State<TodoFormScreen> {
               label: l10n.title,
               validator: (value) {
                 if (value?.isEmpty ?? true) {
-                  return '${l10n.title} ${l10n.errorRequired}';
+                  return l10n.titleRequired;
                 }
                 return null;
               },
@@ -69,6 +119,10 @@ class _TodoFormScreenState extends State<TodoFormScreen> {
                   return const Center(child: CircularProgressIndicator());
                 }
 
+                print('当前选中的分类: ${_selectedCategory?.toJson()}');
+                print(
+                    '可选分类列表: ${provider.categories.map((c) => c.toJson()).toList()}');
+
                 return DropdownButtonFormField<Category?>(
                   value: _selectedCategory,
                   decoration: InputDecoration(
@@ -81,6 +135,9 @@ class _TodoFormScreenState extends State<TodoFormScreen> {
                       child: Text(l10n.noCategory),
                     ),
                     ...provider.categories.map((category) {
+                      if (_selectedCategory?.id == category.id) {
+                        _selectedCategory = category;
+                      }
                       return DropdownMenuItem(
                         value: category,
                         child: Row(
@@ -133,6 +190,8 @@ class _TodoFormScreenState extends State<TodoFormScreen> {
                 ),
               ],
               onChanged: (value) {
+                print('当前优先级: $_priority');
+                print('选择的优先级: $value');
                 setState(() {
                   _priority = value!;
                 });

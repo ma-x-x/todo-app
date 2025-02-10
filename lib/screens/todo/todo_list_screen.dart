@@ -18,7 +18,14 @@ class TodoListScreen extends StatelessWidget {
     return Scaffold(
       appBar: AppBar(
         title: Text(AppLocalizations.of(context)!.todoList),
+        automaticallyImplyLeading: false,
         actions: [
+          IconButton(
+            icon: const Icon(Icons.refresh),
+            onPressed: () {
+              context.read<TodoProvider>().loadTodos();
+            },
+          ),
           IconButton(
             icon: const Icon(Icons.search),
             onPressed: () {
@@ -104,14 +111,18 @@ class TodoListScreen extends StatelessWidget {
           }
 
           return ListView.builder(
+            addAutomaticKeepAlives: false,
+            addRepaintBoundaries: false,
             itemCount: todos.length,
-            itemBuilder: (context, index) {
-              return TodoItem(todo: todos[index]);
-            },
+            itemBuilder: (context, index) => TodoItem(
+              key: ValueKey(todos[index].id),
+              todo: todos[index],
+            ),
           );
         },
       ),
       floatingActionButton: FloatingActionButton(
+        heroTag: 'todo_add_fab',
         onPressed: () {
           Navigator.push(
             context,

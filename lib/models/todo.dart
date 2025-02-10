@@ -25,7 +25,7 @@ class Todo {
     required this.title,
     this.description,
     this.completed = false,
-    required this.priority,
+    this.priority = 'medium',
     this.categoryId,
     this.category,
     this.reminders,
@@ -35,7 +35,25 @@ class Todo {
     this.completedAt,
   });
 
-  factory Todo.fromJson(Map<String, dynamic> json) => _$TodoFromJson(json);
+  factory Todo.fromJson(Map<String, dynamic> json) {
+    return Todo(
+      id: json['id'] as int?,
+      title: json['title'] as String,
+      description: json['description'] as String?,
+      completed: json['completed'] as bool? ?? false,
+      priority: json['priority'] as String? ?? 'medium',
+      categoryId: json['categoryId'] as int?,
+      category: json['category'] == null
+          ? null
+          : Category.fromJson(json['category'] as Map<String, dynamic>),
+      createdAt: json['createdAt'] == null
+          ? null
+          : DateTime.parse(json['createdAt'] as String),
+      updatedAt: json['updatedAt'] == null
+          ? null
+          : DateTime.parse(json['updatedAt'] as String),
+    );
+  }
   Map<String, dynamic> toJson() => _$TodoToJson(this);
 
   Todo copyWith({

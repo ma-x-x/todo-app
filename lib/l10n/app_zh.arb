@@ -131,5 +131,6 @@
 
     "category": "分类",
     "selectCategory": "选择分类",
-    "noCategory": "无分类"
+    "noCategory": "无分类",
+    "titleRequired": "请输入标题"
 } 

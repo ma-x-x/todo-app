@@ -37,7 +37,27 @@ class AppRouter {
         return MaterialPageRoute(builder: (_) => const RegisterScreen());
 
       case home:
-        return MaterialPageRoute(builder: (_) => const HomeScreen());
+        return MaterialPageRoute(
+          builder: (_) => WillPopScope(
+            onWillPop: () async {
+              final DateTime now = DateTime.now();
+              if (_lastPressedAt == null ||
+                  now.difference(_lastPressedAt!) >
+                      const Duration(seconds: 2)) {
+                _lastPressedAt = now;
+                ScaffoldMessenger.of(_).showSnackBar(
+                  const SnackBar(
+                    content: Text('再按一次退出应用'),
+                    duration: Duration(seconds: 2),
+                  ),
+                );
+                return false;
+              }
+              return true;
+            },
+            child: const HomeScreen(),
+          ),
+        );
 
       case todoForm:
         final todo = settings.arguments as Todo?;
@@ -91,4 +111,6 @@ class AppRouter {
         );
     }
   }
+
+  static DateTime? _lastPressedAt;
 }

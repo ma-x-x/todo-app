@@ -41,14 +41,15 @@ class AuthProvider with ChangeNotifier {
     try {
       final response = await _authApi.login(username, password);
 
+      // 确保正确获取 token 和 user 数据
       final token = response['token'] as String;
-      final userData = response['user'] as User;
+      final user = response['user'] as User;
 
       await _storage.saveToken(token);
       print('Token已保存: $token');
 
-      await _storage.saveUser(userData.toJson());
-      _currentUser = userData;
+      await _storage.saveUser(user.toJson());
+      _currentUser = user;
       print('用户数据已保存: $_currentUser');
 
       notifyListeners();
@@ -82,10 +83,15 @@ class AuthProvider with ChangeNotifier {
   }
 
   Future<void> logout() async {
-    await _storage.deleteToken();
-    await _storage.deleteUser();
-    _currentUser = null;
-    notifyListeners();
+    try {
+      await _storage.deleteToken();
+      await _storage.deleteUser();
+      _currentUser = null;
+      notifyListeners();
+    } catch (e) {
+      print('退出登录失败: $e');
+      rethrow;
+    }
   }
 
   Future<void> checkAuthStatus() async {

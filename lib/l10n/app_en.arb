@@ -501,5 +501,6 @@
     },
     "category": "Category",
     "selectCategory": "Select Category",
-    "noCategory": "No Category"
+    "noCategory": "No Category",
+    "titleRequired": "Title is required"
 } 

@@ -3,7 +3,6 @@ import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 import 'package:provider/provider.dart';
 import 'package:share_plus/share_plus.dart';
 
-import '../../models/category.dart';
 import '../../providers/category_provider.dart';
 import '../../providers/todo_provider.dart';
 import '../../services/export_service.dart';
@@ -43,10 +42,8 @@ class ExportScreen extends StatelessWidget {
       final todoProvider = context.read<TodoProvider>();
       final categoryProvider = context.read<CategoryProvider>();
 
-      final categoryMap = Map<int, Category>.fromEntries(
-        categoryProvider.categories
-            .where((c) => c.id != null)
-            .map((c) => MapEntry(c.id!, c)),
+      final categoryMap = Map.fromEntries(
+        categoryProvider.categories.map((c) => MapEntry(c.id, c)),
       );
 
       final filePath = await ExportService().exportToCsv(
@@ -89,6 +86,52 @@ class ExportScreen extends StatelessWidget {
   }
 
   Future<void> _exportToPdf(BuildContext context) async {
-    // 类似的实现...
+    try {
+      // 显示加载对话框
+      showDialog(
+        context: context,
+        barrierDismissible: false,
+        builder: (context) => const PopScope(
+          canPop: false,
+          child: Center(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                CircularProgressIndicator(),
+                SizedBox(height: 16),
+                Text('正在生成PDF文件...'),
+              ],
+            ),
+          ),
+        ),
+      );
+
+      final todoProvider = context.read<TodoProvider>();
+      final categoryProvider = context.read<CategoryProvider>();
+
+      final categoryMap = Map.fromEntries(
+        categoryProvider.categories.map((c) => MapEntry(c.id, c)),
+      );
+
+      final filePath = await ExportService().exportToPdf(
+        todos: todoProvider.todos,
+        categories: categoryMap,
+      );
+
+      if (context.mounted) {
+        Navigator.pop(context); // 关闭加载对话框
+
+        final file = XFile(filePath);
+        await Share.shareXFiles(
+          [file],
+          subject: 'Todo App Export (PDF)',
+        );
+      }
+    } catch (e) {
+      if (context.mounted) {
+        Navigator.pop(context); // 关闭加载对话框
+        ErrorHandler.showErrorSnackBar(context, e.toString());
+      }
+    }
   }
 }

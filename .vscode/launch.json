@@ -41,6 +41,19 @@
             "request": "launch",
             "type": "dart",
             "program": "./test/"
+        },
+        {
+            "name": "Android Emulator",
+            "request": "launch",
+            "type": "dart",
+            "deviceId": "emulator-5554",
+            "program": "lib/main.dart",
+            "flutterMode": "debug",
+            "args": [
+                "--verbose"
+            ],
+            "console": "debugConsole",
+            "cwd": "${workspaceFolder}"
         }
     ],
     "compounds": [
@@ -48,7 +61,8 @@
             "name": "All Devices",
             "configurations": [
                 "todo_app (debug mode)",
-                "Chrome Debug"
+                "Chrome Debug",
+                "Android Emulator"
             ]
         }
     ]

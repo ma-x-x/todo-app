@@ -13,7 +13,6 @@ class AuthApi {
         'password': password,
       });
 
-      // 根据swagger文档，登录成功返回token和user信息
       return {
         'token': response.data['token'] as String,
         'user': User.fromJson(response.data['user']),

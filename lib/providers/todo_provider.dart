@@ -66,9 +66,17 @@ class TodoProvider with ChangeNotifier {
 
   Future<void> updateTodo(Todo todo) async {
     try {
-      final updatedTodo = await _todoApi.updateTodo(todo);
+      // 保存原有的待办对象
       final index = _todos.indexWhere((t) => t.id == todo.id);
       if (index != -1) {
+        final originalTodo = _todos[index];
+
+        // 调用API更新
+        final updatedTodo = await _todoApi.updateTodo(todo.copyWith(
+          createdAt: originalTodo.createdAt,
+        ));
+
+        // 更新本地数据
         _todos[index] = updatedTodo;
         await _storage.saveTodos(_todos);
         notifyListeners();
@@ -122,5 +130,14 @@ class TodoProvider with ChangeNotifier {
     _todos = todosData.map((json) => Todo.fromJson(json)).toList();
     await _storage.saveTodos(_todos);
     notifyListeners();
+  }
+
+  Future<Todo> getTodoDetail(int id) async {
+    try {
+      return await _todoApi.getTodoDetail(id);
+    } catch (e) {
+      print('获取待办详情失败: $e');
+      rethrow;
+    }
   }
 }

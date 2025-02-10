@@ -26,7 +26,7 @@ class ErrorHandler {
 
     switch (response.statusCode) {
       case 400:
-        return _parseErrorMessage(response.data) ?? 
+        return _parseErrorMessage(response.data) ??
             AppLocalizations.of(context)!.errorBadRequest;
       case 401:
         return AppLocalizations.of(context)!.errorUnauthorized;
@@ -64,4 +64,4 @@ class ErrorHandler {
       ),
     );
   }
-} 
+}

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 import 'package:provider/provider.dart';
 
 import '../../providers/category_provider.dart';
@@ -19,9 +20,19 @@ class CategoryListScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
+
     return Scaffold(
       appBar: AppBar(
-        title: const Text('分类管理'),
+        title: Text(l10n.categories),
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.refresh),
+            onPressed: () {
+              context.read<CategoryProvider>().loadCategories();
+            },
+          ),
+        ],
       ),
       body: RefreshIndicator(
         onRefresh: () => context.read<CategoryProvider>().loadCategories(),
@@ -51,39 +62,62 @@ class CategoryListScreen extends StatelessWidget {
             }
 
             return ListView.builder(
+              padding: const EdgeInsets.all(16),
               itemCount: provider.categories.length,
               itemBuilder: (context, index) {
                 final category = provider.categories[index];
                 final categoryColor = _parseColor(category.color);
 
-                return ListTile(
-                  leading: categoryColor != null
-                      ? Container(
-                          width: 24,
-                          height: 24,
-                          decoration: BoxDecoration(
-                            color: categoryColor,
-                            shape: BoxShape.circle,
-                            border: Border.all(
-                              color: Colors.grey.shade300,
-                              width: 1,
-                            ),
-                          ),
-                        )
-                      : null,
-                  title: Text(category.name),
-                  trailing: IconButton(
-                    icon: const Icon(Icons.delete),
-                    onPressed: () => _confirmDelete(context, category.id!),
-                  ),
-                  onTap: () {
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                        builder: (_) => CategoryFormScreen(category: category),
+                return Card(
+                  elevation: 2,
+                  margin: const EdgeInsets.only(bottom: 12),
+                  child: ListTile(
+                    contentPadding:
+                        const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                    leading: Container(
+                      width: 40,
+                      height: 40,
+                      decoration: BoxDecoration(
+                        color: categoryColor?.withOpacity(0.2),
+                        shape: BoxShape.circle,
+                        border: Border.all(
+                          color: categoryColor ?? Colors.grey,
+                          width: 2,
+                        ),
                       ),
-                    );
-                  },
+                      child: Center(
+                        child: Text(
+                          category.name.characters.first,
+                          style: TextStyle(
+                            color: categoryColor,
+                            fontSize: 18,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                      ),
+                    ),
+                    title: Text(
+                      category.name,
+                      style: const TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.w500,
+                      ),
+                    ),
+                    trailing: IconButton(
+                      icon: const Icon(Icons.delete_outline),
+                      color: Colors.red,
+                      onPressed: () => _confirmDelete(context, category.id),
+                    ),
+                    onTap: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (_) =>
+                              CategoryFormScreen(category: category),
+                        ),
+                      );
+                    },
+                  ),
                 );
               },
             );
@@ -91,6 +125,7 @@ class CategoryListScreen extends StatelessWidget {
         ),
       ),
       floatingActionButton: FloatingActionButton(
+        heroTag: 'category_add_fab',
         onPressed: () {
           Navigator.push(
             context,
