@@ -35,38 +35,78 @@ class _HomeScreenState extends State<HomeScreen>
   @override
   Widget build(BuildContext context) {
     super.build(context);
+    final theme = Theme.of(context);
+
     return Scaffold(
-      // 使用 PageStorage 保存页面状态
-      body: PageStorage(
-        bucket: _bucket,
-        child: _pages[_currentIndex],
+      body: Container(
+        decoration: BoxDecoration(
+          gradient: LinearGradient(
+            begin: Alignment.topCenter,
+            end: Alignment.bottomCenter,
+            colors: [
+              theme.colorScheme.surface,
+              theme.colorScheme.surfaceContainerHighest,
+            ],
+          ),
+        ),
+        child: PageStorage(
+          bucket: _bucket,
+          child: _pages[_currentIndex],
+        ),
       ),
-      bottomNavigationBar: NavigationBar(
-        labelBehavior: NavigationDestinationLabelBehavior.alwaysShow, // 始终显示标签
-        selectedIndex: _currentIndex,
-        onDestinationSelected: (index) {
-          setState(() {
-            _currentIndex = index;
-          });
-        },
-        destinations: [
-          NavigationDestination(
-            icon: const Icon(Icons.check_circle_outline),
-            label: AppLocalizations.of(context)!.todos,
-          ),
-          NavigationDestination(
-            icon: const Icon(Icons.category_outlined),
-            label: AppLocalizations.of(context)!.categories,
-          ),
-          NavigationDestination(
-            icon: const Icon(Icons.bar_chart_outlined),
-            label: AppLocalizations.of(context)!.statistics,
-          ),
-          NavigationDestination(
-            icon: const Icon(Icons.settings_outlined),
-            label: AppLocalizations.of(context)!.settings,
-          ),
-        ],
+      bottomNavigationBar: Container(
+        decoration: BoxDecoration(
+          color: theme.colorScheme.surface,
+          boxShadow: [
+            BoxShadow(
+              color: theme.shadowColor.withAlpha(20),
+              blurRadius: 10,
+              offset: const Offset(0, -5),
+            ),
+          ],
+        ),
+        child: NavigationBar(
+          height: 65,
+          backgroundColor: theme.colorScheme.surface,
+          labelBehavior: NavigationDestinationLabelBehavior.alwaysShow,
+          selectedIndex: _currentIndex,
+          onDestinationSelected: (index) {
+            setState(() {
+              _currentIndex = index;
+            });
+          },
+          indicatorColor: theme.colorScheme.secondaryContainer,
+          destinations: [
+            NavigationDestination(
+              icon: Icon(Icons.check_circle_outline,
+                  color: _currentIndex == 0
+                      ? theme.colorScheme.primary
+                      : theme.colorScheme.onSurfaceVariant),
+              label: AppLocalizations.of(context)!.todos,
+            ),
+            NavigationDestination(
+              icon: Icon(Icons.category_outlined,
+                  color: _currentIndex == 1
+                      ? theme.colorScheme.primary
+                      : theme.colorScheme.onSurfaceVariant),
+              label: AppLocalizations.of(context)!.categories,
+            ),
+            NavigationDestination(
+              icon: Icon(Icons.bar_chart_outlined,
+                  color: _currentIndex == 2
+                      ? theme.colorScheme.primary
+                      : theme.colorScheme.onSurfaceVariant),
+              label: AppLocalizations.of(context)!.statistics,
+            ),
+            NavigationDestination(
+              icon: Icon(Icons.settings_outlined,
+                  color: _currentIndex == 3
+                      ? theme.colorScheme.primary
+                      : theme.colorScheme.onSurfaceVariant),
+              label: AppLocalizations.of(context)!.settings,
+            ),
+          ],
+        ),
       ),
     );
   }

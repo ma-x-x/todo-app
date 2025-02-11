@@ -102,16 +102,32 @@ class ApiClient {
           if (responseData['code'] == 0 || responseData['code'] == 200) {
             // 成功响应，直接返回data字段
             response.data = responseData['data'];
+            return handler.next(response);
           } else {
             // 业务错误，抛出错误信息
             throw DioException(
               requestOptions: response.requestOptions,
               response: response,
+              type: DioExceptionType.badResponse,
               message: responseData['message'] ?? '未知错误',
             );
           }
         }
         return handler.next(response);
+      },
+      onError: (error, handler) {
+        if (error.response?.data is Map<String, dynamic>) {
+          final responseData = error.response!.data as Map<String, dynamic>;
+          return handler.reject(
+            DioException(
+              requestOptions: error.requestOptions,
+              response: error.response,
+              type: error.type,
+              message: responseData['message'] ?? error.message,
+            ),
+          );
+        }
+        return handler.next(error);
       },
     );
   }
@@ -175,7 +191,8 @@ class ApiClient {
     bool canQueue,
   ) async {
     try {
-      return await request();
+      // 使用 _retryRequest 包装原始请求
+      return await _retryRequest(request);
     } catch (e) {
       if (e is DioException && !_network.hasConnection) {
         if (canQueue) {
@@ -188,7 +205,6 @@ class ApiClient {
     }
   }
 
-  @override
   Future<Response> get(String path, {Map<String, dynamic>? queryParameters}) {
     return _executeWithOfflineSupport(
       () => _dio.get(path, queryParameters: queryParameters),
@@ -196,7 +212,6 @@ class ApiClient {
     );
   }
 
-  @override
   Future<Response> post(String path, {dynamic data}) {
     return _executeWithOfflineSupport(
       () => _dio.post(path, data: data),
@@ -204,7 +219,6 @@ class ApiClient {
     );
   }
 
-  @override
   Future<Response> put(String path, {dynamic data}) {
     return _executeWithOfflineSupport(
       () => _dio.put(path, data: data),
@@ -212,7 +226,6 @@ class ApiClient {
     );
   }
 
-  @override
   Future<Response> delete(String path) {
     return _executeWithOfflineSupport(
       () => _dio.delete(path),
@@ -247,6 +260,12 @@ class ApiClient {
     final response = await get(path);
     _cache[cacheKey] = CachedResponse(response);
     return response;
+  }
+
+  void clearAuth() {
+    // 清理认证相关的拦截器
+    _dio.interceptors.clear();
+    _configureInterceptors();
   }
 }
 

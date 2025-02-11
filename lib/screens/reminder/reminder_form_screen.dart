@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_datetime_picker_plus/flutter_datetime_picker_plus.dart';
+import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 import 'package:provider/provider.dart';
 
 import '../../models/reminder.dart';
@@ -42,18 +43,25 @@ class _ReminderFormScreenState extends State<ReminderFormScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
+    final theme = Theme.of(context);
+
     return Scaffold(
       appBar: AppBar(
-        title: Text(widget.reminder == null ? '新建提醒' : '编辑提醒'),
+        title: Text(
+            widget.reminder == null ? l10n.newReminder : l10n.editReminder),
       ),
       body: ListView(
-        padding: const EdgeInsets.all(16),
+        padding: const EdgeInsets.all(24),
         children: [
           Card(
-            child: ListTile(
-              title: const Text('提醒时间'),
-              subtitle: Text(_formatDateTime(_selectedDateTime)),
-              trailing: const Icon(Icons.arrow_forward_ios),
+            elevation: 0,
+            color: theme.colorScheme.surfaceContainer,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(16),
+            ),
+            child: InkWell(
+              borderRadius: BorderRadius.circular(16),
               onTap: () {
                 DatePicker.showDateTimePicker(
                   context,
@@ -66,19 +74,54 @@ class _ReminderFormScreenState extends State<ReminderFormScreen> {
                   },
                 );
               },
+              child: Padding(
+                padding: const EdgeInsets.all(16),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      l10n.reminderTime,
+                      style: theme.textTheme.titleMedium?.copyWith(
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                    const SizedBox(height: 8),
+                    Row(
+                      children: [
+                        Icon(
+                          Icons.access_time,
+                          color: theme.colorScheme.primary,
+                        ),
+                        const SizedBox(width: 8),
+                        Text(
+                          _formatDateTime(_selectedDateTime),
+                          style: theme.textTheme.bodyLarge,
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
+              ),
             ),
           ),
-          const SizedBox(height: 16),
+          const SizedBox(height: 24),
+          Text(
+            l10n.reminderType,
+            style: theme.textTheme.titleMedium?.copyWith(
+              fontWeight: FontWeight.w600,
+            ),
+          ),
+          const SizedBox(height: 8),
           Card(
+            elevation: 0,
+            color: theme.colorScheme.surfaceContainer,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(16),
+            ),
             child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                const Padding(
-                  padding: EdgeInsets.all(16),
-                  child: Text('提醒类型'),
-                ),
                 RadioListTile<String>(
-                  title: const Text('单次提醒'),
+                  title: Text(l10n.reminderOnce),
                   value: 'once',
                   groupValue: _selectedRemindType,
                   onChanged: (value) {
@@ -88,7 +131,7 @@ class _ReminderFormScreenState extends State<ReminderFormScreen> {
                   },
                 ),
                 RadioListTile<String>(
-                  title: const Text('每日提醒'),
+                  title: Text(l10n.reminderDaily),
                   value: 'daily',
                   groupValue: _selectedRemindType,
                   onChanged: (value) {
@@ -98,7 +141,7 @@ class _ReminderFormScreenState extends State<ReminderFormScreen> {
                   },
                 ),
                 RadioListTile<String>(
-                  title: const Text('每周提醒'),
+                  title: Text(l10n.reminderWeekly),
                   value: 'weekly',
                   groupValue: _selectedRemindType,
                   onChanged: (value) {
@@ -110,17 +153,24 @@ class _ReminderFormScreenState extends State<ReminderFormScreen> {
               ],
             ),
           ),
-          const SizedBox(height: 16),
+          const SizedBox(height: 24),
+          Text(
+            l10n.notifyType,
+            style: theme.textTheme.titleMedium?.copyWith(
+              fontWeight: FontWeight.w600,
+            ),
+          ),
+          const SizedBox(height: 8),
           Card(
+            elevation: 0,
+            color: theme.colorScheme.surfaceContainer,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(16),
+            ),
             child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                const Padding(
-                  padding: EdgeInsets.all(16),
-                  child: Text('通知方式'),
-                ),
                 RadioListTile<String>(
-                  title: const Text('推送通知'),
+                  title: Text(l10n.notifyPush),
                   value: 'push',
                   groupValue: _selectedNotifyType,
                   onChanged: (value) {
@@ -130,7 +180,7 @@ class _ReminderFormScreenState extends State<ReminderFormScreen> {
                   },
                 ),
                 RadioListTile<String>(
-                  title: const Text('邮件通知'),
+                  title: Text(l10n.notifyEmail),
                   value: 'email',
                   groupValue: _selectedNotifyType,
                   onChanged: (value) {
@@ -144,19 +194,22 @@ class _ReminderFormScreenState extends State<ReminderFormScreen> {
           ),
         ],
       ),
-      bottomNavigationBar: Padding(
-        padding: const EdgeInsets.all(16),
-        child: ElevatedButton(
-          onPressed: _isLoading ? null : _submit,
-          child: _isLoading
-              ? const SizedBox(
-                  height: 20,
-                  width: 20,
-                  child: CircularProgressIndicator(
-                    strokeWidth: 2,
-                  ),
-                )
-              : const Text('保存'),
+      bottomNavigationBar: SafeArea(
+        child: Padding(
+          padding: const EdgeInsets.all(16),
+          child: FilledButton(
+            onPressed: _isLoading ? null : _submit,
+            child: _isLoading
+                ? const SizedBox(
+                    height: 20,
+                    width: 20,
+                    child: CircularProgressIndicator(
+                      strokeWidth: 2,
+                      valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                    ),
+                  )
+                : Text(l10n.save),
+          ),
         ),
       ),
     );

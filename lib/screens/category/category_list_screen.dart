@@ -13,7 +13,7 @@ class CategoryListScreen extends StatelessWidget {
     try {
       return Color(int.parse(colorString.replaceFirst('#', 'FF'), radix: 16));
     } catch (e) {
-      print('颜色解析错误: $e');
+      debugPrint('Error parsing color: $e');
       return null;
     }
   }
@@ -21,6 +21,7 @@ class CategoryListScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context)!;
+    final theme = Theme.of(context);
 
     return Scaffold(
       appBar: AppBar(
@@ -28,9 +29,8 @@ class CategoryListScreen extends StatelessWidget {
         actions: [
           IconButton(
             icon: const Icon(Icons.refresh),
-            onPressed: () {
-              context.read<CategoryProvider>().loadCategories();
-            },
+            tooltip: l10n.refresh,
+            onPressed: () => context.read<CategoryProvider>().loadCategories(),
           ),
         ],
       ),
@@ -44,70 +44,81 @@ class CategoryListScreen extends StatelessWidget {
 
             if (provider.error != null) {
               return Center(
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    Text('加载失败: ${provider.error}'),
-                    ElevatedButton(
-                      onPressed: () => provider.loadCategories(),
-                      child: const Text('重试'),
-                    ),
-                  ],
+                child: Padding(
+                  padding: const EdgeInsets.all(24),
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Icon(
+                        Icons.error_outline,
+                        size: 48,
+                        color: theme.colorScheme.error,
+                      ),
+                      const SizedBox(height: 16),
+                      Text(
+                        l10n.loadingError(provider.error!),
+                        textAlign: TextAlign.center,
+                        style: theme.textTheme.titleMedium,
+                      ),
+                      const SizedBox(height: 24),
+                      FilledButton.tonal(
+                        onPressed: () => provider.loadCategories(),
+                        child: Text(l10n.retry),
+                      ),
+                    ],
+                  ),
                 ),
               );
             }
 
             if (provider.categories.isEmpty) {
-              return const Center(child: Text('暂无分类'));
+              return Center(
+                child: Padding(
+                  padding: const EdgeInsets.all(24),
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Icon(
+                        Icons.category_outlined,
+                        size: 48,
+                        color: theme.colorScheme.primary
+                            .withAlpha((0.5 * 255).round()),
+                      ),
+                      const SizedBox(height: 16),
+                      Text(
+                        l10n.noCategories,
+                        style: theme.textTheme.titleMedium,
+                      ),
+                      const SizedBox(height: 8),
+                      Text(
+                        l10n.noCategoriesHint,
+                        textAlign: TextAlign.center,
+                        style: theme.textTheme.bodyMedium?.copyWith(
+                          color: theme.textTheme.bodySmall?.color,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              );
             }
 
             return ListView.builder(
-              padding: const EdgeInsets.all(16),
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 20),
               itemCount: provider.categories.length,
               itemBuilder: (context, index) {
                 final category = provider.categories[index];
                 final categoryColor = _parseColor(category.color);
 
                 return Card(
-                  elevation: 2,
+                  elevation: 0,
                   margin: const EdgeInsets.only(bottom: 12),
-                  child: ListTile(
-                    contentPadding:
-                        const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                    leading: Container(
-                      width: 40,
-                      height: 40,
-                      decoration: BoxDecoration(
-                        color: categoryColor?.withOpacity(0.2),
-                        shape: BoxShape.circle,
-                        border: Border.all(
-                          color: categoryColor ?? Colors.grey,
-                          width: 2,
-                        ),
-                      ),
-                      child: Center(
-                        child: Text(
-                          category.name.characters.first,
-                          style: TextStyle(
-                            color: categoryColor,
-                            fontSize: 18,
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
-                      ),
-                    ),
-                    title: Text(
-                      category.name,
-                      style: const TextStyle(
-                        fontSize: 16,
-                        fontWeight: FontWeight.w500,
-                      ),
-                    ),
-                    trailing: IconButton(
-                      icon: const Icon(Icons.delete_outline),
-                      color: Colors.red,
-                      onPressed: () => _confirmDelete(context, category.id),
-                    ),
+                  color: theme.colorScheme.surfaceContainer,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(16),
+                  ),
+                  child: InkWell(
+                    borderRadius: BorderRadius.circular(16),
                     onTap: () {
                       Navigator.push(
                         context,
@@ -117,6 +128,84 @@ class CategoryListScreen extends StatelessWidget {
                         ),
                       );
                     },
+                    child: Padding(
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 16, vertical: 12),
+                      child: Row(
+                        children: [
+                          Container(
+                            width: 52,
+                            height: 52,
+                            decoration: BoxDecoration(
+                              color: categoryColor
+                                  ?.withAlpha((0.15 * 255).round()),
+                              shape: BoxShape.circle,
+                              border: Border.all(
+                                color:
+                                    categoryColor ?? theme.colorScheme.outline,
+                                width: 2,
+                              ),
+                              boxShadow: [
+                                BoxShadow(
+                                  color: (categoryColor ??
+                                          theme.colorScheme.primary)
+                                      .withAlpha((0.1 * 255).round()),
+                                  blurRadius: 8,
+                                  spreadRadius: 1,
+                                ),
+                              ],
+                            ),
+                            child: Center(
+                              child: Text(
+                                category.name.characters.first.toUpperCase(),
+                                style: TextStyle(
+                                  color: categoryColor ??
+                                      theme.colorScheme.primary,
+                                  fontSize: 22,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
+                            ),
+                          ),
+                          const SizedBox(width: 16),
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  category.name,
+                                  style: theme.textTheme.titleMedium?.copyWith(
+                                    fontWeight: FontWeight.w600,
+                                    letterSpacing: 0.2,
+                                  ),
+                                ),
+                                const SizedBox(height: 4),
+                                Text(
+                                  category.color?.toUpperCase() ?? '',
+                                  style: theme.textTheme.bodySmall?.copyWith(
+                                    color: theme.colorScheme.onSurfaceVariant,
+                                    letterSpacing: 0.5,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                          IconButton.outlined(
+                            icon: const Icon(Icons.delete_outline, size: 20),
+                            style: IconButton.styleFrom(
+                              foregroundColor: theme.colorScheme.error,
+                              side: BorderSide(
+                                color: theme.colorScheme.error
+                                    .withAlpha((0.2 * 255).round()),
+                              ),
+                            ),
+                            tooltip: l10n.delete,
+                            onPressed: () =>
+                                _confirmDelete(context, category.id),
+                          ),
+                        ],
+                      ),
+                    ),
                   ),
                 );
               },
@@ -124,7 +213,7 @@ class CategoryListScreen extends StatelessWidget {
           },
         ),
       ),
-      floatingActionButton: FloatingActionButton(
+      floatingActionButton: FloatingActionButton.extended(
         heroTag: 'category_add_fab',
         onPressed: () {
           Navigator.push(
@@ -132,25 +221,28 @@ class CategoryListScreen extends StatelessWidget {
             MaterialPageRoute(builder: (_) => const CategoryFormScreen()),
           );
         },
-        child: const Icon(Icons.add),
+        icon: const Icon(Icons.add),
+        label: Text(l10n.newCategory),
       ),
     );
   }
 
   Future<void> _confirmDelete(BuildContext context, int id) async {
+    final l10n = AppLocalizations.of(context)!;
+
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (context) => AlertDialog(
-        title: const Text('确认删除'),
-        content: const Text('确定要删除这个分类吗？'),
+        title: Text(l10n.confirmDelete),
+        content: Text(l10n.confirmDeleteCategory),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context, false),
-            child: const Text('取消'),
+            child: Text(l10n.cancel),
           ),
-          TextButton(
+          FilledButton(
             onPressed: () => Navigator.pop(context, true),
-            child: const Text('删除'),
+            child: Text(l10n.delete),
           ),
         ],
       ),

@@ -15,7 +15,7 @@ class AuthApi {
 
       return {
         'token': response.data['token'] as String,
-        'user': User.fromJson(response.data['user']),
+        'user': response.data['user'] as Map<String, dynamic>,
       };
     } catch (e) {
       print('登录失败: $e');

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
 
@@ -26,9 +27,12 @@ class _ReminderListScreenState extends State<ReminderListScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
+    final theme = Theme.of(context);
+
     return Scaffold(
       appBar: AppBar(
-        title: const Text('提醒设置'),
+        title: Text(l10n.reminders),
       ),
       body: Consumer<ReminderProvider>(
         builder: (context, provider, child) {
@@ -38,81 +42,80 @@ class _ReminderListScreenState extends State<ReminderListScreen> {
 
           if (provider.error != null) {
             return Center(
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Text('加载失败: ${provider.error}'),
-                  ElevatedButton(
-                    onPressed: () => provider.fetchReminders(widget.todo.id!),
-                    child: const Text('重试'),
-                  ),
-                ],
+              child: Padding(
+                padding: const EdgeInsets.all(24),
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Icon(
+                      Icons.error_outline,
+                      size: 48,
+                      color: theme.colorScheme.error,
+                    ),
+                    const SizedBox(height: 16),
+                    Text(
+                      l10n.loadingError(provider.error!),
+                      textAlign: TextAlign.center,
+                      style: theme.textTheme.titleMedium,
+                    ),
+                    const SizedBox(height: 24),
+                    FilledButton.tonal(
+                      onPressed: () => provider.fetchReminders(widget.todo.id!),
+                      child: Text(l10n.retry),
+                    ),
+                  ],
+                ),
               ),
             );
           }
 
           final reminders = provider.getRemindersForTodo(widget.todo.id!);
           if (reminders.isEmpty) {
-            return const Center(child: Text('暂无提醒，点击右下角添加'));
+            return Center(
+              child: Padding(
+                padding: const EdgeInsets.all(24),
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Icon(
+                      Icons.notifications_outlined,
+                      size: 48,
+                      color: theme.colorScheme.primary
+                          .withAlpha((0.5 * 255).round()),
+                    ),
+                    const SizedBox(height: 16),
+                    Text(
+                      l10n.noReminders,
+                      style: theme.textTheme.titleMedium,
+                    ),
+                    const SizedBox(height: 8),
+                    Text(
+                      l10n.noRemindersHint,
+                      textAlign: TextAlign.center,
+                      style: theme.textTheme.bodyMedium?.copyWith(
+                        color: theme.colorScheme.onSurfaceVariant,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            );
           }
 
           return ListView.builder(
-            padding: const EdgeInsets.all(16),
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 20),
             itemCount: reminders.length,
             itemBuilder: (context, index) {
               final reminder = reminders[index];
               return Card(
-                elevation: 2,
+                elevation: 0,
                 margin: const EdgeInsets.only(bottom: 12),
-                child: ListTile(
-                  contentPadding:
-                      const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                  leading: Container(
-                    width: 40,
-                    height: 40,
-                    decoration: BoxDecoration(
-                      color: Theme.of(context).primaryColor.withOpacity(0.1),
-                      shape: BoxShape.circle,
-                    ),
-                    child: Icon(
-                      reminder.notifyType == 'email'
-                          ? Icons.email_outlined
-                          : Icons.notifications_outlined,
-                      color: Theme.of(context).primaryColor,
-                    ),
-                  ),
-                  title: Text(
-                    reminder.remindType == 'once'
-                        ? '单次提醒'
-                        : reminder.remindType == 'daily'
-                            ? '每日提醒'
-                            : '每周提醒',
-                    style: const TextStyle(
-                      fontSize: 16,
-                      fontWeight: FontWeight.w500,
-                    ),
-                  ),
-                  subtitle: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      const SizedBox(height: 4),
-                      Text(
-                        '提醒时间: ${DateFormat('yyyy-MM-dd HH:mm').format(reminder.remindAt)}',
-                        style: TextStyle(color: Colors.grey[600]),
-                      ),
-                      const SizedBox(height: 4),
-                      Text(
-                        '通知方式: ${reminder.notifyType == 'email' ? '邮件' : '推送'}',
-                        style: TextStyle(color: Colors.grey[600]),
-                      ),
-                    ],
-                  ),
-                  trailing: IconButton(
-                    icon: const Icon(Icons.delete_outline),
-                    color: Colors.red,
-                    onPressed: () =>
-                        _showDeleteConfirmation(context, reminder.id!),
-                  ),
+                color: theme.colorScheme.surfaceContainer,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(16),
+                ),
+                child: InkWell(
+                  borderRadius: BorderRadius.circular(16),
                   onTap: () {
                     Navigator.push(
                       context,
@@ -120,17 +123,118 @@ class _ReminderListScreenState extends State<ReminderListScreen> {
                         builder: (_) => ReminderFormScreen(
                           todoId: widget.todo.id!,
                           todoTitle: widget.todo.title,
+                          reminder: reminder,
                         ),
                       ),
                     );
                   },
+                  child: Padding(
+                    padding: const EdgeInsets.all(16),
+                    child: Row(
+                      children: [
+                        Container(
+                          width: 48,
+                          height: 48,
+                          decoration: BoxDecoration(
+                            color: theme.colorScheme.primary
+                                .withAlpha((0.1 * 255).round()),
+                            shape: BoxShape.circle,
+                          ),
+                          child: Icon(
+                            reminder.notifyType == 'email'
+                                ? Icons.email_outlined
+                                : Icons.notifications_outlined,
+                            color: theme.colorScheme.primary,
+                          ),
+                        ),
+                        const SizedBox(width: 16),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                _getRemindTypeText(reminder.remindType, l10n),
+                                style: theme.textTheme.titleMedium?.copyWith(
+                                  fontWeight: FontWeight.w600,
+                                ),
+                              ),
+                              const SizedBox(height: 4),
+                              Text(
+                                DateFormat('yyyy-MM-dd HH:mm')
+                                    .format(reminder.remindAt),
+                                style: theme.textTheme.bodyMedium?.copyWith(
+                                  color: theme.colorScheme.onSurfaceVariant,
+                                ),
+                              ),
+                              const SizedBox(height: 4),
+                              Container(
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 8,
+                                  vertical: 2,
+                                ),
+                                decoration: BoxDecoration(
+                                  color: theme.colorScheme.primary
+                                      .withAlpha((0.1 * 255).round()),
+                                  borderRadius: BorderRadius.circular(12),
+                                ),
+                                child: Text(
+                                  _getNotifyTypeText(reminder.notifyType, l10n),
+                                  style: theme.textTheme.labelSmall?.copyWith(
+                                    color: theme.colorScheme.primary,
+                                    fontWeight: FontWeight.w500,
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                        IconButton.outlined(
+                          icon: const Icon(Icons.edit_outlined, size: 20),
+                          style: IconButton.styleFrom(
+                            foregroundColor: theme.colorScheme.primary,
+                            side: BorderSide(
+                              color: theme.colorScheme.primary
+                                  .withAlpha((0.2 * 255).round()),
+                            ),
+                          ),
+                          tooltip: l10n.edit,
+                          onPressed: () {
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (_) => ReminderFormScreen(
+                                  todoId: widget.todo.id!,
+                                  todoTitle: widget.todo.title,
+                                  reminder: reminder,
+                                ),
+                              ),
+                            );
+                          },
+                        ),
+                        const SizedBox(width: 8),
+                        IconButton.outlined(
+                          icon: const Icon(Icons.delete_outline, size: 20),
+                          style: IconButton.styleFrom(
+                            foregroundColor: theme.colorScheme.error,
+                            side: BorderSide(
+                              color: theme.colorScheme.error
+                                  .withAlpha((0.2 * 255).round()),
+                            ),
+                          ),
+                          tooltip: l10n.delete,
+                          onPressed: () =>
+                              _showDeleteConfirmation(context, reminder.id!),
+                        ),
+                      ],
+                    ),
+                  ),
                 ),
               );
             },
           );
         },
       ),
-      floatingActionButton: FloatingActionButton(
+      floatingActionButton: FloatingActionButton.extended(
         onPressed: () {
           Navigator.push(
             context,
@@ -142,7 +246,8 @@ class _ReminderListScreenState extends State<ReminderListScreen> {
             ),
           );
         },
-        child: const Icon(Icons.add),
+        icon: const Icon(Icons.add),
+        label: Text(l10n.newReminder),
       ),
     );
   }
@@ -185,6 +290,30 @@ class _ReminderListScreenState extends State<ReminderListScreen> {
           );
         }
       }
+    }
+  }
+
+  String _getRemindTypeText(String remindType, AppLocalizations l10n) {
+    switch (remindType) {
+      case 'once':
+        return '单次提醒';
+      case 'daily':
+        return '每日提醒';
+      case 'weekly':
+        return '每周提醒';
+      default:
+        throw Exception('Unknown remind type: $remindType');
+    }
+  }
+
+  String _getNotifyTypeText(String notifyType, AppLocalizations l10n) {
+    switch (notifyType) {
+      case 'email':
+        return '邮件';
+      case 'push':
+        return '推送';
+      default:
+        throw Exception('Unknown notify type: $notifyType');
     }
   }
 }

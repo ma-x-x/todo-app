@@ -132,5 +132,47 @@
     "category": "分类",
     "selectCategory": "选择分类",
     "noCategory": "无分类",
-    "titleRequired": "请输入标题"
+    "titleRequired": "请输入标题",
+    "refresh": "刷新",
+    "loadingError": "加载失败：{error}",
+    "@loadingError": {
+        "placeholders": {
+            "error": {
+                "type": "String"
+            }
+        }
+    },
+    "retry": "重试",
+    "noCategories": "暂无分类",
+    "noCategoriesHint": "创建你的第一个分类开始使用",
+    "confirmDeleteCategory": "确定要删除这个分类吗？",
+
+    "appName": "待办事项",
+    "@appName": {
+        "description": "应用程序名称"
+    },
+    "emailRequired": "请输入邮箱",
+    "@emailRequired": {
+        "description": "邮箱为空时的错误提示"
+    },
+    "emailInvalid": "请输入有效的邮箱",
+    "@emailInvalid": {
+        "description": "邮箱格式无效时的错误提示"
+    },
+    "passwordRequired": "请输入密码",
+    "@passwordRequired": {
+        "description": "密码为空时的错误提示"
+    },
+    "passwordTooShort": "密码长度不能少于6位",
+    "@passwordTooShort": {
+        "description": "密码太短时的错误提示"
+    },
+    "noAccount": "还没有账号？立即注册",
+    "@noAccount": {
+        "description": "注册链接文本"
+    },
+    "noTodosHint": "创建你的第一个待办事项开始使用",
+
+    "noReminders": "暂无提醒",
+    "noRemindersHint": "点击右下角添加提醒"
 } 

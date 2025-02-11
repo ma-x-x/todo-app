@@ -23,103 +23,247 @@ class _RegisterScreenState extends State<RegisterScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('注册')),
-      body: SingleChildScrollView(
-        padding: const EdgeInsets.all(16),
-        child: Center(
-          child: Form(
-            key: _formKey,
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                const Icon(
-                  Icons.app_registration,
-                  size: 100,
-                  color: Colors.blue,
-                ),
-                const SizedBox(height: 32),
-                CustomTextField(
-                  controller: _usernameController,
-                  focusNode: _usernameFocus,
-                  label: '用户名',
-                  keyboardType: TextInputType.text,
-                  textInputAction: TextInputAction.next,
-                  prefixIcon: const Icon(Icons.person),
-                  onSubmitted: (_) {
-                    FocusScope.of(context).requestFocus(_emailFocus);
-                  },
-                  validator: (value) {
-                    if (value?.isEmpty ?? true) {
-                      return '请输入用户名';
-                    }
-                    return null;
-                  },
-                ),
-                const SizedBox(height: 16),
-                CustomTextField(
-                  controller: _emailController,
-                  label: '邮箱',
-                  keyboardType: TextInputType.emailAddress,
-                  validator: (value) {
-                    if (value?.isEmpty ?? true) {
-                      return '请输入邮箱';
-                    }
-                    if (!RegExp(r'^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$')
-                        .hasMatch(value!)) {
-                      return '请输入有效的邮箱地址';
-                    }
-                    return null;
-                  },
-                ),
-                const SizedBox(height: 16),
-                CustomTextField(
-                  controller: _passwordController,
-                  label: '密码',
-                  obscureText: true,
-                  validator: (value) {
-                    if (value?.isEmpty ?? true) {
-                      return '请输入密码';
-                    }
-                    if (value!.length < 6) {
-                      return '密码长度不能小于6位';
-                    }
-                    if (value.length > 32) {
-                      return '密码长度不能超过32位';
-                    }
-                    return null;
-                  },
-                ),
-                const SizedBox(height: 16),
-                CustomTextField(
-                  controller: _confirmPasswordController,
-                  label: '确认密码',
-                  obscureText: true,
-                  validator: (value) {
-                    if (value?.isEmpty ?? true) {
-                      return '请确认密码';
-                    }
-                    if (value != _passwordController.text) {
-                      return '两次输入的密码不一致';
-                    }
-                    return null;
-                  },
-                ),
-                const SizedBox(height: 24),
-                SizedBox(
-                  width: double.infinity,
-                  child: Consumer<AuthProvider>(
-                    builder: (context, auth, _) {
-                      if (auth.isLoading) {
-                        return const Center(child: CircularProgressIndicator());
-                      }
-                      return ElevatedButton(
-                        onPressed: _register,
-                        child: const Text('注册'),
-                      );
-                    },
+      body: Container(
+        decoration: const BoxDecoration(
+          gradient: LinearGradient(
+            begin: Alignment.topCenter,
+            end: Alignment.bottomCenter,
+            colors: [
+              Color(0xFFFFF3E6), // 非常浅的橙色
+              Color(0xFFFFE4D4), // 浅珊瑚粉
+            ],
+          ),
+        ),
+        child: SafeArea(
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 24),
+            child: Center(
+              child: SingleChildScrollView(
+                child: Form(
+                  key: _formKey,
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Container(
+                        padding: const EdgeInsets.all(16),
+                        decoration: BoxDecoration(
+                          shape: BoxShape.circle,
+                          color: Colors.orange.withOpacity(0.2),
+                        ),
+                        child: Icon(
+                          Icons.app_registration,
+                          size: 80,
+                          color: Colors.orange.shade700,
+                        ),
+                      ),
+                      const SizedBox(height: 40),
+                      CustomTextField(
+                        controller: _usernameController,
+                        focusNode: _usernameFocus,
+                        label: '用户名',
+                        keyboardType: TextInputType.text,
+                        textInputAction: TextInputAction.next,
+                        onSubmitted: (_) {
+                          FocusScope.of(context).requestFocus(_emailFocus);
+                        },
+                        validator: (value) {
+                          if (value?.isEmpty ?? true) {
+                            return '请输入用户名';
+                          }
+                          return null;
+                        },
+                        style: TextStyle(color: Colors.orange.shade900),
+                        decoration: InputDecoration(
+                          filled: true,
+                          fillColor: Colors.white.withOpacity(0.5),
+                          border: const OutlineInputBorder(
+                            borderRadius: BorderRadius.all(Radius.circular(30)),
+                            borderSide: BorderSide.none,
+                          ),
+                          enabledBorder: const OutlineInputBorder(
+                            borderRadius: BorderRadius.all(Radius.circular(30)),
+                            borderSide: BorderSide.none,
+                          ),
+                          focusedBorder: OutlineInputBorder(
+                            borderRadius:
+                                const BorderRadius.all(Radius.circular(30)),
+                            borderSide:
+                                BorderSide(color: Colors.orange.shade400),
+                          ),
+                          labelText: '用户名',
+                          labelStyle: TextStyle(color: Colors.orange.shade700),
+                          prefixIcon:
+                              Icon(Icons.person, color: Colors.orange.shade600),
+                        ),
+                      ),
+                      const SizedBox(height: 20),
+                      CustomTextField(
+                        controller: _emailController,
+                        focusNode: _emailFocus,
+                        label: '邮箱',
+                        keyboardType: TextInputType.emailAddress,
+                        textInputAction: TextInputAction.next,
+                        validator: (value) {
+                          if (value?.isEmpty ?? true) {
+                            return '请输入邮箱';
+                          }
+                          if (!RegExp(r'^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$')
+                              .hasMatch(value!)) {
+                            return '请输入有效的邮箱地址';
+                          }
+                          return null;
+                        },
+                        style: TextStyle(color: Colors.orange.shade900),
+                        decoration: InputDecoration(
+                          filled: true,
+                          fillColor: Colors.white.withOpacity(0.5),
+                          border: const OutlineInputBorder(
+                            borderRadius: BorderRadius.all(Radius.circular(30)),
+                            borderSide: BorderSide.none,
+                          ),
+                          enabledBorder: const OutlineInputBorder(
+                            borderRadius: BorderRadius.all(Radius.circular(30)),
+                            borderSide: BorderSide.none,
+                          ),
+                          focusedBorder: OutlineInputBorder(
+                            borderRadius:
+                                const BorderRadius.all(Radius.circular(30)),
+                            borderSide:
+                                BorderSide(color: Colors.orange.shade400),
+                          ),
+                          labelText: '邮箱',
+                          labelStyle: TextStyle(color: Colors.orange.shade700),
+                          prefixIcon:
+                              Icon(Icons.email, color: Colors.orange.shade600),
+                        ),
+                      ),
+                      const SizedBox(height: 20),
+                      CustomTextField(
+                        controller: _passwordController,
+                        label: '密码',
+                        obscureText: true,
+                        textInputAction: TextInputAction.next,
+                        validator: (value) {
+                          if (value?.isEmpty ?? true) {
+                            return '请输入密码';
+                          }
+                          if (value!.length < 6) {
+                            return '密码长度不能小于6位';
+                          }
+                          return null;
+                        },
+                        style: TextStyle(color: Colors.orange.shade900),
+                        decoration: InputDecoration(
+                          filled: true,
+                          fillColor: Colors.white.withOpacity(0.5),
+                          border: const OutlineInputBorder(
+                            borderRadius: BorderRadius.all(Radius.circular(30)),
+                            borderSide: BorderSide.none,
+                          ),
+                          enabledBorder: const OutlineInputBorder(
+                            borderRadius: BorderRadius.all(Radius.circular(30)),
+                            borderSide: BorderSide.none,
+                          ),
+                          focusedBorder: OutlineInputBorder(
+                            borderRadius:
+                                const BorderRadius.all(Radius.circular(30)),
+                            borderSide:
+                                BorderSide(color: Colors.orange.shade400),
+                          ),
+                          labelText: '密码',
+                          labelStyle: TextStyle(color: Colors.orange.shade700),
+                          prefixIcon:
+                              Icon(Icons.lock, color: Colors.orange.shade600),
+                        ),
+                      ),
+                      const SizedBox(height: 20),
+                      CustomTextField(
+                        controller: _confirmPasswordController,
+                        label: '确认密码',
+                        obscureText: true,
+                        textInputAction: TextInputAction.done,
+                        validator: (value) {
+                          if (value?.isEmpty ?? true) {
+                            return '请确认密码';
+                          }
+                          if (value != _passwordController.text) {
+                            return '两次输入的密码不一致';
+                          }
+                          return null;
+                        },
+                        style: TextStyle(color: Colors.orange.shade900),
+                        decoration: InputDecoration(
+                          filled: true,
+                          fillColor: Colors.white.withOpacity(0.5),
+                          border: const OutlineInputBorder(
+                            borderRadius: BorderRadius.all(Radius.circular(30)),
+                            borderSide: BorderSide.none,
+                          ),
+                          enabledBorder: const OutlineInputBorder(
+                            borderRadius: BorderRadius.all(Radius.circular(30)),
+                            borderSide: BorderSide.none,
+                          ),
+                          focusedBorder: OutlineInputBorder(
+                            borderRadius:
+                                const BorderRadius.all(Radius.circular(30)),
+                            borderSide:
+                                BorderSide(color: Colors.orange.shade400),
+                          ),
+                          labelText: '确认密码',
+                          labelStyle: TextStyle(color: Colors.orange.shade700),
+                          prefixIcon: Icon(Icons.lock_outline,
+                              color: Colors.orange.shade600),
+                        ),
+                      ),
+                      const SizedBox(height: 32),
+                      SizedBox(
+                        width: double.infinity,
+                        height: 50,
+                        child: Consumer<AuthProvider>(
+                          builder: (context, auth, _) {
+                            if (auth.isLoading) {
+                              return Center(
+                                child: CircularProgressIndicator(
+                                  color: Colors.orange.shade400,
+                                ),
+                              );
+                            }
+                            return ElevatedButton(
+                              onPressed: _register,
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor: Colors.orange.shade400,
+                                foregroundColor: Colors.white,
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(30),
+                                ),
+                                elevation: 2,
+                              ),
+                              child: const Text(
+                                '注册',
+                                style: TextStyle(
+                                  fontSize: 18,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
+                            );
+                          },
+                        ),
+                      ),
+                      const SizedBox(height: 20),
+                      TextButton(
+                        onPressed: () => Navigator.pop(context),
+                        style: TextButton.styleFrom(
+                          foregroundColor: Colors.orange.shade700,
+                        ),
+                        child: const Text(
+                          '已有账号？返回登录',
+                          style: TextStyle(fontSize: 16),
+                        ),
+                      ),
+                    ],
                   ),
                 ),
-              ],
+              ),
             ),
           ),
         ),

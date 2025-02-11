@@ -2,10 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 import 'package:provider/provider.dart';
 
-import '../../models/todo_filter.dart';
 import '../../providers/filter_provider.dart';
 import '../../providers/todo_provider.dart';
-import '../../widgets/todo_item.dart';
+import '../reminder/reminder_list_screen.dart';
 import 'todo_filter_screen.dart';
 import 'todo_form_screen.dart';
 import 'todo_search_delegate.dart';
@@ -15,28 +14,29 @@ class TodoListScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
+    final theme = Theme.of(context);
+
     return Scaffold(
       appBar: AppBar(
-        title: Text(AppLocalizations.of(context)!.todoList),
+        title: Text(l10n.todoList),
         automaticallyImplyLeading: false,
         actions: [
           IconButton(
             icon: const Icon(Icons.refresh),
-            onPressed: () {
-              context.read<TodoProvider>().loadTodos();
-            },
+            tooltip: l10n.refresh,
+            onPressed: () => context.read<TodoProvider>().loadTodos(),
           ),
           IconButton(
             icon: const Icon(Icons.search),
+            tooltip: l10n.searchHint,
             onPressed: () {
-              showSearch(
-                context: context,
-                delegate: TodoSearchDelegate(),
-              );
+              showSearch(context: context, delegate: TodoSearchDelegate());
             },
           ),
           IconButton(
             icon: const Icon(Icons.filter_list),
+            tooltip: l10n.filters,
             onPressed: () {
               Navigator.push(
                 context,
@@ -54,74 +54,287 @@ class TodoListScreen extends StatelessWidget {
 
           if (todoProvider.error != null) {
             return Center(
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Text('加载失败: ${todoProvider.error}'),
-                  ElevatedButton(
-                    onPressed: () => todoProvider.loadTodos(),
-                    child: const Text('重试'),
-                  ),
-                ],
+              child: Padding(
+                padding: const EdgeInsets.all(24),
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Icon(
+                      Icons.error_outline,
+                      size: 48,
+                      color: theme.colorScheme.error,
+                    ),
+                    const SizedBox(height: 16),
+                    Text(
+                      l10n.loadingError(todoProvider.error!),
+                      textAlign: TextAlign.center,
+                      style: theme.textTheme.titleMedium,
+                    ),
+                    const SizedBox(height: 24),
+                    FilledButton.tonal(
+                      onPressed: () => todoProvider.loadTodos(),
+                      child: Text(l10n.retry),
+                    ),
+                  ],
+                ),
               ),
             );
           }
 
-          final todos = todoProvider.todos.where((todo) {
-            // 应用搜索过滤
-            if (filterProvider.searchQuery.isNotEmpty) {
-              final query = filterProvider.searchQuery.toLowerCase();
-              if (!todo.title.toLowerCase().contains(query) &&
-                  !(todo.description?.toLowerCase().contains(query) ?? false)) {
-                return false;
-              }
-            }
-
-            // 应用状态过滤
-            switch (filterProvider.filter) {
-              case TodoFilter.active:
-                if (todo.completed) return false;
-                break;
-              case TodoFilter.completed:
-                if (!todo.completed) return false;
-                break;
-              default:
-                break;
-            }
-
-            // 应用分类过滤
-            if (filterProvider.selectedCategory != null &&
-                todo.categoryId != filterProvider.selectedCategory!.id) {
-              return false;
-            }
-
-            // 应用优先级过滤
-            if (filterProvider.selectedPriority != null &&
-                todo.priority != filterProvider.selectedPriority) {
-              return false;
-            }
-
-            return true;
-          }).toList();
+          final todos = todoProvider.getFilteredTodos(filterProvider);
 
           if (todos.isEmpty) {
             return Center(
-              child: Text(AppLocalizations.of(context)!.noTodos),
+              child: Padding(
+                padding: const EdgeInsets.all(24),
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Icon(
+                      Icons.check_circle_outline,
+                      size: 48,
+                      color: theme.colorScheme.primary
+                          .withAlpha((0.5 * 255).round()),
+                    ),
+                    const SizedBox(height: 16),
+                    Text(
+                      l10n.noTodos,
+                      style: theme.textTheme.titleMedium,
+                    ),
+                    const SizedBox(height: 8),
+                    Text(
+                      l10n.noTodosHint,
+                      textAlign: TextAlign.center,
+                      style: theme.textTheme.bodyMedium?.copyWith(
+                        color: theme.colorScheme.onSurfaceVariant,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
             );
           }
 
           return ListView.builder(
-            addAutomaticKeepAlives: false,
-            addRepaintBoundaries: false,
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 20),
             itemCount: todos.length,
-            itemBuilder: (context, index) => TodoItem(
-              key: ValueKey(todos[index].id),
-              todo: todos[index],
-            ),
+            itemBuilder: (context, index) {
+              final todo = todos[index];
+              final category = todo.category;
+              final categoryColor = category?.color != null
+                  ? Color(int.parse(category!.color!.replaceFirst('#', 'FF'),
+                      radix: 16))
+                  : null;
+
+              return Card(
+                elevation: 0,
+                margin: const EdgeInsets.only(bottom: 12),
+                color: todo.completed
+                    ? theme.colorScheme.surfaceContainer
+                        .withAlpha((0.6 * 255).round())
+                    : theme.colorScheme.surfaceContainer,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(16),
+                ),
+                child: InkWell(
+                  borderRadius: BorderRadius.circular(16),
+                  onTap: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (_) => ReminderListScreen(todo: todo),
+                      ),
+                    );
+                  },
+                  onLongPress: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (_) => TodoFormScreen(todo: todo),
+                      ),
+                    );
+                  },
+                  child: Opacity(
+                    opacity: todo.completed ? 0.6 : 1.0,
+                    child: Padding(
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 16, vertical: 12),
+                      child: Row(
+                        children: [
+                          // Checkbox with custom style
+                          Container(
+                            width: 42,
+                            height: 42,
+                            decoration: BoxDecoration(
+                              color: theme.colorScheme.surface,
+                              shape: BoxShape.circle,
+                              border: Border.all(
+                                color: todo.completed
+                                    ? (categoryColor ??
+                                        theme.colorScheme.primary)
+                                    : theme.colorScheme.outlineVariant,
+                                width: 1.5,
+                              ),
+                            ),
+                            child: Material(
+                              color: Colors.transparent,
+                              child: InkWell(
+                                customBorder: const CircleBorder(),
+                                onTap: () {
+                                  todoProvider.toggleTodoStatus(todo);
+                                },
+                                child: Center(
+                                  child: AnimatedSwitcher(
+                                    duration: const Duration(milliseconds: 200),
+                                    child: Icon(
+                                      todo.completed ? Icons.check : null,
+                                      key: ValueKey(todo.completed),
+                                      color: todo.completed
+                                          ? (categoryColor ??
+                                              theme.colorScheme.primary)
+                                          : null,
+                                      size: 20,
+                                    ),
+                                  ),
+                                ),
+                              ),
+                            ),
+                          ),
+                          const SizedBox(width: 16),
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Row(
+                                  children: [
+                                    Expanded(
+                                      child: Text(
+                                        todo.title,
+                                        style: theme.textTheme.titleMedium
+                                            ?.copyWith(
+                                          fontWeight: FontWeight.w600,
+                                          letterSpacing: 0.2,
+                                          decoration: todo.completed
+                                              ? TextDecoration.lineThrough
+                                              : null,
+                                          color: todo.completed
+                                              ? theme
+                                                  .colorScheme.onSurfaceVariant
+                                              : null,
+                                        ),
+                                      ),
+                                    ),
+                                    if (todo.hasActiveReminder())
+                                      Icon(
+                                        Icons.notifications_active_outlined,
+                                        size: 18,
+                                        color: categoryColor ??
+                                            theme.colorScheme.primary,
+                                      ),
+                                  ],
+                                ),
+                                if (todo.description?.isNotEmpty ?? false) ...[
+                                  const SizedBox(height: 4),
+                                  Text(
+                                    todo.description!,
+                                    maxLines: 2,
+                                    overflow: TextOverflow.ellipsis,
+                                    style: theme.textTheme.bodySmall?.copyWith(
+                                      color: theme.colorScheme.onSurfaceVariant,
+                                    ),
+                                  ),
+                                ],
+                                const SizedBox(height: 4),
+                                Row(
+                                  children: [
+                                    if (category != null)
+                                      Container(
+                                        padding: const EdgeInsets.symmetric(
+                                          horizontal: 8,
+                                          vertical: 2,
+                                        ),
+                                        decoration: BoxDecoration(
+                                          color: (categoryColor ??
+                                                  theme.colorScheme.primary)
+                                              .withAlpha((0.1 * 255).round()),
+                                          borderRadius:
+                                              BorderRadius.circular(12),
+                                        ),
+                                        child: Text(
+                                          category.name,
+                                          style: theme.textTheme.labelSmall
+                                              ?.copyWith(
+                                            color: categoryColor ??
+                                                theme.colorScheme.primary,
+                                            fontWeight: FontWeight.w500,
+                                          ),
+                                        ),
+                                      ),
+                                    if (category != null)
+                                      const SizedBox(width: 8),
+                                    Icon(
+                                      _getPriorityIcon(todo.priority),
+                                      size: 16,
+                                      color: _getPriorityColor(
+                                          todo.priority, theme),
+                                    ),
+                                    const SizedBox(width: 4),
+                                    Text(
+                                      _getPriorityText(todo.priority, l10n),
+                                      style:
+                                          theme.textTheme.labelSmall?.copyWith(
+                                        color: _getPriorityColor(
+                                            todo.priority, theme),
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ],
+                            ),
+                          ),
+                          IconButton.outlined(
+                            icon: const Icon(Icons.edit_outlined, size: 20),
+                            style: IconButton.styleFrom(
+                              foregroundColor: theme.colorScheme.primary,
+                              side: BorderSide(
+                                color: theme.colorScheme.primary
+                                    .withAlpha((0.2 * 255).round()),
+                              ),
+                            ),
+                            tooltip: l10n.edit,
+                            onPressed: () {
+                              Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                  builder: (_) => TodoFormScreen(todo: todo),
+                                ),
+                              );
+                            },
+                          ),
+                          const SizedBox(width: 8),
+                          IconButton.outlined(
+                            icon: const Icon(Icons.delete_outline, size: 20),
+                            style: IconButton.styleFrom(
+                              foregroundColor: theme.colorScheme.error,
+                              side: BorderSide(
+                                color: theme.colorScheme.error
+                                    .withAlpha((0.2 * 255).round()),
+                              ),
+                            ),
+                            tooltip: l10n.delete,
+                            onPressed: () => _confirmDelete(context, todo.id!),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                ),
+              );
+            },
           );
         },
       ),
-      floatingActionButton: FloatingActionButton(
+      floatingActionButton: FloatingActionButton.extended(
         heroTag: 'todo_add_fab',
         onPressed: () {
           Navigator.push(
@@ -129,8 +342,76 @@ class TodoListScreen extends StatelessWidget {
             MaterialPageRoute(builder: (_) => const TodoFormScreen()),
           );
         },
-        child: const Icon(Icons.add),
+        icon: const Icon(Icons.add),
+        label: Text(l10n.newTodo),
       ),
     );
+  }
+
+  IconData _getPriorityIcon(String priority) {
+    switch (priority) {
+      case 'high':
+        return Icons.priority_high;
+      case 'low':
+        return Icons.arrow_downward;
+      default:
+        return Icons.remove;
+    }
+  }
+
+  Color _getPriorityColor(String priority, ThemeData theme) {
+    switch (priority) {
+      case 'high':
+        return theme.colorScheme.error;
+      case 'low':
+        return theme.colorScheme.tertiary;
+      default:
+        return theme.colorScheme.primary;
+    }
+  }
+
+  String _getPriorityText(String priority, AppLocalizations l10n) {
+    switch (priority) {
+      case 'high':
+        return l10n.priorityHigh;
+      case 'low':
+        return l10n.priorityLow;
+      default:
+        return l10n.priorityMedium;
+    }
+  }
+
+  Future<void> _confirmDelete(BuildContext context, int id) async {
+    final l10n = AppLocalizations.of(context)!;
+
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: Text(l10n.confirmDelete),
+        content: Text(l10n.confirmDeleteMessage),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context, false),
+            child: Text(l10n.cancel),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.pop(context, true),
+            child: Text(l10n.delete),
+          ),
+        ],
+      ),
+    );
+
+    if (confirmed == true && context.mounted) {
+      try {
+        await context.read<TodoProvider>().deleteTodo(id);
+      } catch (e) {
+        if (context.mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text(e.toString())),
+          );
+        }
+      }
+    }
   }
 }

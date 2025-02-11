@@ -21,110 +21,157 @@ class SettingsScreen extends StatefulWidget {
 class _SettingsScreenState extends State<SettingsScreen> {
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final l10n = AppLocalizations.of(context)!;
+
     return Scaffold(
       appBar: AppBar(
-        title: Text(AppLocalizations.of(context)!.settings),
+        title: Text(l10n.settings),
         automaticallyImplyLeading: false,
       ),
       body: ListView(
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 20),
         children: [
-          ListTile(
-            leading: const Icon(Icons.language),
-            title: Text(AppLocalizations.of(context)!.language),
-            trailing: Consumer<LocaleProvider>(
-              builder: (context, provider, child) {
-                return DropdownButton<Locale>(
-                  value: provider.locale ?? Localizations.localeOf(context),
-                  items: L10n.all.map((locale) {
-                    return DropdownMenuItem(
-                      value: locale,
-                      child: Text(_getLanguageName(locale.languageCode)),
+          _buildSettingsCard(
+            theme,
+            children: [
+              _buildSettingTile(
+                theme,
+                icon: Icons.language,
+                title: l10n.language,
+                trailing: Consumer<LocaleProvider>(
+                  builder: (context, provider, child) {
+                    return DropdownButton<Locale>(
+                      value: provider.locale ?? Localizations.localeOf(context),
+                      items: L10n.all.map((locale) {
+                        return DropdownMenuItem(
+                          value: locale,
+                          child: Text(_getLanguageName(locale.languageCode)),
+                        );
+                      }).toList(),
+                      onChanged: (Locale? newLocale) {
+                        if (newLocale != null) {
+                          provider.setLocale(newLocale);
+                        }
+                      },
                     );
-                  }).toList(),
-                  onChanged: (Locale? newLocale) {
-                    if (newLocale != null) {
-                      provider.setLocale(newLocale);
-                    }
                   },
-                );
-              },
-            ),
+                ),
+              ),
+              _buildSettingTile(
+                theme,
+                icon: Icons.palette,
+                title: l10n.themeSettings,
+                onTap: () =>
+                    Navigator.pushNamed(context, AppRouter.themeSettings),
+              ),
+              _buildSettingTile(
+                theme,
+                icon: Icons.notifications,
+                title: l10n.notifications,
+                onTap: () => Navigator.pushNamed(
+                    context, AppRouter.notificationSettings),
+              ),
+            ],
           ),
-          ListTile(
-            leading: const Icon(Icons.palette),
-            title: Text(AppLocalizations.of(context)!.themeSettings),
-            trailing: const Icon(Icons.arrow_forward_ios),
-            onTap: () {
-              Navigator.pushNamed(context, AppRouter.themeSettings);
-            },
+          const SizedBox(height: 16),
+          _buildSettingsCard(
+            theme,
+            children: [
+              _buildSettingTile(
+                theme,
+                icon: Icons.backup,
+                title: l10n.backup,
+                onTap: () => Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (_) => const BackupScreen()),
+                ),
+              ),
+              _buildSettingTile(
+                theme,
+                icon: Icons.file_download,
+                title: l10n.export,
+                onTap: () => Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (_) => const ExportScreen()),
+                ),
+              ),
+            ],
           ),
-          ListTile(
-            leading: const Icon(Icons.notifications),
-            title: Text(AppLocalizations.of(context)!.notifications),
-            trailing: const Icon(Icons.arrow_forward_ios),
-            onTap: () {
-              Navigator.pushNamed(context, AppRouter.notificationSettings);
-            },
-          ),
-          ListTile(
-            leading: const Icon(Icons.backup),
-            title: Text(AppLocalizations.of(context)!.backup),
-            trailing: const Icon(Icons.arrow_forward_ios),
-            onTap: () {
-              Navigator.push(
-                context,
-                MaterialPageRoute(builder: (_) => const BackupScreen()),
-              );
-            },
-          ),
-          ListTile(
-            leading: const Icon(Icons.file_download),
-            title: Text(AppLocalizations.of(context)!.export),
-            trailing: const Icon(Icons.arrow_forward_ios),
-            onTap: () {
-              Navigator.push(
-                context,
-                MaterialPageRoute(builder: (_) => const ExportScreen()),
-              );
-            },
-          ),
-          const Divider(),
-          ListTile(
-            leading: const Icon(Icons.system_update),
-            title: const Text('检查更新'),
-            onTap: () async {
-              final updateService = context.read<UpdateService>();
-              final updateInfo = await updateService.checkForUpdates();
-
-              if (updateInfo == null && mounted) {
-                ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(content: Text('已是最新版本')),
-                );
-                return;
-              }
-
-              if (updateInfo != null && mounted) {
-                await showDialog(
-                  context: context,
-                  barrierDismissible: !updateInfo.isForced,
-                  builder: (context) => UpdateDialog(updateInfo: updateInfo),
-                );
-              }
-            },
-          ),
-          ListTile(
-            leading: const Icon(Icons.logout),
-            title: Text(AppLocalizations.of(context)!.logout),
-            onTap: () => _showLogoutDialog(context),
-          ),
-          ListTile(
-            leading: const Icon(Icons.info),
-            title: Text(AppLocalizations.of(context)!.about),
-            trailing: const Icon(Icons.arrow_forward_ios),
-            onTap: () => _showAboutDialog(context),
+          const SizedBox(height: 16),
+          _buildSettingsCard(
+            theme,
+            children: [
+              _buildSettingTile(
+                theme,
+                icon: Icons.system_update,
+                title: '检查更新',
+                onTap: () => _checkForUpdates(context),
+              ),
+              _buildSettingTile(
+                theme,
+                icon: Icons.logout,
+                title: l10n.logout,
+                iconColor: theme.colorScheme.error,
+                textColor: theme.colorScheme.error,
+                onTap: () => _showLogoutDialog(context),
+              ),
+              _buildSettingTile(
+                theme,
+                icon: Icons.info,
+                title: l10n.about,
+                onTap: () => _showAboutDialog(context),
+                isLast: true,
+              ),
+            ],
           ),
         ],
       ),
+    );
+  }
+
+  Widget _buildSettingsCard(ThemeData theme, {required List<Widget> children}) {
+    return Card(
+      elevation: 0,
+      color: theme.colorScheme.surfaceContainer,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(16),
+      ),
+      child: Column(children: children),
+    );
+  }
+
+  Widget _buildSettingTile(
+    ThemeData theme, {
+    required IconData icon,
+    required String title,
+    Widget? trailing,
+    VoidCallback? onTap,
+    Color? iconColor,
+    Color? textColor,
+    bool isLast = false,
+  }) {
+    return Column(
+      children: [
+        ListTile(
+          leading: Icon(icon, color: iconColor ?? theme.colorScheme.primary),
+          title: Text(
+            title,
+            style: theme.textTheme.bodyLarge?.copyWith(
+              color: textColor,
+            ),
+          ),
+          trailing: trailing ?? const Icon(Icons.arrow_forward_ios, size: 20),
+          onTap: onTap,
+        ),
+        if (!isLast)
+          Divider(
+            height: 1,
+            indent: 56,
+            endIndent: 16,
+            color: theme.colorScheme.outlineVariant,
+          ),
+      ],
     );
   }
 
@@ -191,5 +238,25 @@ class _SettingsScreenState extends State<SettingsScreen> {
         ],
       ),
     );
+  }
+
+  Future<void> _checkForUpdates(BuildContext context) async {
+    final updateService = context.read<UpdateService>();
+    final updateInfo = await updateService.checkForUpdates();
+
+    if (updateInfo == null && mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('已是最新版本')),
+      );
+      return;
+    }
+
+    if (updateInfo != null && mounted) {
+      await showDialog(
+        context: context,
+        barrierDismissible: !updateInfo.isForced,
+        builder: (context) => UpdateDialog(updateInfo: updateInfo),
+      );
+    }
   }
 }

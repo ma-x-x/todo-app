@@ -41,7 +41,8 @@ class _CategoryFormScreenState extends State<CategoryFormScreen> {
     return Scaffold(
       appBar: AppBar(
         title: Text(
-            widget.category == null ? l10n.newCategory : l10n.editCategory),
+          widget.category == null ? l10n.newCategory : l10n.editCategory,
+        ),
         elevation: 0,
       ),
       body: Form(
@@ -60,49 +61,51 @@ class _CategoryFormScreenState extends State<CategoryFormScreen> {
                 return null;
               },
             ),
-            const SizedBox(height: 24),
+            const SizedBox(height: 32),
             Text(
               l10n.categoryColor,
-              style: theme.textTheme.titleMedium,
+              style: theme.textTheme.titleMedium?.copyWith(
+                fontWeight: FontWeight.w600,
+              ),
             ),
             const SizedBox(height: 16),
             Card(
               elevation: 2,
               shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(12),
+                borderRadius: BorderRadius.circular(16),
               ),
               child: Padding(
-                padding: const EdgeInsets.all(16),
+                padding: const EdgeInsets.all(20),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Row(
                       children: [
                         Container(
-                          width: 48,
-                          height: 48,
+                          width: 56,
+                          height: 56,
                           decoration: BoxDecoration(
-                            color: _selectedColor.withOpacity(0.2),
+                            color: _selectedColor.withOpacity(0.15),
                             shape: BoxShape.circle,
                             border: Border.all(
                               color: _selectedColor,
-                              width: 2,
+                              width: 2.5,
                             ),
                           ),
                           child: Center(
                             child: Text(
                               _nameController.text.isEmpty
                                   ? "A"
-                                  : _nameController.text[0],
+                                  : _nameController.text[0].toUpperCase(),
                               style: TextStyle(
                                 color: _selectedColor,
-                                fontSize: 20,
+                                fontSize: 24,
                                 fontWeight: FontWeight.bold,
                               ),
                             ),
                           ),
                         ),
-                        const SizedBox(width: 16),
+                        const SizedBox(width: 20),
                         Expanded(
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
@@ -111,26 +114,30 @@ class _CategoryFormScreenState extends State<CategoryFormScreen> {
                                 _nameController.text.isEmpty
                                     ? l10n.categoryName
                                     : _nameController.text,
-                                style: theme.textTheme.titleMedium,
+                                style: theme.textTheme.titleLarge?.copyWith(
+                                  fontWeight: FontWeight.w600,
+                                ),
                               ),
                               const SizedBox(height: 4),
                               Text(
                                 '#${_selectedColor.value.toRadixString(16).substring(2).toUpperCase()}',
-                                style: theme.textTheme.bodySmall,
+                                style: theme.textTheme.bodyMedium?.copyWith(
+                                  color: theme.textTheme.bodySmall?.color,
+                                ),
                               ),
                             ],
                           ),
                         ),
                       ],
                     ),
-                    const SizedBox(height: 16),
+                    const SizedBox(height: 24),
                     BlockPicker(
                       pickerColor: _selectedColor,
                       onColorChanged: (color) {
                         setState(() => _selectedColor = color);
                       },
                       itemBuilder: (color, isCurrentColor, onTap) => Container(
-                        margin: const EdgeInsets.all(4),
+                        margin: const EdgeInsets.all(5),
                         decoration: BoxDecoration(
                           color: color,
                           shape: BoxShape.circle,
@@ -138,8 +145,16 @@ class _CategoryFormScreenState extends State<CategoryFormScreen> {
                             color: isCurrentColor
                                 ? theme.colorScheme.primary
                                 : Colors.transparent,
-                            width: 2,
+                            width: 2.5,
                           ),
+                          boxShadow: [
+                            if (isCurrentColor)
+                              BoxShadow(
+                                color: color.withOpacity(0.4),
+                                blurRadius: 8,
+                                spreadRadius: 1,
+                              ),
+                          ],
                         ),
                         child: Material(
                           color: Colors.transparent,

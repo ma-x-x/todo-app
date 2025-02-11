@@ -502,5 +502,45 @@
     "category": "Category",
     "selectCategory": "Select Category",
     "noCategory": "No Category",
-    "titleRequired": "Title is required"
+    "titleRequired": "Title is required",
+    "appName": "Todo App",
+    "@appName": {
+        "description": "The name of the application"
+    },
+    "emailRequired": "Please enter your email",
+    "@emailRequired": {
+        "description": "Error message when email is empty"
+    },
+    "emailInvalid": "Please enter a valid email",
+    "@emailInvalid": {
+        "description": "Error message when email format is invalid"
+    },
+    "passwordRequired": "Please enter your password",
+    "@passwordRequired": {
+        "description": "Error message when password is empty"
+    },
+    "passwordTooShort": "Password must be at least 6 characters",
+    "@passwordTooShort": {
+        "description": "Error message when password is too short"
+    },
+    "noAccount": "Don't have an account? Sign up",
+    "@noAccount": {
+        "description": "Text for registration link"
+    },
+    "refresh": "Refresh",
+    "loadingError": "Loading failed: {error}",
+    "@loadingError": {
+        "placeholders": {
+            "error": {
+                "type": "String"
+            }
+        }
+    },
+    "retry": "Retry",
+    "noCategories": "No Categories",
+    "noCategoriesHint": "Create your first category to get started",
+    "confirmDeleteCategory": "Are you sure you want to delete this category?",
+    "noTodosHint": "Create your first todo to get started",
+    "noReminders": "No Reminders",
+    "noRemindersHint": "Create your first reminder to get started"
 } 

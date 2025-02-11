@@ -10,6 +10,7 @@ import '../services/storage_service.dart';
 class AuthProvider with ChangeNotifier {
   final AuthApi _authApi;
   final StorageService _storage;
+  final ApiClient _apiClient;
 
   User? _currentUser;
   bool _isLoading = false;
@@ -21,7 +22,8 @@ class AuthProvider with ChangeNotifier {
     required ApiClient apiClient,
     required StorageService storage,
   })  : _authApi = AuthApi(apiClient),
-        _storage = storage {
+        _storage = storage,
+        _apiClient = apiClient {
     _loadStoredAuth();
     _setupTokenRefresh();
   }
@@ -43,28 +45,26 @@ class AuthProvider with ChangeNotifier {
   bool get isAuthenticated => _currentUser != null;
 
   Future<void> login(String username, String password) async {
-    _isLoading = true;
-    _error = null;
-    notifyListeners();
-
     try {
-      final response = await _authApi.login(username, password);
+      _isLoading = true;
+      _error = null;
+      notifyListeners();
 
-      // 确保正确获取 token 和 user 数据
-      final token = response['token'] as String;
-      final user = response['user'] as User;
+      final response = await _authApi.login(username, password);
+      final token = response['token'].toString().trim();
+      final userData = Map<String, dynamic>.from(response['user'] as Map);
 
       await _storage.saveToken(token);
-      print('Token已保存: $token');
+      await _storage.saveUser(userData);
 
-      await _storage.saveUser(user.toJson());
-      _currentUser = user;
-      print('用户数据已保存: $_currentUser');
+      _currentUser = User.fromJson(userData);
+      _setupTokenRefresh();
 
       notifyListeners();
+      print('Auth state updated: isAuthenticated = $isAuthenticated');
     } catch (e) {
-      print('登录处理错误: $e');
-      _error = '登录失败：${e.toString()}';
+      _error = e.toString();
+      _currentUser = null;
       notifyListeners();
       rethrow;
     } finally {
@@ -93,13 +93,23 @@ class AuthProvider with ChangeNotifier {
 
   Future<void> logout() async {
     try {
+      _isLoading = true;
+      notifyListeners();
+
       await _storage.deleteToken();
       await _storage.deleteUser();
       _currentUser = null;
+      _refreshTimer?.cancel();
+
+      _apiClient.clearAuth();
+
       notifyListeners();
     } catch (e) {
       print('退出登录失败: $e');
       rethrow;
+    } finally {
+      _isLoading = false;
+      notifyListeners();
     }
   }
 

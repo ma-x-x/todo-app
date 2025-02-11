@@ -1,11 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_gen/gen_l10n/app_localizations.dart';
-import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:provider/provider.dart';
 
 import 'api/api_client.dart';
-import 'l10n/l10n.dart';
 import 'providers/auth_provider.dart';
 import 'providers/category_provider.dart';
 import 'providers/filter_provider.dart';
@@ -14,7 +12,7 @@ import 'providers/notification_settings_provider.dart';
 import 'providers/reminder_provider.dart';
 import 'providers/theme_provider.dart';
 import 'providers/todo_provider.dart';
-import 'routes/app_router.dart';
+import 'screens/auth/auth_wrapper.dart';
 import 'screens/auth/login_screen.dart';
 import 'screens/home/home_screen.dart';
 import 'services/network_service.dart';
@@ -22,9 +20,7 @@ import 'services/notification_service.dart';
 import 'services/offline_manager.dart';
 import 'services/storage_service.dart';
 import 'services/update_service.dart';
-import 'utils/theme.dart';
 import 'widgets/error_boundary.dart';
-import 'widgets/update_dialog.dart';
 
 void main() async {
   // 确保 Flutter 绑定初始化
@@ -127,33 +123,8 @@ void main() async {
   ));
 }
 
-class MyApp extends StatefulWidget {
+class MyApp extends StatelessWidget {
   const MyApp({super.key});
-
-  @override
-  State<MyApp> createState() => _MyAppState();
-}
-
-class _MyAppState extends State<MyApp> {
-  @override
-  void initState() {
-    super.initState();
-    _checkForUpdates();
-  }
-
-  Future<void> _checkForUpdates() async {
-    final updateService = context.read<UpdateService>();
-    final updateInfo = await updateService.checkForUpdates();
-
-    if (updateInfo != null && mounted) {
-      // 显示更新对话框
-      await showDialog(
-        context: context,
-        barrierDismissible: !updateInfo.isForced,
-        builder: (context) => UpdateDialog(updateInfo: updateInfo),
-      );
-    }
-  }
 
   @override
   Widget build(BuildContext context) {
@@ -161,69 +132,20 @@ class _MyAppState extends State<MyApp> {
       builder: (context, themeProvider, localeProvider, child) {
         return MaterialApp(
           title: 'Todo App',
-          theme: AppTheme.lightTheme,
-          darkTheme: AppTheme.darkTheme,
+          theme: themeProvider.lightTheme,
+          darkTheme: themeProvider.darkTheme,
           themeMode: themeProvider.themeMode,
           locale: localeProvider.locale,
-          supportedLocales: L10n.all,
-          localizationsDelegates: const [
-            AppLocalizations.delegate,
-            GlobalMaterialLocalizations.delegate,
-            GlobalWidgetsLocalizations.delegate,
-            GlobalCupertinoLocalizations.delegate,
-          ],
-          navigatorObservers: [
-            _AuthRouteObserver(),
-          ],
-          onGenerateRoute: (settings) {
-            // 处理根路由
-            if (settings.name == '/') {
-              return MaterialPageRoute(
-                builder: (_) => context.read<AuthProvider>().isAuthenticated
-                    ? const HomeScreen()
-                    : const LoginScreen(),
-              );
-            }
-            // 处理其他路由
-            return AppRouter.generateRoute(settings);
-          },
+          localizationsDelegates: AppLocalizations.localizationsDelegates,
+          supportedLocales: AppLocalizations.supportedLocales,
           initialRoute: '/',
+          routes: {
+            '/': (context) => const AuthWrapper(),
+            '/login': (context) => const LoginScreen(),
+            '/home': (context) => const HomeScreen(),
+          },
         );
       },
     );
-  }
-}
-
-// 添加路由观察者类
-class _AuthRouteObserver extends NavigatorObserver {
-  @override
-  void didPush(Route<dynamic> route, Route<dynamic>? previousRoute) {
-    _checkAuth(route);
-  }
-
-  @override
-  void didReplace({Route<dynamic>? newRoute, Route<dynamic>? oldRoute}) {
-    if (newRoute != null) {
-      _checkAuth(newRoute);
-    }
-  }
-
-  void _checkAuth(Route<dynamic> route) {
-    // 获取当前路由名称
-    final routeName = route.settings.name;
-    if (routeName == null) return;
-
-    // 如果不是登录或注册页面，检查认证状态
-    if (routeName != AppRouter.login && routeName != AppRouter.register) {
-      Future.delayed(Duration.zero, () {
-        final context = navigator?.context;
-        if (context != null && !context.read<AuthProvider>().isAuthenticated) {
-          navigator?.pushNamedAndRemoveUntil(
-            AppRouter.login,
-            (route) => false,
-          );
-        }
-      });
-    }
   }
 }

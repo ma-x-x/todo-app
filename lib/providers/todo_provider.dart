@@ -3,6 +3,8 @@ import 'package:flutter/foundation.dart';
 import '../api/api_client.dart';
 import '../api/todo_api.dart';
 import '../models/todo.dart';
+import '../models/todo_filter.dart';
+import '../providers/filter_provider.dart';
 import '../services/network_service.dart';
 import '../services/offline_manager.dart';
 import '../services/storage_service.dart';
@@ -177,5 +179,44 @@ class TodoProvider with ChangeNotifier {
 
     // 重新加载数据
     await loadTodos();
+  }
+
+  List<Todo> getFilteredTodos(FilterProvider filterProvider) {
+    return todos.where((todo) {
+      // Apply search filter
+      if (filterProvider.searchQuery.isNotEmpty) {
+        final query = filterProvider.searchQuery.toLowerCase();
+        if (!todo.title.toLowerCase().contains(query) &&
+            !(todo.description?.toLowerCase().contains(query) ?? false)) {
+          return false;
+        }
+      }
+
+      // Apply status filter
+      switch (filterProvider.filter) {
+        case TodoFilter.active:
+          if (todo.completed) return false;
+          break;
+        case TodoFilter.completed:
+          if (!todo.completed) return false;
+          break;
+        default:
+          break;
+      }
+
+      // Apply category filter
+      if (filterProvider.selectedCategory != null &&
+          todo.categoryId != filterProvider.selectedCategory!.id) {
+        return false;
+      }
+
+      // Apply priority filter
+      if (filterProvider.selectedPriority != null &&
+          todo.priority != filterProvider.selectedPriority) {
+        return false;
+      }
+
+      return true;
+    }).toList();
   }
 }

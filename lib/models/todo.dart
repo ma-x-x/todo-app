@@ -106,9 +106,8 @@ class Todo {
   }
 
   bool hasActiveReminder() {
-    if (reminders == null || reminders!.isEmpty) return false;
-    final now = DateTime.now();
-    return reminders!
-        .any((reminder) => !reminder.status && reminder.remindAt.isAfter(now));
+    return reminders
+            ?.any((reminder) => reminder.remindAt.isAfter(DateTime.now())) ??
+        false;
   }
 }
