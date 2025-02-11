@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_colorpicker/flutter_colorpicker.dart';
+import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 import 'package:provider/provider.dart';
 
 import '../../models/category.dart';
@@ -19,6 +20,7 @@ class _CategoryFormScreenState extends State<CategoryFormScreen> {
   final _formKey = GlobalKey<FormState>();
   late TextEditingController _nameController;
   Color _selectedColor = Colors.blue;
+  bool _isLoading = false;
 
   @override
   void initState() {
@@ -33,83 +35,153 @@ class _CategoryFormScreenState extends State<CategoryFormScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
+    final theme = Theme.of(context);
+
     return Scaffold(
       appBar: AppBar(
-        title: Text(widget.category == null ? '新建分类' : '编辑分类'),
+        title: Text(
+            widget.category == null ? l10n.newCategory : l10n.editCategory),
+        elevation: 0,
       ),
       body: Form(
         key: _formKey,
         child: ListView(
-          padding: const EdgeInsets.all(16),
+          padding: const EdgeInsets.all(24),
           children: [
             CustomTextField(
               controller: _nameController,
-              label: '名称',
+              label: l10n.categoryName,
+              prefixIcon: const Icon(Icons.category_outlined),
               validator: (value) {
                 if (value?.isEmpty ?? true) {
-                  return '请输入分类名称';
+                  return l10n.errorRequired(l10n.categoryName);
                 }
                 return null;
               },
             ),
+            const SizedBox(height: 24),
+            Text(
+              l10n.categoryColor,
+              style: theme.textTheme.titleMedium,
+            ),
             const SizedBox(height: 16),
-            const Text('选择颜色：'),
-            const SizedBox(height: 8),
-            Container(
-              padding: const EdgeInsets.all(8),
-              decoration: BoxDecoration(
-                border: Border.all(color: Colors.grey),
-                borderRadius: BorderRadius.circular(8),
+            Card(
+              elevation: 2,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(12),
               ),
-              child: BlockPicker(
-                pickerColor: _selectedColor,
-                onColorChanged: (color) {
-                  setState(() {
-                    _selectedColor = color;
-                  });
-                },
-                itemBuilder: (color, isCurrentColor, onTap) {
-                  return Container(
-                    margin: const EdgeInsets.all(4),
-                    width: 35,
-                    height: 35,
-                    decoration: BoxDecoration(
-                      color: color,
-                      shape: BoxShape.circle,
-                      border: Border.all(
-                        color:
-                            isCurrentColor ? Colors.blue : Colors.grey.shade300,
-                        width: isCurrentColor ? 2 : 1,
+              child: Padding(
+                padding: const EdgeInsets.all(16),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      children: [
+                        Container(
+                          width: 48,
+                          height: 48,
+                          decoration: BoxDecoration(
+                            color: _selectedColor.withOpacity(0.2),
+                            shape: BoxShape.circle,
+                            border: Border.all(
+                              color: _selectedColor,
+                              width: 2,
+                            ),
+                          ),
+                          child: Center(
+                            child: Text(
+                              _nameController.text.isEmpty
+                                  ? "A"
+                                  : _nameController.text[0],
+                              style: TextStyle(
+                                color: _selectedColor,
+                                fontSize: 20,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                          ),
+                        ),
+                        const SizedBox(width: 16),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                _nameController.text.isEmpty
+                                    ? l10n.categoryName
+                                    : _nameController.text,
+                                style: theme.textTheme.titleMedium,
+                              ),
+                              const SizedBox(height: 4),
+                              Text(
+                                '#${_selectedColor.value.toRadixString(16).substring(2).toUpperCase()}',
+                                style: theme.textTheme.bodySmall,
+                              ),
+                            ],
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 16),
+                    BlockPicker(
+                      pickerColor: _selectedColor,
+                      onColorChanged: (color) {
+                        setState(() => _selectedColor = color);
+                      },
+                      itemBuilder: (color, isCurrentColor, onTap) => Container(
+                        margin: const EdgeInsets.all(4),
+                        decoration: BoxDecoration(
+                          color: color,
+                          shape: BoxShape.circle,
+                          border: Border.all(
+                            color: isCurrentColor
+                                ? theme.colorScheme.primary
+                                : Colors.transparent,
+                            width: 2,
+                          ),
+                        ),
+                        child: Material(
+                          color: Colors.transparent,
+                          child: InkWell(
+                            onTap: onTap,
+                            borderRadius: BorderRadius.circular(50),
+                          ),
+                        ),
                       ),
                     ),
-                    child: Material(
-                      color: Colors.transparent,
-                      child: InkWell(
-                        onTap: onTap,
-                        borderRadius: BorderRadius.circular(50),
-                      ),
-                    ),
-                  );
-                },
+                  ],
+                ),
               ),
             ),
           ],
         ),
       ),
-      bottomNavigationBar: Padding(
-        padding: const EdgeInsets.all(16),
-        child: ElevatedButton(
-          onPressed: _submit,
-          child: const Text('保存'),
+      bottomNavigationBar: SafeArea(
+        child: Padding(
+          padding: const EdgeInsets.all(16),
+          child: FilledButton(
+            onPressed: _isLoading ? null : _submit,
+            child: _isLoading
+                ? const SizedBox(
+                    height: 20,
+                    width: 20,
+                    child: CircularProgressIndicator(
+                      strokeWidth: 2,
+                      valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                    ),
+                  )
+                : Text(l10n.save),
+          ),
         ),
       ),
     );
   }
 
   Future<void> _submit() async {
-    if (!_formKey.currentState!.validate()) {
-      return;
-    }
+    if (!_formKey.currentState!.validate()) return;
+
+    setState(() => _isLoading = true);
 
     try {
       final colorString =
@@ -139,6 +211,10 @@ class _CategoryFormScreenState extends State<CategoryFormScreen> {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text(e.toString())),
         );
+      }
+    } finally {
+      if (mounted) {
+        setState(() => _isLoading = false);
       }
     }
   }
