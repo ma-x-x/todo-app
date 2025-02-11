@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
-import '../services/storage_service.dart';
+
 import '../l10n/l10n.dart';
+import '../services/storage_service.dart';
 
 class LocaleProvider with ChangeNotifier {
   final StorageService _storage = StorageService();
@@ -33,4 +34,4 @@ class LocaleProvider with ChangeNotifier {
     _storage.saveLocale('');
     notifyListeners();
   }
-} 
+}

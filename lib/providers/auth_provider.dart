@@ -7,15 +7,24 @@ import '../api/auth_api.dart';
 import '../models/user.dart';
 import '../services/storage_service.dart';
 
+/// 认证状态管理器
+/// 负责处理用户的登录、注册、登出等认证相关操作
+/// 同时管理认证状态和令牌的自动刷新
 class AuthProvider with ChangeNotifier {
   final AuthApi _authApi;
   final StorageService _storage;
   final ApiClient _apiClient;
 
+  /// 当前登录用户
   User? _currentUser;
+
+  /// 是否正在加载
   bool _isLoading = false;
+
+  /// 错误信息
   String? _error;
 
+  /// 令牌刷新定时器
   Timer? _refreshTimer;
 
   AuthProvider({
@@ -39,9 +48,16 @@ class AuthProvider with ChangeNotifier {
     }
   }
 
+  /// 获取当前用户
   User? get currentUser => _currentUser;
+
+  /// 是否正在加载
   bool get isLoading => _isLoading;
+
+  /// 获取错误信息
   String? get error => _error;
+
+  /// 是否已认证
   bool get isAuthenticated => _currentUser != null;
 
   Future<void> login(String username, String password) async {
@@ -61,7 +77,6 @@ class AuthProvider with ChangeNotifier {
       _setupTokenRefresh();
 
       notifyListeners();
-      print('Auth state updated: isAuthenticated = $isAuthenticated');
     } catch (e) {
       _error = e.toString();
       _currentUser = null;
@@ -96,11 +111,16 @@ class AuthProvider with ChangeNotifier {
       _isLoading = true;
       notifyListeners();
 
-      await _storage.deleteToken();
-      await _storage.deleteUser();
+      // 先清除认证状态
       _currentUser = null;
       _refreshTimer?.cancel();
+      _refreshTimer = null;
 
+      // 然后清除存储
+      await _storage.deleteToken();
+      await _storage.deleteUser();
+
+      // 清除 API 客户端的认证信息
       _apiClient.clearAuth();
 
       notifyListeners();

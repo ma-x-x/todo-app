@@ -5,20 +5,46 @@ import 'reminder.dart';
 
 part 'todo.g.dart';
 
+/// 待办事项模型
 @JsonSerializable()
 class Todo {
+  /// 待办事项ID
   final int? id;
+
+  /// 标题
   final String title;
+
+  /// 描述
   final String? description;
+
+  /// 是否已完成
   final bool completed;
+
+  /// 优先级（low/medium/high）
   final String priority;
+
+  /// 分类ID
   final int? categoryId;
+
+  /// 所属分类
   final Category? category;
+
+  /// 相关提醒列表
   final List<Reminder>? reminders;
+
+  /// 创建时间
   final DateTime? createdAt;
+
+  /// 更新时间
   final DateTime? updatedAt;
+
+  /// 截止日期
   final DateTime? dueDate;
+
+  /// 完成时间
   final DateTime? completedAt;
+
+  /// 是否为离线数据
   final bool isOffline;
 
   Todo({

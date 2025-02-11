@@ -2,13 +2,25 @@ import 'package:json_annotation/json_annotation.dart';
 
 part 'category.g.dart';
 
+/// 待办事项分类模型
 @JsonSerializable()
 class Category {
+  /// 分类ID
   final int id;
+
+  /// 分类名称
   final String name;
+
+  /// 分类描述
   final String? description;
+
+  /// 分类颜色
   final String? color;
+
+  /// 创建时间
   final DateTime? createdAt;
+
+  /// 更新时间
   final DateTime? updatedAt;
 
   Category({

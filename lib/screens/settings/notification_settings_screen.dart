@@ -4,6 +4,9 @@ import 'package:provider/provider.dart';
 
 import '../../providers/notification_settings_provider.dart';
 
+/// 通知设置页面
+/// 提供通知相关的各项设置
+/// 包括开关通知、声音、振动，以及设置免打扰时间
 class NotificationSettingsScreen extends StatelessWidget {
   const NotificationSettingsScreen({super.key});
 
@@ -72,12 +75,14 @@ class NotificationSettingsScreen extends StatelessWidget {
     );
   }
 
+  /// 格式化时间显示
   String _formatTimeOfDay(TimeOfDay time) {
     final hour = time.hour.toString().padLeft(2, '0');
     final minute = time.minute.toString().padLeft(2, '0');
     return '$hour:$minute';
   }
 
+  /// 显示时间选择器
   Future<void> _selectTime(
     BuildContext context,
     TimeOfDay initialTime,
@@ -91,31 +96,5 @@ class NotificationSettingsScreen extends StatelessWidget {
     if (time != null) {
       onTimeSelected(time);
     }
-  }
-
-  Widget _buildSettingSection({
-    required String title,
-    required String subtitle,
-    required Widget child,
-  }) {
-    return Card(
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Padding(
-            padding: const EdgeInsets.all(16),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(title, style: const TextStyle(fontSize: 18)),
-                const SizedBox(height: 4),
-                Text(subtitle, style: TextStyle(color: Colors.grey[600])),
-              ],
-            ),
-          ),
-          child,
-        ],
-      ),
-    );
   }
 }

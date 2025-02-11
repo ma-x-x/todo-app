@@ -1,20 +1,33 @@
 import 'package:dio/dio.dart';
 import 'package:flutter/foundation.dart';
+import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 
+import '../providers/auth_provider.dart';
 import '../services/network_service.dart';
 import '../services/storage_service.dart';
 
 class ApiClient {
   late final Dio _dio;
+  final navigatorKey = GlobalKey<NavigatorState>();
 
-  // 根据是否在调试模式选择不同的基础URL
+  // 生产环境和开发环境的API基础URL
   static const String _prodBaseUrl = 'http://1.92.74.47:8081/api/v1';
-  static const String _devBaseUrl = 'http://172.22.156.37:8080/api/v1';
+  static const String _devBaseUrl = 'http://1.92.74.47:8081/api/v1';
 
+  // 存储服务，用于管理token等本地存储数据
   final StorageService _storage = StorageService();
+  // 网络服务，用于监控网络状态
   final NetworkService _network = NetworkService();
 
+  // 离线请求队列，存储在离线状态下的请求
   final _offlineQueue = <Future<Response> Function()>[];
+
+  // 添加重试配置
+  static const _maxRetries = 3;
+  static const _retryDelays = [1, 3, 5]; // 重试延迟秒数
+
+  CancelToken? _cancelToken;
 
   ApiClient() {
     const baseUrl = kDebugMode ? _devBaseUrl : _prodBaseUrl;
@@ -28,6 +41,8 @@ class ApiClient {
       headers: {
         'Accept-Encoding': 'gzip, deflate',
       },
+      validateStatus: (status) =>
+          status != null && status >= 200 && status < 300,
     ));
 
     _configureBaseOptions();
@@ -40,37 +55,41 @@ class ApiClient {
       'Content-Type': 'application/json',
       'Accept': 'application/json',
     };
-
-    // 添加验证状态码的回调
-    _dio.options.validateStatus = (status) {
-      print('响应状态码: $status');
-      return status != null && status >= 200 && status < 300;
-    };
   }
 
   void _configureInterceptors() {
     _dio.interceptors.clear();
     _dio.interceptors.addAll([
-      _createAuthInterceptor(),
-      _createResponseInterceptor(),
-      _createLoggingInterceptor(),
-      // 添加错误处理拦截器
       InterceptorsWrapper(
         onError: (error, handler) async {
+          print('Error interceptor: ${error.response?.statusCode}');
           if (error.response?.statusCode == 401) {
-            // token 失效，清除本地存储的 token
-            await _storage.deleteToken();
-            // 可以在这里添加重定向到登录页面的逻辑
-            if (error.requestOptions.path != '/auth/login') {
-              throw DioException(
-                requestOptions: error.requestOptions,
-                message: '登录已过期，请重新登录',
-              );
+            try {
+              await _storage.deleteToken();
+              await _storage.deleteUser();
+
+              final context = navigatorKey.currentContext;
+              if (context != null && context.mounted) {
+                await Provider.of<AuthProvider>(context, listen: false)
+                    .logout();
+
+                Future.microtask(() {
+                  Navigator.of(context).pushNamedAndRemoveUntil(
+                    '/login',
+                    (route) => false,
+                  );
+                });
+              }
+            } catch (e) {
+              print('Error handling 401: $e');
             }
           }
           return handler.next(error);
         },
       ),
+      _createAuthInterceptor(),
+      _createResponseInterceptor(),
+      _createLoggingInterceptor(),
     ]);
   }
 
@@ -82,7 +101,6 @@ class ApiClient {
           if (token != null && token.isNotEmpty) {
             options.headers['Authorization'] = 'Bearer $token';
           } else {
-            // token 不存在，直接抛出认证错误
             throw DioException(
               requestOptions: options,
               message: '请先登录',
@@ -100,11 +118,9 @@ class ApiClient {
         if (response.data is Map<String, dynamic>) {
           final responseData = response.data as Map<String, dynamic>;
           if (responseData['code'] == 0 || responseData['code'] == 200) {
-            // 成功响应，直接返回data字段
             response.data = responseData['data'];
             return handler.next(response);
           } else {
-            // 业务错误，抛出错误信息
             throw DioException(
               requestOptions: response.requestOptions,
               response: response,
@@ -151,7 +167,6 @@ class ApiClient {
         print('请求数据: ${error.requestOptions.data}');
         print('请求路径: ${error.requestOptions.path}');
 
-        // 如果是服务器错误，尝试提取更有用的错误信息
         if (error.response?.statusCode == 500) {
           final responseData = error.response?.data;
           if (responseData is Map<String, dynamic>) {
@@ -191,7 +206,6 @@ class ApiClient {
     bool canQueue,
   ) async {
     try {
-      // 使用 _retryRequest 包装原始请求
       return await _retryRequest(request);
     } catch (e) {
       if (e is DioException && !_network.hasConnection) {
@@ -205,9 +219,17 @@ class ApiClient {
     }
   }
 
-  Future<Response> get(String path, {Map<String, dynamic>? queryParameters}) {
+  Future<Response> get(
+    String path, {
+    Map<String, dynamic>? queryParameters,
+    CancelToken? cancelToken,
+  }) {
     return _executeWithOfflineSupport(
-      () => _dio.get(path, queryParameters: queryParameters),
+      () => _dio.get(
+        path,
+        queryParameters: queryParameters,
+        cancelToken: cancelToken ?? _cancelToken,
+      ),
       false,
     );
   }
@@ -233,20 +255,35 @@ class ApiClient {
     );
   }
 
-  // 添加重试机制
   Future<Response> _retryRequest(Future<Response> Function() request) async {
-    try {
-      return await request();
-    } on DioException catch (e) {
-      if (e.type == DioExceptionType.connectionTimeout) {
-        // 重试请求
+    int retryCount = 0;
+
+    while (true) {
+      try {
         return await request();
+      } on DioException catch (e) {
+        if (retryCount >= _maxRetries ||
+            !_shouldRetry(e) ||
+            !_network.hasConnection) {
+          rethrow;
+        }
+
+        // 指数退避重试
+        final delay = _retryDelays[retryCount];
+        print('请求失败，$delay秒后重试 (${retryCount + 1}/$_maxRetries)');
+        await Future.delayed(Duration(seconds: delay));
+        retryCount++;
       }
-      rethrow;
     }
   }
 
-  // 添加请求缓存
+  bool _shouldRetry(DioException error) {
+    return error.type == DioExceptionType.connectionTimeout ||
+        error.type == DioExceptionType.receiveTimeout ||
+        error.type == DioExceptionType.sendTimeout ||
+        (error.response?.statusCode ?? 0) >= 500;
+  }
+
   final _cache = <String, CachedResponse>{};
 
   Future<Response> getCached(String path, {Duration? maxAge}) async {
@@ -263,9 +300,13 @@ class ApiClient {
   }
 
   void clearAuth() {
-    // 清理认证相关的拦截器
     _dio.interceptors.clear();
     _configureInterceptors();
+  }
+
+  void cancelRequests({String? reason}) {
+    _cancelToken?.cancel(reason);
+    _cancelToken = CancelToken();
   }
 }
 

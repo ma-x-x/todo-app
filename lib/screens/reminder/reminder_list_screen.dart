@@ -7,7 +7,11 @@ import '../../models/todo.dart';
 import '../../providers/reminder_provider.dart';
 import 'reminder_form_screen.dart';
 
+/// 提醒列表页面
+/// 显示指定待办事项的所有提醒
+/// 支持添加、编辑和删除提醒
 class ReminderListScreen extends StatefulWidget {
+  /// 关联的待办事项
   final Todo todo;
 
   const ReminderListScreen({super.key, required this.todo});
@@ -17,12 +21,24 @@ class ReminderListScreen extends StatefulWidget {
 }
 
 class _ReminderListScreenState extends State<ReminderListScreen> {
+  late Future<void> _loadDataFuture;
+
   @override
   void initState() {
     super.initState();
-    Future.microtask(
-      () => context.read<ReminderProvider>().fetchReminders(widget.todo.id!),
-    );
+    _loadDataFuture = Future(() async {
+      if (!mounted) return;
+      final reminderProvider =
+          Provider.of<ReminderProvider>(context, listen: false);
+      await reminderProvider.ensureInitialized(widget.todo.id!);
+    });
+  }
+
+  Future<void> _refresh() async {
+    if (!mounted) return;
+    final reminderProvider =
+        Provider.of<ReminderProvider>(context, listen: false);
+    await reminderProvider.loadReminders(widget.todo.id!);
   }
 
   @override
@@ -33,14 +49,21 @@ class _ReminderListScreenState extends State<ReminderListScreen> {
     return Scaffold(
       appBar: AppBar(
         title: Text(l10n.reminders),
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.refresh),
+            onPressed: _refresh,
+          ),
+        ],
       ),
-      body: Consumer<ReminderProvider>(
-        builder: (context, provider, child) {
-          if (provider.isLoading) {
+      body: FutureBuilder(
+        future: _loadDataFuture,
+        builder: (context, snapshot) {
+          if (snapshot.connectionState == ConnectionState.waiting) {
             return const Center(child: CircularProgressIndicator());
           }
 
-          if (provider.error != null) {
+          if (snapshot.hasError) {
             return Center(
               child: Padding(
                 padding: const EdgeInsets.all(24),
@@ -54,13 +77,13 @@ class _ReminderListScreenState extends State<ReminderListScreen> {
                     ),
                     const SizedBox(height: 16),
                     Text(
-                      l10n.loadingError(provider.error!),
+                      l10n.loadingError(snapshot.error.toString()),
                       textAlign: TextAlign.center,
                       style: theme.textTheme.titleMedium,
                     ),
                     const SizedBox(height: 24),
                     FilledButton.tonal(
-                      onPressed: () => provider.fetchReminders(widget.todo.id!),
+                      onPressed: _refresh,
                       child: Text(l10n.retry),
                     ),
                   ],
@@ -69,7 +92,9 @@ class _ReminderListScreenState extends State<ReminderListScreen> {
             );
           }
 
-          final reminders = provider.getRemindersForTodo(widget.todo.id!);
+          final reminderProvider = Provider.of<ReminderProvider>(context);
+          final reminders =
+              reminderProvider.getRemindersForTodo(widget.todo.id!);
           if (reminders.isEmpty) {
             return Center(
               child: Padding(
@@ -252,6 +277,33 @@ class _ReminderListScreenState extends State<ReminderListScreen> {
     );
   }
 
+  /// 获取提醒类型的显示文本
+  String _getRemindTypeText(String remindType, AppLocalizations l10n) {
+    switch (remindType) {
+      case 'once':
+        return '单次提醒';
+      case 'daily':
+        return '每日提醒';
+      case 'weekly':
+        return '每周提醒';
+      default:
+        throw Exception('Unknown remind type: $remindType');
+    }
+  }
+
+  /// 获取通知类型的显示文本
+  String _getNotifyTypeText(String notifyType, AppLocalizations l10n) {
+    switch (notifyType) {
+      case 'email':
+        return '邮件';
+      case 'push':
+        return '推送';
+      default:
+        throw Exception('Unknown notify type: $notifyType');
+    }
+  }
+
+  /// 显示删除确认对话框
   Future<void> _showDeleteConfirmation(
       BuildContext context, int reminderId) async {
     final confirmed = await showDialog<bool>(
@@ -290,30 +342,6 @@ class _ReminderListScreenState extends State<ReminderListScreen> {
           );
         }
       }
-    }
-  }
-
-  String _getRemindTypeText(String remindType, AppLocalizations l10n) {
-    switch (remindType) {
-      case 'once':
-        return '单次提醒';
-      case 'daily':
-        return '每日提醒';
-      case 'weekly':
-        return '每周提醒';
-      default:
-        throw Exception('Unknown remind type: $remindType');
-    }
-  }
-
-  String _getNotifyTypeText(String notifyType, AppLocalizations l10n) {
-    switch (notifyType) {
-      case 'email':
-        return '邮件';
-      case 'push':
-        return '推送';
-      default:
-        throw Exception('Unknown notify type: $notifyType');
     }
   }
 }

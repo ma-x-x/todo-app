@@ -4,6 +4,9 @@ import 'package:provider/provider.dart';
 import '../../providers/auth_provider.dart';
 import '../../widgets/common/custom_text_field.dart';
 
+/// 注册页面
+/// 提供用户注册功能
+/// 包含用户名、邮箱、密码等信息的输入和验证
 class RegisterScreen extends StatefulWidget {
   const RegisterScreen({super.key});
 
@@ -12,12 +15,25 @@ class RegisterScreen extends StatefulWidget {
 }
 
 class _RegisterScreenState extends State<RegisterScreen> {
+  /// 表单全局键，用于验证表单
   final _formKey = GlobalKey<FormState>();
+
+  /// 用户名输入控制器
   final _usernameController = TextEditingController();
+
+  /// 邮箱输入控制器
   final _emailController = TextEditingController();
+
+  /// 密码输入控制器
   final _passwordController = TextEditingController();
+
+  /// 确认密码输入控制器
   final _confirmPasswordController = TextEditingController();
+
+  /// 用户名输入框焦点
   final _usernameFocus = FocusNode();
+
+  /// 邮箱输入框焦点
   final _emailFocus = FocusNode();
 
   @override
@@ -271,6 +287,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
     );
   }
 
+  /// 执行注册操作
   Future<void> _register() async {
     if (!_formKey.currentState!.validate()) {
       return;

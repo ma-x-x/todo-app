@@ -1,11 +1,15 @@
 import 'package:flutter/material.dart';
-import 'package:provider/provider.dart';
 import 'package:flutter_gen/gen_l10n/app_localizations.dart';
-import '../../providers/filter_provider.dart';
-import '../../providers/category_provider.dart';
-import '../../models/todo_filter.dart';
-import '../../models/category.dart';
+import 'package:provider/provider.dart';
 
+import '../../models/category.dart';
+import '../../models/todo_filter.dart';
+import '../../providers/category_provider.dart';
+import '../../providers/filter_provider.dart';
+
+/// 待办事项过滤器页面
+/// 提供完成状态、分类、优先级等过滤条件的设置
+/// 用户可以组合多个条件来筛选待办事项
 class TodoFilterScreen extends StatelessWidget {
   const TodoFilterScreen({super.key});
 
@@ -126,6 +130,10 @@ class TodoFilterScreen extends StatelessWidget {
     );
   }
 
+  /// 获取过滤器名称的显示文本
+  /// [context] 构建上下文
+  /// [filter] 过滤器类型
+  /// 返回对应的本地化文本
   String _getFilterName(BuildContext context, TodoFilter filter) {
     switch (filter) {
       case TodoFilter.all:
@@ -136,4 +144,4 @@ class TodoFilterScreen extends StatelessWidget {
         return AppLocalizations.of(context)!.completed;
     }
   }
-} 
+}

@@ -8,6 +8,9 @@ import '../../providers/todo_provider.dart';
 import '../../services/export_service.dart';
 import '../../utils/error_handler.dart';
 
+/// 导出页面
+/// 提供数据导出功能，支持导出为CSV和PDF格式
+/// 导出后可以选择分享文件
 class ExportScreen extends StatelessWidget {
   const ExportScreen({super.key});
 
@@ -37,6 +40,9 @@ class ExportScreen extends StatelessWidget {
     );
   }
 
+  /// 导出为CSV格式
+  /// [context] 构建上下文，用于访问Provider和显示对话框
+  /// 将待办事项数据导出为CSV文件，并提供分享选项
   Future<void> _exportToCsv(BuildContext context) async {
     try {
       final todoProvider = context.read<TodoProvider>();
@@ -85,6 +91,9 @@ class ExportScreen extends StatelessWidget {
     }
   }
 
+  /// 导出为PDF格式
+  /// [context] 构建上下文，用于访问Provider和显示对话框
+  /// 将待办事项数据导出为PDF文件，并提供分享选项
   Future<void> _exportToPdf(BuildContext context) async {
     try {
       // 显示加载对话框

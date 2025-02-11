@@ -7,9 +7,17 @@ import '../../models/reminder.dart';
 import '../../providers/reminder_provider.dart';
 import '../../services/notification_service.dart';
 
+/// 提醒表单页面
+/// 用于创建新的提醒或编辑现有提醒
+/// 包含提醒时间、提醒类型、通知类型等设置
 class ReminderFormScreen extends StatefulWidget {
+  /// 关联的待办事项ID
   final int todoId;
+
+  /// 待办事项标题
   final String todoTitle;
+
+  /// 要编辑的提醒，如果为null则表示创建新提醒
   final Reminder? reminder;
 
   const ReminderFormScreen({
@@ -24,9 +32,16 @@ class ReminderFormScreen extends StatefulWidget {
 }
 
 class _ReminderFormScreenState extends State<ReminderFormScreen> {
+  /// 选中的提醒时间
   late DateTime _selectedDateTime;
+
+  /// 选中的提醒类型（一次性/每日/每周）
   String _selectedRemindType = 'once';
+
+  /// 选中的通知类型（邮件/推送）
   String _selectedNotifyType = 'push';
+
+  /// 是否正在加载
   bool _isLoading = false;
 
   @override
@@ -222,6 +237,8 @@ class _ReminderFormScreenState extends State<ReminderFormScreen> {
         '${dateTime.minute.toString().padLeft(2, '0')}';
   }
 
+  /// 提交表单
+  /// 创建或更新提醒
   Future<void> _submit() async {
     setState(() {
       _isLoading = true;

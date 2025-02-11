@@ -6,6 +6,9 @@ import '../settings/settings_screen.dart';
 import '../statistics/statistics_screen.dart';
 import '../todo/todo_list_screen.dart';
 
+/// 应用主页面
+/// 包含待办事项、分类、统计和设置四个主要功能模块
+/// 使用底部导航栏进行切换，并保持各页面状态
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
 
@@ -15,12 +18,14 @@ class HomeScreen extends StatefulWidget {
 
 class _HomeScreenState extends State<HomeScreen>
     with AutomaticKeepAliveClientMixin {
+  /// 当前选中的底部导航项索引
   int _currentIndex = 0;
 
-  // 使用 PageStorageBucket 来保存页面状态
+  /// 用于保存页面状态的存储桶
   final PageStorageBucket _bucket = PageStorageBucket();
 
-  // 懒加载页面
+  /// 懒加载的页面列表
+  /// 使用 PageStorageKey 确保页面状态被保存
   late final List<Widget> _pages = [
     const TodoListScreen(key: PageStorageKey('todos')),
     const CategoryListScreen(key: PageStorageKey('categories')),
@@ -31,6 +36,12 @@ class _HomeScreenState extends State<HomeScreen>
   // 保持页面状态
   @override
   bool get wantKeepAlive => true;
+
+  void _onTabChanged(int index) {
+    setState(() {
+      _currentIndex = index;
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -70,11 +81,7 @@ class _HomeScreenState extends State<HomeScreen>
           backgroundColor: theme.colorScheme.surface,
           labelBehavior: NavigationDestinationLabelBehavior.alwaysShow,
           selectedIndex: _currentIndex,
-          onDestinationSelected: (index) {
-            setState(() {
-              _currentIndex = index;
-            });
-          },
+          onDestinationSelected: _onTabChanged,
           indicatorColor: theme.colorScheme.secondaryContainer,
           destinations: [
             NavigationDestination(

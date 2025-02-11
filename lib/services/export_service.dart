@@ -9,8 +9,17 @@ import 'package:pdf/widgets.dart' as pw;
 import '../models/category.dart';
 import '../models/todo.dart';
 
+/// 导出服务类
+/// 提供将待办事项导出为不同格式(CSV、PDF)的功能
 class ExportService {
-  /// 导出待办事项为CSV文件
+  /// 将待办事项导出为CSV文件
+  ///
+  /// 参数:
+  /// - todos: 待办事项列表
+  /// - categories: 分类映射表
+  ///
+  /// 返回: 导出文件的路径
+  /// 在Web平台上不支持此功能
   Future<String> exportToCsv({
     required List<Todo> todos,
     required Map<int, Category> categories,
@@ -43,7 +52,15 @@ class ExportService {
     return file.path;
   }
 
-  /// 导出待办事项为PDF文件
+  /// 将待办事项导出为PDF文件
+  /// 生成包含待办事项列表、统计信息的PDF文档
+  ///
+  /// 参数:
+  /// - todos: 待办事项列表
+  /// - categories: 分类映射表
+  ///
+  /// 返回: 导出文件的路径
+  /// 在Web平台上不支持此功能
   Future<String> exportToPdf({
     required List<Todo> todos,
     required Map<int, Category> categories,

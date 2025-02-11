@@ -4,6 +4,9 @@ import 'package:provider/provider.dart';
 
 import '../../providers/theme_provider.dart';
 
+/// 主题设置页面
+/// 提供主题模式的切换功能
+/// 支持跟随系统、浅色模式、深色模式
 class ThemeSettingsScreen extends StatelessWidget {
   const ThemeSettingsScreen({super.key});
 
@@ -71,6 +74,7 @@ class ThemeSettingsScreen extends StatelessWidget {
     );
   }
 
+  /// 构建主题选项
   Widget _buildThemeOption(
     ThemeData theme, {
     required String title,

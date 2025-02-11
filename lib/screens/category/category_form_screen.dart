@@ -7,7 +7,11 @@ import '../../models/category.dart';
 import '../../providers/category_provider.dart';
 import '../../widgets/common/custom_text_field.dart';
 
+/// 分类表单页面
+/// 用于创建新的分类或编辑现有分类
+/// 包含分类名称和颜色选择功能
 class CategoryFormScreen extends StatefulWidget {
+  /// 要编辑的分类，如果为null则表示创建新分类
   final Category? category;
 
   const CategoryFormScreen({super.key, this.category});
@@ -17,9 +21,16 @@ class CategoryFormScreen extends StatefulWidget {
 }
 
 class _CategoryFormScreenState extends State<CategoryFormScreen> {
+  /// 表单全局键，用于验证表单
   final _formKey = GlobalKey<FormState>();
+
+  /// 分类名称输入控制器
   late TextEditingController _nameController;
+
+  /// 选中的颜色
   Color _selectedColor = Colors.blue;
+
+  /// 是否正在加载
   bool _isLoading = false;
 
   @override
@@ -53,7 +64,9 @@ class _CategoryFormScreenState extends State<CategoryFormScreen> {
             CustomTextField(
               controller: _nameController,
               label: l10n.categoryName,
+              obscureText: false,
               prefixIcon: const Icon(Icons.category_outlined),
+              keyboardType: TextInputType.text,
               validator: (value) {
                 if (value?.isEmpty ?? true) {
                   return l10n.errorRequired(l10n.categoryName);
@@ -193,6 +206,8 @@ class _CategoryFormScreenState extends State<CategoryFormScreen> {
     );
   }
 
+  /// 提交表单
+  /// 创建或更新分类
   Future<void> _submit() async {
     if (!_formKey.currentState!.validate()) return;
 

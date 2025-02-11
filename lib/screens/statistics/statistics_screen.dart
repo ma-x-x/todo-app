@@ -9,6 +9,8 @@ import '../../providers/todo_provider.dart';
 import '../../services/statistics_service.dart';
 
 /// 统计分析页面
+/// 显示待办事项的各项统计数据
+/// 包括总数、完成率、分类分布、优先级分布等
 class StatisticsScreen extends StatelessWidget {
   const StatisticsScreen({super.key});
 
@@ -250,6 +252,7 @@ class StatisticsScreen extends StatelessWidget {
     );
   }
 
+  /// 构建统计数据行
   Widget _buildStatRow(BuildContext context, String label, String value,
       IconData icon, Color color) {
     final theme = Theme.of(context);
@@ -285,7 +288,64 @@ class StatisticsScreen extends StatelessWidget {
     );
   }
 
+  /// 构建趋势图数据点
+  List<FlSpot> _buildTrendSpots(TodoStatistics statistics) {
+    // 获取最近7天的数据
+    final now = DateTime.now();
+    final dates = List.generate(7, (index) {
+      return DateTime(
+        now.year,
+        now.month,
+        now.day - index,
+      );
+    }).reversed.toList();
+
+    // 转换数据为折线图点
+    return dates.map((date) {
+      return FlSpot(
+        date.millisecondsSinceEpoch.toDouble(),
+        statistics.completionByDate[date]?.toDouble() ?? 0,
+      );
+    }).toList();
+  }
+
+  /// 构建趋势图标题
+  FlTitlesData _buildTrendTitles(BuildContext context, ThemeData theme) {
+    return FlTitlesData(
+      leftTitles: const AxisTitles(
+        sideTitles: SideTitles(
+          showTitles: true,
+          reservedSize: 30,
+        ),
+      ),
+      bottomTitles: AxisTitles(
+        sideTitles: SideTitles(
+          showTitles: true,
+          getTitlesWidget: (value, meta) {
+            final date = DateTime.fromMillisecondsSinceEpoch(value.toInt());
+            return Padding(
+              padding: const EdgeInsets.only(top: 8),
+              child: Text(
+                '${date.month}/${date.day}',
+                style: const TextStyle(fontSize: 10),
+              ),
+            );
+          },
+        ),
+      ),
+      rightTitles: const AxisTitles(
+        sideTitles: SideTitles(showTitles: false),
+      ),
+      topTitles: const AxisTitles(
+        sideTitles: SideTitles(showTitles: false),
+      ),
+    );
+  }
+
   /// 构建优先级分布饼图
+  /// [context] 构建上下文
+  /// [statistics] 统计数据
+  /// 返回优先级分布的饼图段列表
   List<PieChartSectionData> _buildPrioritySections(
       BuildContext context, TodoStatistics statistics) {
     // 定义优先级对应的颜色
@@ -312,6 +372,9 @@ class StatisticsScreen extends StatelessWidget {
   }
 
   /// 构建优先级分布图例
+  /// [context] 构建上下文
+  /// [theme] 主题数据
+  /// 返回优先级分布的图例组件
   Widget _buildPriorityLegend(BuildContext context, ThemeData theme) {
     // 定义优先级对应的颜色
     final priorityColors = {
@@ -341,6 +404,10 @@ class StatisticsScreen extends StatelessWidget {
   }
 
   /// 构建分类分布柱状图
+  /// [statistics] 统计数据
+  /// [theme] 主题数据
+  /// [categoryProvider] 分类提供者
+  /// 返回分类分布的柱状图组数据列表
   List<BarChartGroupData> _buildCategoryGroups(TodoStatistics statistics,
       ThemeData theme, CategoryProvider categoryProvider) {
     return statistics.todosByCategory.entries.map((entry) {
@@ -367,6 +434,11 @@ class StatisticsScreen extends StatelessWidget {
   }
 
   /// 构建分类分布柱状图标题
+  /// [context] 构建上下文
+  /// [statistics] 统计数据
+  /// [categoryProvider] 分类提供者
+  /// [theme] 主题数据
+  /// 返回分类分布柱状图的标题配置
   FlTitlesData _buildCategoryTitles(
       BuildContext context,
       TodoStatistics statistics,
@@ -393,62 +465,6 @@ class StatisticsScreen extends StatelessWidget {
               padding: const EdgeInsets.only(top: 8),
               child: Text(
                 categoryNames[value.toInt()] ?? '',
-                style: const TextStyle(fontSize: 10),
-              ),
-            );
-          },
-        ),
-      ),
-      rightTitles: const AxisTitles(
-        sideTitles: SideTitles(showTitles: false),
-      ),
-      topTitles: const AxisTitles(
-        sideTitles: SideTitles(showTitles: false),
-      ),
-    );
-  }
-
-  /// 构建完成趋势折线图
-  List<FlSpot> _buildTrendSpots(TodoStatistics statistics) {
-    // 获取最近7天的数据
-    final now = DateTime.now();
-    final dates = List.generate(7, (index) {
-      return DateTime(
-        now.year,
-        now.month,
-        now.day - index,
-      );
-    }).reversed.toList();
-
-    // 转换数据为折线图点
-    return dates.map((date) {
-      return FlSpot(
-        date.millisecondsSinceEpoch.toDouble(),
-        statistics.completionByDate[date]?.toDouble() ?? 0,
-      );
-    }).toList();
-  }
-
-  /// 构建完成趋势折线图标题
-  FlTitlesData _buildTrendTitles(BuildContext context, ThemeData theme) {
-    return FlTitlesData(
-      leftTitles: const AxisTitles(
-        sideTitles: SideTitles(
-          showTitles: true,
-          reservedSize: 30,
-        ),
-      ),
-      bottomTitles: AxisTitles(
-        sideTitles: SideTitles(
-          showTitles: true,
-          getTitlesWidget: (value, meta) {
-            final date = DateTime.fromMillisecondsSinceEpoch(
-              value.toInt(),
-            );
-            return Padding(
-              padding: const EdgeInsets.only(top: 8),
-              child: Text(
-                '${date.month}/${date.day}',
                 style: const TextStyle(fontSize: 10),
               ),
             );

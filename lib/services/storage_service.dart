@@ -6,6 +6,8 @@ import 'package:shared_preferences/shared_preferences.dart';
 import '../models/category.dart';
 import '../models/todo.dart';
 
+/// 存储服务类
+/// 管理应用数据的本地存储，包括用户数据、设置和缓存
 class StorageService {
   static final StorageService _instance = StorageService._();
   factory StorageService() => _instance;
@@ -24,16 +26,18 @@ class StorageService {
   // 私有构造函数
   StorageService._();
 
+  /// 初始化存储服务
   Future<void> init() async {
     _prefs = await SharedPreferences.getInstance();
     _secureStorage = const FlutterSecureStorage();
   }
 
-  // Token 相关操作
+  /// 保存认证令牌
   Future<void> saveToken(String token) async {
     await _secureStorage.write(key: _tokenKey, value: token);
   }
 
+  /// 获取存储的认证令牌
   Future<String?> getToken() async {
     return await _secureStorage.read(key: _tokenKey);
   }
@@ -134,7 +138,15 @@ class StorageService {
     return _prefs.get(key) as T?;
   }
 
-  // 优化对象存储方法
+  /// 通用对象存储方法
+  ///
+  /// 类型参数:
+  /// - T: 要存储的对象类型
+  ///
+  /// 参数:
+  /// - key: 存储键
+  /// - object: 要存储的对象
+  /// - fromJson: 从JSON转换为对象的函数
   Future<void> saveObject<T>(
       String key, T object, T Function(Map<String, dynamic>) fromJson) async {
     final jsonStr = jsonEncode(object);

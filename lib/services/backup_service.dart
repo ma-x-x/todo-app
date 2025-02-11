@@ -9,12 +9,24 @@ import '../models/category.dart';
 import '../models/reminder.dart';
 import '../models/todo.dart';
 
+/// 备份服务类
+/// 负责应用数据的导出和导入功能，包括待办事项、分类和提醒事项的备份
 class BackupService {
+  // 单例模式实现
   static final BackupService _instance = BackupService._();
   factory BackupService() => _instance;
 
   BackupService._();
 
+  /// 导出应用数据
+  /// 将待办事项、分类和提醒事项导出为JSON文件
+  ///
+  /// 参数:
+  /// - todos: 待办事项列表
+  /// - categories: 分类列表
+  /// - reminders: 提醒事项列表
+  ///
+  /// 返回: 导出文件的路径
   Future<String> exportData({
     required List<Todo> todos,
     required List<Category> categories,
@@ -40,6 +52,14 @@ class BackupService {
     return file.path;
   }
 
+  /// 导入备份数据
+  /// 从JSON字符串中恢复应用数据
+  ///
+  /// 参数:
+  /// - jsonStr: JSON格式的备份数据字符串
+  ///
+  /// 返回: 包含恢复的数据的Map对象
+  /// 可能抛出 FormatException 如果备份文件格式无效
   Future<Map<String, dynamic>> importData(String jsonStr) async {
     try {
       final data = jsonDecode(jsonStr) as Map<String, dynamic>;
@@ -65,6 +85,11 @@ class BackupService {
     }
   }
 
+  /// 分享备份文件
+  /// 使用系统分享功能分享备份文件
+  ///
+  /// 参数:
+  /// - filePath: 要分享的备份文件路径
   Future<void> shareBackup(String filePath) async {
     final file = XFile(filePath);
     await Share.shareXFiles(

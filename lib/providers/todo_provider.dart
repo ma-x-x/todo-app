@@ -1,6 +1,5 @@
 import 'package:flutter/foundation.dart';
 
-import '../api/api_client.dart';
 import '../api/todo_api.dart';
 import '../models/todo.dart';
 import '../models/todo_filter.dart';
@@ -9,50 +8,77 @@ import '../services/network_service.dart';
 import '../services/offline_manager.dart';
 import '../services/storage_service.dart';
 
+/// 待办事项管理器
+/// 负责管理待办事项的数据，包括加载、创建、更新、删除等操作
+/// 支持离线模式和数据同步
 class TodoProvider with ChangeNotifier {
   final TodoApi _todoApi;
   final StorageService _storage = StorageService();
-  List<Todo> _todos = [];
+
+  /// 待办事项列表
+  final List<Todo> _todos = [];
+
+  /// 是否正在加载
   bool _isLoading = false;
+
+  /// 错误信息
   String? _error;
 
+  /// 离线管理器
   final _offlineManager = OfflineManager();
+
+  /// 网络服务
   final _network = NetworkService();
 
-  TodoProvider() : _todoApi = TodoApi(ApiClient()) {
-    loadTodos();
-  }
+  /// 获取所有待办事项
+  List<Todo> get todos => _todos;
 
-  void _loadCachedTodos() {
-    final cachedTodos = _storage.getTodos();
-    if (cachedTodos != null) {
-      _todos = cachedTodos;
+  /// 是否正在加载
+  bool get isLoading => _isLoading;
+
+  /// 获取错误信息
+  String? get error => _error;
+
+  /// 添加自动加载标志
+  bool _isInitialized = false;
+
+  TodoProvider({required TodoApi todoApi}) : _todoApi = todoApi;
+
+  Future<void> ensureInitialized() async {
+    if (_isInitialized) return;
+
+    try {
+      _isLoading = true;
+      notifyListeners();
+
+      final todos = await _todoApi.getTodos();
+      _todos.clear();
+      _todos.addAll(todos);
+      _isInitialized = true;
+      _error = null;
+    } catch (e) {
+      _error = e.toString();
+      print('加载待办事项失败: $e');
+    } finally {
+      _isLoading = false;
       notifyListeners();
     }
   }
 
-  List<Todo> get todos => _todos;
-  bool get isLoading => _isLoading;
-  String? get error => _error;
-
   Future<void> loadTodos() async {
-    _isLoading = true;
-    _error = null;
-    notifyListeners();
+    if (_isLoading) return;
 
     try {
-      print('开始加载待办事项...');
-      _todos = await _todoApi.getTodos();
-      // 缓存数据
-      await _storage.saveTodos(_todos);
-      print('成功加载待办事项: ${_todos.length}个项目');
+      _isLoading = true;
       notifyListeners();
+
+      final todos = await _todoApi.getTodos();
+      _todos.clear();
+      _todos.addAll(todos);
+      _error = null;
     } catch (e) {
-      print('加载待办事项失败: $e');
       _error = e.toString();
-      // 如果网络请求失败，尝试使用缓存数据
-      _loadCachedTodos();
-      notifyListeners();
+      print('加载待办事项失败: $e');
     } finally {
       _isLoading = false;
       notifyListeners();
@@ -148,7 +174,8 @@ class TodoProvider with ChangeNotifier {
   }
 
   Future<void> importTodos(List<dynamic> todosData) async {
-    _todos = todosData.map((json) => Todo.fromJson(json)).toList();
+    _todos.clear();
+    _todos.addAll(todosData.map((json) => Todo.fromJson(json)).toList());
     await _storage.saveTodos(_todos);
     notifyListeners();
   }

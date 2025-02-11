@@ -4,6 +4,9 @@ import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 import 'package:provider/provider.dart';
 
 import 'api/api_client.dart';
+import 'api/category_api.dart';
+import 'api/reminder_api.dart';
+import 'api/todo_api.dart';
 import 'providers/auth_provider.dart';
 import 'providers/category_provider.dart';
 import 'providers/filter_provider.dart';
@@ -12,9 +15,7 @@ import 'providers/notification_settings_provider.dart';
 import 'providers/reminder_provider.dart';
 import 'providers/theme_provider.dart';
 import 'providers/todo_provider.dart';
-import 'screens/auth/auth_wrapper.dart';
-import 'screens/auth/login_screen.dart';
-import 'screens/home/home_screen.dart';
+import 'routes/app_router.dart';
 import 'services/network_service.dart';
 import 'services/notification_service.dart';
 import 'services/offline_manager.dart';
@@ -99,16 +100,13 @@ void main() async {
       Provider<NotificationService>.value(value: notificationService),
       ChangeNotifierProvider.value(value: authProvider),
       ChangeNotifierProvider(
-        lazy: true,
-        create: (_) => TodoProvider(),
+        create: (_) => TodoProvider(todoApi: TodoApi(apiClient)),
       ),
       ChangeNotifierProvider(
-        lazy: true,
-        create: (_) => CategoryProvider(),
+        create: (_) => CategoryProvider(categoryApi: CategoryApi(apiClient)),
       ),
       ChangeNotifierProvider(
-        lazy: true,
-        create: (_) => ReminderProvider(),
+        create: (_) => ReminderProvider(reminderApi: ReminderApi(apiClient)),
       ),
       ChangeNotifierProvider(create: (_) => ThemeProvider()),
       ChangeNotifierProvider(create: (_) => LocaleProvider()),
@@ -130,7 +128,9 @@ class MyApp extends StatelessWidget {
   Widget build(BuildContext context) {
     return Consumer2<ThemeProvider, LocaleProvider>(
       builder: (context, themeProvider, localeProvider, child) {
+        final apiClient = Provider.of<ApiClient>(context, listen: false);
         return MaterialApp(
+          navigatorKey: apiClient.navigatorKey,
           title: 'Todo App',
           theme: themeProvider.lightTheme,
           darkTheme: themeProvider.darkTheme,
@@ -139,10 +139,9 @@ class MyApp extends StatelessWidget {
           localizationsDelegates: AppLocalizations.localizationsDelegates,
           supportedLocales: AppLocalizations.supportedLocales,
           initialRoute: '/',
-          routes: {
-            '/': (context) => const AuthWrapper(),
-            '/login': (context) => const LoginScreen(),
-            '/home': (context) => const HomeScreen(),
+          onGenerateRoute: AppRouter.generateRoute,
+          builder: (context, child) {
+            return child ?? const SizedBox.shrink();
           },
         );
       },

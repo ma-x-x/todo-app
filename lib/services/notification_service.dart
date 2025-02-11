@@ -15,6 +15,8 @@ abstract class PlatformHelper {
   static bool get isIOS => !kIsWeb && Platform.operatingSystem == 'ios';
 }
 
+/// 通知服务类
+/// 管理本地通知的发送、调度和权限
 class NotificationService {
   static final NotificationService _instance = NotificationService._();
   factory NotificationService() => _instance;
@@ -31,6 +33,8 @@ class NotificationService {
     _settings = settings;
   }
 
+  /// 初始化通知服务
+  /// 配置通知渠道和权限
   Future<void> _init() async {
     tz.initializeTimeZones();
 
@@ -53,6 +57,11 @@ class NotificationService {
     );
   }
 
+  /// 调度提醒通知
+  ///
+  /// 参数:
+  /// - reminder: 提醒事项对象
+  /// - todoTitle: 待办事项标题
   Future<void> scheduleNotification(Reminder reminder, String todoTitle) async {
     if (!_settings.enabled || reminder.notifyType != 'push') return;
     if (_settings.quietHoursEnabled && _settings.isQuietTime()) return;
@@ -127,6 +136,11 @@ class NotificationService {
     }
   }
 
+  /// 计算下一次通知时间
+  /// 考虑勿扰时段设置
+  ///
+  /// 参数:
+  /// - dateTime: 基准时间
   tz.TZDateTime _nextInstanceOfTime(DateTime dateTime) {
     final now = tz.TZDateTime.now(tz.local);
     tz.TZDateTime scheduledDate = tz.TZDateTime(

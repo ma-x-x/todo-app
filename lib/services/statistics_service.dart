@@ -3,9 +3,22 @@ import 'package:collection/collection.dart';
 import '../models/statistics.dart';
 import '../models/todo.dart';
 
-/// 统计服务类，用于计算各种统计数据
+/// 统计服务类
+/// 计算和生成待办事项的各种统计数据
 class StatisticsService {
-  /// 计算待办事项的统计数据
+  /// 计算待办事项统计数据
+  ///
+  /// 参数:
+  /// - todos: 待办事项列表
+  ///
+  /// 返回:
+  /// 包含各种统计指标的 TodoStatistics 对象，包括：
+  /// - 总数、已完成数、活动数
+  /// - 按优先级分布
+  /// - 按分类分布
+  /// - 按完成日期分布
+  /// - 完成率
+  /// - 平均完成时间
   TodoStatistics calculateStatistics(List<Todo> todos) {
     // 计算基本数量统计
     final totalTodos = todos.length;

@@ -1,6 +1,8 @@
 import 'package:package_info_plus/package_info_plus.dart';
 import 'package:version/version.dart';
 
+/// 更新服务类
+/// 检查应用更新并提供更新信息
 class UpdateService {
   static final UpdateService _instance = UpdateService._();
   factory UpdateService() => _instance;
@@ -10,10 +12,16 @@ class UpdateService {
 
   UpdateService._();
 
+  /// 初始化更新服务
   Future<void> init() async {
     _packageInfo = await PackageInfo.fromPlatform();
   }
 
+  /// 检查应用更新
+  ///
+  /// 返回:
+  /// - 如果有更新可用，返回 UpdateInfo 对象
+  /// - 如果没有更新或检查失败，返回 null
   Future<UpdateInfo?> checkForUpdates() async {
     if (_isChecking) return null;
     _isChecking = true;
@@ -41,7 +49,7 @@ class UpdateService {
 2. 修复了一些已知问题
 3. 添加了新功能
 ''',
-          downloadUrl: 'https://github.com/your-repo/releases/latest',
+          downloadUrl: 'https://github.com/ma-x-x/todo-app/releases/latest',
           isForced: false,
         );
       }
@@ -55,10 +63,19 @@ class UpdateService {
   }
 }
 
+/// 更新信息类
+/// 包含应用更新的详细信息
 class UpdateInfo {
+  /// 新版本号
   final String version;
+
+  /// 更新说明
   final String description;
+
+  /// 下载地址
   final String downloadUrl;
+
+  /// 是否强制更新
   final bool isForced;
 
   UpdateInfo({

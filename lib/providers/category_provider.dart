@@ -1,52 +1,48 @@
 import 'package:flutter/foundation.dart' hide Category;
 
-import '../api/api_client.dart';
 import '../api/category_api.dart';
 import '../models/category.dart';
 import '../services/storage_service.dart';
 
+/// 分类管理器
+/// 负责管理待办事项的分类数据，包括加载、创建、更新和删除分类
 class CategoryProvider with ChangeNotifier {
   final CategoryApi _categoryApi;
-  final StorageService _storage = StorageService();
-  List<Category> _categories = [];
-  bool _isLoading = false;
+  final bool _isLoading = false;
   String? _error;
+  final List<Category> _categories = [];
+  bool _isInitialized = false;
+  final StorageService _storage = StorageService();
 
-  CategoryProvider() : _categoryApi = CategoryApi(ApiClient()) {
-    loadCategories();
-  }
-
+  /// 获取所有分类
   List<Category> get categories => _categories;
+
+  /// 是否正在加载
   bool get isLoading => _isLoading;
+
+  /// 获取错误信息
   String? get error => _error;
 
-  Future<void> loadCategories() async {
-    _isLoading = true;
-    _error = null;
-    notifyListeners();
+  bool get isInitialized => _isInitialized;
 
+  CategoryProvider({required CategoryApi categoryApi})
+      : _categoryApi = categoryApi;
+
+  Future<void> loadCategories() async {
     try {
-      print('开始加载分类...');
-      _categories = await _categoryApi.getCategories();
-      await _storage.saveCategories(_categories);
-      print('成功加载分类: ${_categories.length}个项目');
+      _loadCachedCategories();
+      final categories = await _categoryApi.getCategories();
+
+      _categories.clear();
+      _categories.addAll(categories);
+      _error = null;
+      _isInitialized = true;
+
       notifyListeners();
     } catch (e) {
-      print('加载分类失败: $e');
       _error = e.toString();
-      _loadCachedCategories();
-      notifyListeners();
-    } finally {
-      _isLoading = false;
-      notifyListeners();
-    }
-  }
-
-  void _loadCachedCategories() {
-    final cachedCategories = _storage.getCategories();
-    if (cachedCategories != null) {
-      _categories = cachedCategories;
-      notifyListeners();
+      print('加载分类失败: $e');
+      rethrow;
     }
   }
 
@@ -68,7 +64,7 @@ class CategoryProvider with ChangeNotifier {
   Future<void> updateCategory(Category category) async {
     try {
       final updatedCategory = await _categoryApi.updateCategory(
-        category.id!,
+        category.id,
         category.toJson(),
       );
       final index = _categories.indexWhere((c) => c.id == category.id);
@@ -96,9 +92,24 @@ class CategoryProvider with ChangeNotifier {
   }
 
   Future<void> importCategories(List<dynamic> categoriesData) async {
-    _categories =
-        categoriesData.map((json) => Category.fromJson(json)).toList();
+    _categories.clear();
+    _categories
+        .addAll(categoriesData.map((json) => Category.fromJson(json)).toList());
     await _storage.saveCategories(_categories);
     notifyListeners();
+  }
+
+  Future<void> ensureInitialized() async {
+    if (_isInitialized) return;
+    await loadCategories();
+  }
+
+  void _loadCachedCategories() {
+    final cachedCategories = _storage.getCategories();
+    if (cachedCategories != null) {
+      _categories.clear();
+      _categories.addAll(cachedCategories);
+      notifyListeners();
+    }
   }
 }

@@ -1,3 +1,4 @@
+import 'package:collection/collection.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 import 'package:provider/provider.dart';
@@ -8,7 +9,11 @@ import '../../providers/category_provider.dart';
 import '../../providers/todo_provider.dart';
 import '../../widgets/common/custom_text_field.dart';
 
+/// 待办事项表单页面
+/// 用于创建新的待办事项或编辑现有待办事项
+/// 包含标题、描述、分类、优先级等字段的输入
 class TodoFormScreen extends StatefulWidget {
+  /// 要编辑的待办事项，如果为null则表示创建新待办事项
   final Todo? todo;
 
   const TodoFormScreen({super.key, this.todo});
@@ -18,261 +23,270 @@ class TodoFormScreen extends StatefulWidget {
 }
 
 class _TodoFormScreenState extends State<TodoFormScreen> {
+  /// 表单的全局键，用于验证表单
   final _formKey = GlobalKey<FormState>();
+
+  /// 标题输入控制器
   final _titleController = TextEditingController();
+
+  /// 描述输入控制器
   final _descriptionController = TextEditingController();
+
+  /// 选中的分类
   Category? _selectedCategory;
-  late String _priority;
-  bool _isLoading = false;
+
+  /// 选中的优先级
+  String _priority = 'medium';
+
+  late Future<void> _initFuture;
 
   @override
   void initState() {
     super.initState();
-    _priority = 'medium';
-    if (widget.todo != null) {
-      _loadTodoDetail();
-    }
+    _initFuture = _initialize();
   }
 
-  Future<void> _loadTodoDetail() async {
-    setState(() {
-      _isLoading = true;
-    });
-
+  Future<void> _initialize() async {
     try {
-      final todo =
-          await context.read<TodoProvider>().getTodoDetail(widget.todo!.id!);
-      print('获取到的待办详情: ${todo.toJson()}');
-      print('优先级值: ${todo.priority}');
+      final categoryProvider = context.read<CategoryProvider>();
+      final todoProvider = context.read<TodoProvider>();
 
-      _titleController.text = todo.title;
-      _descriptionController.text = todo.description ?? '';
-      _selectedCategory = todo.category;
+      // 1. 如果分类未初始化，先加载分类
+      if (!categoryProvider.isInitialized) {
+        await categoryProvider.loadCategories();
+      }
 
-      setState(() {
-        _priority = ['low', 'medium', 'high'].contains(todo.priority)
-            ? todo.priority
-            : 'medium';
-      });
-      print('设置的优先级值: $_priority');
+      // 2. 如果是编辑模式，加载待办事项详情
+      if (widget.todo != null) {
+        final todo = await todoProvider.getTodoDetail(widget.todo!.id!);
+        if (!mounted) return;
+
+        _titleController.text = todo.title;
+        _descriptionController.text = todo.description ?? '';
+        _priority = todo.priority;
+
+        // 3. 设置分类（使用已加载的分类数据）
+        if (todo.categoryId != null) {
+          _selectedCategory = categoryProvider.categories
+              .firstWhereOrNull((c) => c.id == todo.categoryId);
+        }
+      }
     } catch (e) {
-      print('加载待办详情失败: $e');
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('加载失败: $e')),
-        );
-      }
-    } finally {
-      if (mounted) {
-        setState(() {
-          _isLoading = false;
-        });
-      }
+      print('初始化失败: $e');
+      rethrow;
     }
   }
 
   @override
   Widget build(BuildContext context) {
-    final l10n = AppLocalizations.of(context)!;
-    final theme = Theme.of(context);
-
-    if (_isLoading) {
-      return Scaffold(
-        appBar: AppBar(
-          title: Text(widget.todo == null ? l10n.newTodo : l10n.editTodo),
-        ),
-        body: const Center(child: CircularProgressIndicator()),
-      );
-    }
-
     return Scaffold(
       appBar: AppBar(
-        title: Text(widget.todo == null ? l10n.newTodo : l10n.editTodo),
+        title: Text(widget.todo == null ? '新建待办' : '编辑待办'),
       ),
-      body: Form(
-        key: _formKey,
-        child: ListView(
-          padding: const EdgeInsets.all(24),
-          children: [
-            CustomTextField(
-              controller: _titleController,
-              label: l10n.title,
-              prefixIcon: const Icon(Icons.title_outlined),
-              validator: (value) {
-                if (value?.isEmpty ?? true) {
-                  return l10n.titleRequired;
-                }
-                return null;
-              },
-            ),
-            const SizedBox(height: 20),
-            CustomTextField(
-              controller: _descriptionController,
-              label: l10n.description,
-              prefixIcon: const Icon(Icons.description_outlined),
-              maxLines: 3,
-            ),
-            const SizedBox(height: 24),
-            Consumer<CategoryProvider>(
-              builder: (context, provider, child) {
-                if (provider.isLoading) {
-                  return const Center(
-                    child: Padding(
-                      padding: EdgeInsets.all(8),
-                      child: CircularProgressIndicator(),
-                    ),
-                  );
-                }
+      body: FutureBuilder(
+        future: _initFuture,
+        builder: (context, snapshot) {
+          if (snapshot.connectionState == ConnectionState.waiting) {
+            return const Center(child: CircularProgressIndicator());
+          }
 
-                return DropdownButtonFormField<Category?>(
-                  value: _selectedCategory,
-                  decoration: InputDecoration(
-                    labelText: l10n.category,
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                    prefixIcon: const Icon(Icons.category_outlined),
-                    filled: true,
-                    fillColor: theme.colorScheme.surface,
+          if (snapshot.hasError) {
+            return Center(
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Text('加载失败: ${snapshot.error}'),
+                  const SizedBox(height: 16),
+                  FilledButton(
+                    onPressed: () {
+                      setState(() {
+                        _initFuture = _initialize();
+                      });
+                    },
+                    child: const Text('重试'),
                   ),
-                  items: [
-                    DropdownMenuItem(
-                      value: null,
-                      child: Text(l10n.noCategory),
-                    ),
-                    ...provider.categories.map((category) {
-                      if (_selectedCategory?.id == category.id) {
-                        _selectedCategory = category;
-                      }
-                      final categoryColor = category.color != null
-                          ? Color(int.parse(
-                              category.color!.replaceFirst('#', 'FF'),
-                              radix: 16))
-                          : theme.colorScheme.primary;
-                      return DropdownMenuItem(
-                        value: category,
-                        child: Row(
-                          children: [
-                            Container(
-                              width: 16,
-                              height: 16,
-                              margin: const EdgeInsets.only(right: 8),
-                              decoration: BoxDecoration(
-                                color: categoryColor.withOpacity(0.2),
-                                shape: BoxShape.circle,
-                                border: Border.all(
-                                  color: categoryColor,
-                                  width: 2,
-                                ),
-                              ),
-                            ),
-                            Text(category.name),
-                          ],
-                        ),
-                      );
-                    }),
-                  ],
-                  onChanged: (value) =>
-                      setState(() => _selectedCategory = value),
-                );
-              },
-            ),
-            const SizedBox(height: 20),
-            DropdownButtonFormField<String>(
-              value: _priority,
-              decoration: InputDecoration(
-                labelText: l10n.priority,
-                border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(12),
-                ),
-                prefixIcon: const Icon(Icons.flag_outlined),
-                filled: true,
-                fillColor: theme.colorScheme.surface,
+                ],
               ),
-              items: [
-                DropdownMenuItem(
-                  value: 'low',
-                  child: Row(
-                    children: [
-                      Icon(Icons.arrow_downward,
-                          color: theme.colorScheme.tertiary, size: 20),
-                      const SizedBox(width: 8),
-                      Text(l10n.priorityLow),
-                    ],
-                  ),
-                ),
-                DropdownMenuItem(
-                  value: 'medium',
-                  child: Row(
-                    children: [
-                      Icon(Icons.remove,
-                          color: theme.colorScheme.primary, size: 20),
-                      const SizedBox(width: 8),
-                      Text(l10n.priorityMedium),
-                    ],
-                  ),
-                ),
-                DropdownMenuItem(
-                  value: 'high',
-                  child: Row(
-                    children: [
-                      Icon(Icons.priority_high,
-                          color: theme.colorScheme.error, size: 20),
-                      const SizedBox(width: 8),
-                      Text(l10n.priorityHigh),
-                    ],
-                  ),
-                ),
-              ],
-              onChanged: (value) => setState(() => _priority = value!),
+            );
+          }
+
+          return _buildForm(context);
+        },
+      ),
+    );
+  }
+
+  Widget _buildForm(BuildContext context) {
+    return SingleChildScrollView(
+      padding: const EdgeInsets.all(24),
+      child: Form(
+        key: _formKey,
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            _buildTitleField(context),
+            const SizedBox(height: 20),
+            _buildDescriptionField(context),
+            const SizedBox(height: 24),
+            _buildCategoryField(context),
+            const SizedBox(height: 20),
+            _buildPriorityField(context),
+            const SizedBox(height: 32),
+            FilledButton(
+              onPressed: _submit,
+              child: const Text('保存'),
             ),
           ],
-        ),
-      ),
-      bottomNavigationBar: SafeArea(
-        child: Padding(
-          padding: const EdgeInsets.all(16),
-          child: FilledButton(
-            onPressed: _isLoading ? null : _submit,
-            child: _isLoading
-                ? const SizedBox(
-                    height: 20,
-                    width: 20,
-                    child: CircularProgressIndicator(
-                      strokeWidth: 2,
-                      valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
-                    ),
-                  )
-                : Text(l10n.save),
-          ),
         ),
       ),
     );
   }
 
-  Future<void> _submit() async {
-    if (!_formKey.currentState!.validate()) {
-      return;
-    }
-
-    final todo = Todo(
-      id: widget.todo?.id,
-      title: _titleController.text,
-      description: _descriptionController.text,
-      priority: _priority,
-      categoryId: _selectedCategory?.id,
-      completed: widget.todo?.completed ?? false,
-      createdAt: widget.todo?.createdAt ?? DateTime.now(),
-      updatedAt: DateTime.now(),
+  Widget _buildTitleField(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
+    return CustomTextField(
+      controller: _titleController,
+      label: l10n.title,
+      prefixIcon: const Icon(Icons.title_outlined),
+      validator: (value) {
+        if (value?.isEmpty ?? true) {
+          return l10n.titleRequired;
+        }
+        return null;
+      },
     );
+  }
+
+  Widget _buildDescriptionField(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
+    return CustomTextField(
+      controller: _descriptionController,
+      label: l10n.description,
+      prefixIcon: const Icon(Icons.description_outlined),
+      maxLines: 3,
+    );
+  }
+
+  Widget _buildCategoryField(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
+    final theme = Theme.of(context);
+    return Consumer<CategoryProvider>(
+      builder: (context, provider, _) {
+        return DropdownButtonFormField<Category?>(
+          value: _selectedCategory,
+          decoration: InputDecoration(
+            labelText: l10n.category,
+            border: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(12),
+            ),
+            prefixIcon: const Icon(Icons.category_outlined),
+            filled: true,
+            fillColor: theme.colorScheme.surface,
+          ),
+          items: [
+            DropdownMenuItem(
+              value: null,
+              child: Text(l10n.noCategory),
+            ),
+            ...provider.categories.map((category) {
+              final color = category.color != null
+                  ? Color(int.parse(category.color!.replaceFirst('#', 'FF'),
+                      radix: 16))
+                  : theme.colorScheme.primary;
+              return DropdownMenuItem(
+                value: category,
+                child: Row(
+                  children: [
+                    Container(
+                      width: 16,
+                      height: 16,
+                      margin: const EdgeInsets.only(right: 8),
+                      decoration: BoxDecoration(
+                        color: color.withOpacity(0.2),
+                        shape: BoxShape.circle,
+                        border: Border.all(color: color, width: 2),
+                      ),
+                    ),
+                    Text(category.name),
+                  ],
+                ),
+              );
+            }),
+          ],
+          onChanged: (value) => setState(() => _selectedCategory = value),
+        );
+      },
+    );
+  }
+
+  Widget _buildPriorityField(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
+    final theme = Theme.of(context);
+    return DropdownButtonFormField<String>(
+      value: _priority,
+      decoration: InputDecoration(
+        labelText: l10n.priority,
+        border: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(12),
+        ),
+        prefixIcon: const Icon(Icons.flag_outlined),
+        filled: true,
+        fillColor: theme.colorScheme.surface,
+      ),
+      items: [
+        _buildPriorityItem('low', Icons.arrow_downward, l10n.priorityLow,
+            theme.colorScheme.tertiary, theme),
+        _buildPriorityItem('medium', Icons.remove, l10n.priorityMedium,
+            theme.colorScheme.primary, theme),
+        _buildPriorityItem('high', Icons.priority_high, l10n.priorityHigh,
+            theme.colorScheme.error, theme),
+      ],
+      onChanged: (value) {
+        if (value != null) {
+          setState(() => _priority = value);
+        }
+      },
+    );
+  }
+
+  DropdownMenuItem<String> _buildPriorityItem(
+      String value, IconData icon, String label, Color color, ThemeData theme) {
+    return DropdownMenuItem(
+      value: value,
+      child: Row(
+        children: [
+          Icon(icon, color: color, size: 20),
+          const SizedBox(width: 8),
+          Text(label),
+        ],
+      ),
+    );
+  }
+
+  /// 提交表单
+  /// 创建或更新待办事项
+  Future<void> _submit() async {
+    if (!_formKey.currentState!.validate()) return;
 
     try {
+      final todo = Todo(
+        id: widget.todo?.id,
+        title: _titleController.text,
+        description: _descriptionController.text,
+        priority: _priority,
+        categoryId: _selectedCategory?.id,
+        completed: widget.todo?.completed ?? false,
+        createdAt: widget.todo?.createdAt ?? DateTime.now(),
+        updatedAt: DateTime.now(),
+      );
+
       final provider = context.read<TodoProvider>();
       if (widget.todo == null) {
         await provider.createTodo(todo);
       } else {
         await provider.updateTodo(todo);
       }
+
       if (mounted) {
         Navigator.pop(context);
       }

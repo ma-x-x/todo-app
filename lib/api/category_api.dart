@@ -1,5 +1,5 @@
+import '../api/api_client.dart';
 import '../models/category.dart';
-import 'api_client.dart';
 
 class CategoryApi {
   final ApiClient _client;
@@ -9,28 +9,24 @@ class CategoryApi {
   Future<List<Category>> getCategories() async {
     try {
       final response = await _client.get('/categories');
-      return (response.data['items'] as List)
+      final data = response.data as Map<String, dynamic>;
+      if (!data.containsKey('items') || data['items'] is! List) {
+        throw '响应数据格式错误';
+      }
+
+      return (data['items'] as List)
           .map((json) => Category.fromJson(json))
           .toList();
     } catch (e) {
-      print('获取分类失败: $e');
+      print('获取分类列表失败: $e');
       rethrow;
     }
   }
 
   Future<Category> createCategory(Map<String, dynamic> data) async {
     try {
-      final response = await _client.post('/categories', data: {
-        'name': data['name'],
-        'color': data['color'],
-      });
-      return Category.fromJson({
-        'id': response.data['id'],
-        'name': data['name'],
-        'color': data['color'],
-        'created_at': DateTime.now().toIso8601String(),
-        'updated_at': DateTime.now().toIso8601String(),
-      });
+      final response = await _client.post('/categories', data: data);
+      return Category.fromJson(response.data);
     } catch (e) {
       print('创建分类失败: $e');
       rethrow;

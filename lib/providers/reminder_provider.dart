@@ -1,38 +1,68 @@
 import 'package:flutter/foundation.dart';
 
-import '../api/api_client.dart';
 import '../api/reminder_api.dart';
 import '../models/reminder.dart';
 import '../services/notification_service.dart';
 
+/// 提醒事项管理器
+/// 负责管理待办事项的提醒功能，包括创建、更新、删除提醒
+/// 同时负责调度本地通知
 class ReminderProvider with ChangeNotifier {
   final ReminderApi _reminderApi;
-  final NotificationService _notificationService = NotificationService();
-  final Map<int, List<Reminder>> _reminders = {}; // todoId -> List<Reminder>
   bool _isLoading = false;
   String? _error;
+  final Map<int, List<Reminder>> _reminders = {};
+  final Map<int, bool> _initializedTodos = {};
+  final NotificationService _notificationService = NotificationService();
 
-  ReminderProvider() : _reminderApi = ReminderApi(ApiClient());
+  /// 获取指定待办事项的所有提醒
+  List<Reminder> getRemindersForTodo(int todoId) {
+    return _reminders[todoId] ?? [];
+  }
 
-  List<Reminder> getRemindersForTodo(int todoId) => _reminders[todoId] ?? [];
+  /// 获取所有提醒列表
+  List<Reminder> get allReminders =>
+      _reminders.values.expand((reminders) => reminders).toList();
+
+  ReminderProvider({required ReminderApi reminderApi})
+      : _reminderApi = reminderApi;
+
   bool get isLoading => _isLoading;
   String? get error => _error;
 
-  List<Reminder> get allReminders {
-    return _reminders.values.expand((list) => list).toList();
-  }
-
-  Future<void> fetchReminders(int todoId) async {
-    _isLoading = true;
-    _error = null;
-    notifyListeners();
+  Future<void> ensureInitialized(int todoId) async {
+    if (_initializedTodos[todoId] == true) return;
 
     try {
+      _isLoading = true;
+      notifyListeners();
+
       final reminders = await _reminderApi.getReminders(todoId);
       _reminders[todoId] = reminders;
+      _initializedTodos[todoId] = true;
+      _error = null;
     } catch (e) {
-      _error = '获取提醒列表失败：${e.toString()}';
-      print(_error);
+      _error = e.toString();
+      print('加载提醒失败: $e');
+    } finally {
+      _isLoading = false;
+      notifyListeners();
+    }
+  }
+
+  Future<void> loadReminders(int todoId) async {
+    if (_isLoading) return;
+
+    try {
+      _isLoading = true;
+      notifyListeners();
+
+      final reminders = await _reminderApi.getReminders(todoId);
+      _reminders[todoId] = reminders;
+      _error = null;
+    } catch (e) {
+      _error = e.toString();
+      print('加载提醒失败: $e');
     } finally {
       _isLoading = false;
       notifyListeners();
@@ -41,12 +71,14 @@ class ReminderProvider with ChangeNotifier {
 
   Future<void> createReminder(Reminder reminder, String todoTitle) async {
     try {
-      // 先请求权限
       await _notificationService.requestPermissions();
-
       final newReminder =
           await _reminderApi.createReminder(reminder.toRequestJson());
-      _addReminderToList(reminder.todoId, newReminder);
+
+      // 确保待办事项的提醒列表已初始化
+      _reminders.putIfAbsent(reminder.todoId, () => []);
+      _reminders[reminder.todoId]!.add(newReminder);
+
       await _notificationService.scheduleNotification(newReminder, todoTitle);
       notifyListeners();
     } catch (e) {
@@ -55,50 +87,31 @@ class ReminderProvider with ChangeNotifier {
     }
   }
 
-  void _addReminderToList(int todoId, Reminder reminder) {
-    if (!_reminders.containsKey(todoId)) {
-      _reminders[todoId] = [];
-    }
-    _reminders[todoId]!.add(reminder);
-  }
-
   Future<void> updateReminder(Reminder reminder, String todoTitle) async {
     try {
-      // 保存原有的提醒对象
-      final originalReminder = _reminders[reminder.todoId]?.firstWhere(
-        (r) => r.id == reminder.id,
-        orElse: () => reminder,
-      );
+      if (!_reminders.containsKey(reminder.todoId)) return;
 
-      // 发送更新请求
-      await _reminderApi.updateReminder(
+      final list = _reminders[reminder.todoId]!;
+      final index = list.indexWhere((r) => r.id == reminder.id);
+      if (index == -1) return;
+
+      final originalReminder = list[index];
+      final updatedReminder = await _reminderApi.updateReminder(
         reminder.id!,
         reminder.toRequestJson(),
       );
 
-      // 使用原有数据和新数据构建更新后的提醒对象
-      final updatedReminder = reminder.copyWith(
-        createdAt: originalReminder?.createdAt,
-        updatedAt: DateTime.now(),
+      list[index] = updatedReminder.copyWith(
+        createdAt: originalReminder.createdAt,
       );
 
-      // 更新本地数据
-      final todoReminders = _reminders[reminder.todoId];
-      if (todoReminders != null) {
-        final index = todoReminders.indexWhere((r) => r.id == reminder.id);
-        if (index != -1) {
-          // 取消旧的通知
-          await _notificationService.cancelNotification(reminder.id!);
-          // 设置新的通知
-          await _notificationService.scheduleNotification(
-            updatedReminder,
-            todoTitle,
-          );
+      await _notificationService.cancelNotification(reminder.id!);
+      await _notificationService.scheduleNotification(
+        list[index],
+        todoTitle,
+      );
 
-          todoReminders[index] = updatedReminder;
-          notifyListeners();
-        }
-      }
+      notifyListeners();
     } catch (e) {
       print('更新提醒失败: $e');
       rethrow;
@@ -108,12 +121,10 @@ class ReminderProvider with ChangeNotifier {
   Future<void> deleteReminder(int todoId, int reminderId) async {
     try {
       await _reminderApi.deleteReminder(reminderId);
-      // 取消通知
       await _notificationService.cancelNotification(reminderId);
 
-      final todoReminders = _reminders[todoId];
-      if (todoReminders != null) {
-        todoReminders.removeWhere((reminder) => reminder.id == reminderId);
+      if (_reminders.containsKey(todoId)) {
+        _reminders[todoId]!.removeWhere((r) => r.id == reminderId);
         notifyListeners();
       }
     } catch (e) {
@@ -126,10 +137,8 @@ class ReminderProvider with ChangeNotifier {
     _reminders.clear();
     for (var json in remindersData) {
       final reminder = Reminder.fromJson(json);
-      if (!_reminders.containsKey(reminder.todoId)) {
-        _reminders[reminder.todoId] = [];
-      }
-      _reminders[reminder.todoId]!.add(reminder);
+      final todoId = reminder.todoId;
+      _reminders.putIfAbsent(todoId, () => []).add(reminder);
     }
     notifyListeners();
   }

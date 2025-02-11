@@ -11,6 +11,9 @@ import '../../widgets/update_dialog.dart';
 import 'backup_screen.dart';
 import 'export_screen.dart';
 
+/// 设置页面
+/// 包含语言设置、主题设置、通知设置等功能
+/// 还包括数据备份、导出、检查更新等功能
 class SettingsScreen extends StatefulWidget {
   const SettingsScreen({super.key});
 
@@ -130,6 +133,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
     );
   }
 
+  /// 构建设置卡片
   Widget _buildSettingsCard(ThemeData theme, {required List<Widget> children}) {
     return Card(
       elevation: 0,
@@ -141,6 +145,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
     );
   }
 
+  /// 构建设置项
   Widget _buildSettingTile(
     ThemeData theme, {
     required IconData icon,
@@ -175,6 +180,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
     );
   }
 
+  /// 获取语言名称
   String _getLanguageName(String languageCode) {
     switch (languageCode) {
       case 'en':
@@ -186,6 +192,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
     }
   }
 
+  /// 显示退出登录确认对话框
   Future<void> _showLogoutDialog(BuildContext context) async {
     final confirmed = await showDialog<bool>(
       context: context,
@@ -226,6 +233,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
     }
   }
 
+  /// 显示关于对话框
   void _showAboutDialog(BuildContext context) {
     showDialog(
       context: context,
@@ -240,6 +248,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
     );
   }
 
+  /// 检查更新
   Future<void> _checkForUpdates(BuildContext context) async {
     final updateService = context.read<UpdateService>();
     final updateInfo = await updateService.checkForUpdates();

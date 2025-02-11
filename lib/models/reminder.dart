@@ -2,26 +2,44 @@ import 'package:json_annotation/json_annotation.dart';
 
 part 'reminder.g.dart';
 
+/// 提醒事项模型
 @JsonSerializable(
   converters: [
     NullableDateTimeConverter(),
   ],
 )
 class Reminder {
+  /// 提醒ID
   final int? id;
+
+  /// 关联的待办事项ID
   @JsonKey(name: 'todoId')
   final int todoId;
+
+  /// 提醒时间
   @JsonKey(name: 'remindAt')
   final DateTime remindAt;
+
+  /// 提醒类型：一次性/每日/每周
   @JsonKey(name: 'remindType')
-  final String remindType; // once/daily/weekly
+  final String remindType;
+
+  /// 通知类型：邮件/推送
   @JsonKey(name: 'notifyType')
-  final String notifyType; // email/push
+  final String notifyType;
+
+  /// 提醒状态
   final bool status;
+
+  /// 创建时间
   @JsonKey(name: 'createdAt')
   final DateTime? createdAt;
+
+  /// 更新时间
   @JsonKey(name: 'updatedAt')
   final DateTime? updatedAt;
+
+  /// 删除时间
   @JsonKey(name: 'deletedAt')
   final DateTime? deletedAt;
 
