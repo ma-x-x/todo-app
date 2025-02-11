@@ -216,30 +216,40 @@ class NotificationService {
     return true; // iOS默认返回true，因为权限是在requestPermissions时处理的
   }
 
-  Future<void> requestPermissions() async {
-    if (kIsWeb) return;
+  Future<bool> requestPermissions() async {
+    if (kIsWeb) return false;
 
-    if (PlatformHelper.isAndroid) {
-      final platform = _notifications.resolvePlatformSpecificImplementation<
-          AndroidFlutterLocalNotificationsPlugin>();
-      if (platform != null) {
-        final hasPermission = await checkPermissions();
-        if (!hasPermission) {
-          await platform.requestNotificationsPermission();
-          await platform.requestExactAlarmsPermission();
+    try {
+      if (PlatformHelper.isAndroid) {
+        final platform = _notifications.resolvePlatformSpecificImplementation<
+            AndroidFlutterLocalNotificationsPlugin>();
+        if (platform != null) {
+          final hasPermission = await checkPermissions();
+          if (!hasPermission) {
+            await platform.requestNotificationsPermission();
+            await platform.requestExactAlarmsPermission();
+          }
+          return await checkPermissions();
         }
       }
-    }
 
-    if (PlatformHelper.isIOS) {
-      await _notifications
-          .resolvePlatformSpecificImplementation<
-              IOSFlutterLocalNotificationsPlugin>()
-          ?.requestPermissions(
-            alert: true,
-            badge: true,
-            sound: true,
-          );
+      if (PlatformHelper.isIOS) {
+        final granted = await _notifications
+                .resolvePlatformSpecificImplementation<
+                    IOSFlutterLocalNotificationsPlugin>()
+                ?.requestPermissions(
+                  alert: true,
+                  badge: true,
+                  sound: true,
+                ) ??
+            false;
+        return granted;
+      }
+
+      return false;
+    } catch (e) {
+      print('Permission request failed: $e');
+      return false;
     }
   }
 }

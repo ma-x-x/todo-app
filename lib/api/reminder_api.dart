@@ -26,7 +26,16 @@ class ReminderApi {
   Future<Reminder> createReminder(Map<String, dynamic> data) async {
     try {
       final response = await _client.post('/reminders', data: data);
-      return Reminder.fromJson(response.data);
+      return Reminder(
+        id: response.data['id'] as int,
+        todoId: data['todoId'] as int,
+        remindAt: DateTime.parse(data['remindAt'] as String),
+        remindType: data['remindType'] as String,
+        notifyType: data['notifyType'] as String,
+        status: false,
+        createdAt: DateTime.now(),
+        updatedAt: DateTime.now(),
+      );
     } catch (e) {
       print('创建提醒失败: $e');
       rethrow;

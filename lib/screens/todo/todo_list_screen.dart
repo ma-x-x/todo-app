@@ -375,7 +375,7 @@ class _TodoListScreenState extends State<TodoListScreen> {
           );
         },
       ),
-      floatingActionButton: FloatingActionButton.extended(
+      floatingActionButton: FloatingActionButton(
         heroTag: 'todo_add_fab',
         onPressed: () {
           Navigator.push(
@@ -383,8 +383,10 @@ class _TodoListScreenState extends State<TodoListScreen> {
             MaterialPageRoute(builder: (_) => const TodoFormScreen()),
           );
         },
-        icon: const Icon(Icons.add),
-        label: Text(l10n.newTodo),
+        tooltip: l10n.newTodo,
+        elevation: 2,
+        shape: const CircleBorder(),
+        child: const Icon(Icons.add),
       ),
     );
   }

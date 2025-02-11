@@ -71,7 +71,16 @@ class NotificationSettingsProvider with ChangeNotifier {
     notifyListeners();
   }
 
+  bool _validateQuietHours(TimeOfDay start, TimeOfDay end) {
+    final startMinutes = start.hour * 60 + start.minute;
+    final endMinutes = end.hour * 60 + end.minute;
+    return startMinutes != endMinutes;
+  }
+
   Future<void> setQuietHoursStart(TimeOfDay time) async {
+    if (!_validateQuietHours(time, _quietHoursEnd)) {
+      throw Exception('开始时间不能等于结束时间');
+    }
     _quietHoursStart = time;
     await _storage.setValue('notification_quiet_start_hour', time.hour);
     await _storage.setValue('notification_quiet_start_minute', time.minute);
@@ -99,5 +108,22 @@ class NotificationSettingsProvider with ChangeNotifier {
       // 处理跨天的情况
       return currentMinutes >= startMinutes || currentMinutes <= endMinutes;
     }
+  }
+
+  Map<String, dynamic> exportSettings() {
+    return {
+      'enabled': _enabled,
+      'soundEnabled': _soundEnabled,
+      'vibrationEnabled': _vibrationEnabled,
+      'quietHoursEnabled': _quietHoursEnabled,
+      'quietHoursStart': {
+        'hour': _quietHoursStart.hour,
+        'minute': _quietHoursStart.minute,
+      },
+      'quietHoursEnd': {
+        'hour': _quietHoursEnd.hour,
+        'minute': _quietHoursEnd.minute,
+      },
+    };
   }
 }

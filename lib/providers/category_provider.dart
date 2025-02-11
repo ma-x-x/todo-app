@@ -6,9 +6,10 @@ import '../services/storage_service.dart';
 
 /// 分类管理器
 /// 负责管理待办事项的分类数据，包括加载、创建、更新和删除分类
+/// 支持本地缓存和在线同步
 class CategoryProvider with ChangeNotifier {
   final CategoryApi _categoryApi;
-  final bool _isLoading = false;
+  bool _isLoading = false;
   String? _error;
   final List<Category> _categories = [];
   bool _isInitialized = false;
@@ -29,7 +30,12 @@ class CategoryProvider with ChangeNotifier {
       : _categoryApi = categoryApi;
 
   Future<void> loadCategories() async {
+    if (_isLoading) return;
+
     try {
+      _isLoading = true;
+      notifyListeners();
+
       _loadCachedCategories();
       final categories = await _categoryApi.getCategories();
 
@@ -37,12 +43,12 @@ class CategoryProvider with ChangeNotifier {
       _categories.addAll(categories);
       _error = null;
       _isInitialized = true;
-
-      notifyListeners();
     } catch (e) {
-      _error = e.toString();
-      print('加载分类失败: $e');
+      _handleError('加载分类', e);
       rethrow;
+    } finally {
+      _isLoading = false;
+      notifyListeners();
     }
   }
 
@@ -111,5 +117,10 @@ class CategoryProvider with ChangeNotifier {
       _categories.addAll(cachedCategories);
       notifyListeners();
     }
+  }
+
+  void _handleError(String operation, dynamic error) {
+    _error = '$operation失败: $error';
+    print(_error);
   }
 }

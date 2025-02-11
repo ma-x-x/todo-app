@@ -259,7 +259,7 @@ class _ReminderListScreenState extends State<ReminderListScreen> {
           );
         },
       ),
-      floatingActionButton: FloatingActionButton.extended(
+      floatingActionButton: FloatingActionButton(
         onPressed: () {
           Navigator.push(
             context,
@@ -271,8 +271,10 @@ class _ReminderListScreenState extends State<ReminderListScreen> {
             ),
           );
         },
-        icon: const Icon(Icons.add),
-        label: Text(l10n.newReminder),
+        tooltip: l10n.newReminder,
+        elevation: 2,
+        shape: const CircleBorder(),
+        child: const Icon(Icons.add),
       ),
     );
   }

@@ -69,20 +69,29 @@ class ReminderProvider with ChangeNotifier {
     }
   }
 
+  void _handleError(String operation, dynamic error) {
+    _error = error.toString();
+    print('$operation失败: $error');
+  }
+
   Future<void> createReminder(Reminder reminder, String todoTitle) async {
     try {
-      await _notificationService.requestPermissions();
+      final hasPermission = await _notificationService.requestPermissions();
       final newReminder =
           await _reminderApi.createReminder(reminder.toRequestJson());
 
-      // 确保待办事项的提醒列表已初始化
-      _reminders.putIfAbsent(reminder.todoId, () => []);
-      _reminders[reminder.todoId]!.add(newReminder);
+      final reminderList = _reminders.putIfAbsent(reminder.todoId, () => []);
+      reminderList.add(newReminder);
 
-      await _notificationService.scheduleNotification(newReminder, todoTitle);
+      if (!hasPermission) {
+        _handleError('通知权限', '未获得通知权限，提醒将无法显示');
+      } else {
+        await _notificationService.scheduleNotification(newReminder, todoTitle);
+      }
+
       notifyListeners();
     } catch (e) {
-      print('创建提醒失败: $e');
+      _handleError('创建提醒', e);
       rethrow;
     }
   }
@@ -95,27 +104,38 @@ class ReminderProvider with ChangeNotifier {
       final index = list.indexWhere((r) => r.id == reminder.id);
       if (index == -1) return;
 
-      final originalReminder = list[index];
-      final updatedReminder = await _reminderApi.updateReminder(
-        reminder.id!,
-        reminder.toRequestJson(),
-      );
-
-      list[index] = updatedReminder.copyWith(
-        createdAt: originalReminder.createdAt,
-      );
-
-      await _notificationService.cancelNotification(reminder.id!);
-      await _notificationService.scheduleNotification(
+      final updatedReminder = await _updateReminderAndNotification(
         list[index],
+        reminder,
         todoTitle,
       );
 
+      list[index] = updatedReminder;
       notifyListeners();
     } catch (e) {
-      print('更新提醒失败: $e');
+      _handleError('更新提醒', e);
       rethrow;
     }
+  }
+
+  Future<Reminder> _updateReminderAndNotification(
+    Reminder original,
+    Reminder updated,
+    String todoTitle,
+  ) async {
+    final updatedReminder = await _reminderApi.updateReminder(
+      updated.id!,
+      updated.toRequestJson(),
+    );
+
+    final result = updatedReminder.copyWith(
+      createdAt: original.createdAt,
+    );
+
+    await _notificationService.cancelNotification(updated.id!);
+    await _notificationService.scheduleNotification(result, todoTitle);
+
+    return result;
   }
 
   Future<void> deleteReminder(int todoId, int reminderId) async {
@@ -138,8 +158,42 @@ class ReminderProvider with ChangeNotifier {
     for (var json in remindersData) {
       final reminder = Reminder.fromJson(json);
       final todoId = reminder.todoId;
-      _reminders.putIfAbsent(todoId, () => []).add(reminder);
+      final reminderList = _reminders.putIfAbsent(todoId, () => []);
+      reminderList.add(reminder);
     }
     notifyListeners();
+  }
+
+  Future<void> deleteRemindersForTodo(int todoId) async {
+    try {
+      final reminders = _reminders[todoId] ?? [];
+      for (final reminder in reminders) {
+        await _reminderApi.deleteReminder(reminder.id!);
+        await _notificationService.cancelNotification(reminder.id!);
+      }
+      _reminders.remove(todoId);
+      notifyListeners();
+    } catch (e) {
+      _handleError('批量删除提醒', e);
+      rethrow;
+    }
+  }
+
+  Future<void> cleanExpiredReminders() async {
+    try {
+      final now = DateTime.now();
+      for (final todoId in _reminders.keys) {
+        _reminders[todoId]?.removeWhere((reminder) {
+          final isExpired = reminder.remindAt.isBefore(now);
+          if (isExpired) {
+            _notificationService.cancelNotification(reminder.id!);
+          }
+          return isExpired;
+        });
+      }
+      notifyListeners();
+    } catch (e) {
+      _handleError('清理过期提醒', e);
+    }
   }
 }

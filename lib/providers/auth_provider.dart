@@ -8,8 +8,13 @@ import '../models/user.dart';
 import '../services/storage_service.dart';
 
 /// 认证状态管理器
-/// 负责处理用户的登录、注册、登出等认证相关操作
-/// 同时管理认证状态和令牌的自动刷新
+/// 负责处理用户的登录、注册、登出等认证相关操作，并管理认证状态
+///
+/// 主要功能：
+/// - 用户登录/注册/登出
+/// - 自动加载存储的认证信息
+/// - 管理令牌的自动刷新
+/// - 维护当前用户状态
 class AuthProvider with ChangeNotifier {
   final AuthApi _authApi;
   final StorageService _storage;
@@ -27,6 +32,9 @@ class AuthProvider with ChangeNotifier {
   /// 令牌刷新定时器
   Timer? _refreshTimer;
 
+  /// 添加令牌刷新间隔常量
+  static const refreshInterval = Duration(minutes: 30);
+
   AuthProvider({
     required ApiClient apiClient,
     required StorageService storage,
@@ -37,6 +45,8 @@ class AuthProvider with ChangeNotifier {
     _setupTokenRefresh();
   }
 
+  /// 从存储中加载认证信息
+  /// 如果存在有效的token和用户数据，则恢复认证状态
   Future<void> _loadStoredAuth() async {
     final token = await _storage.getToken();
     if (token != null) {
@@ -60,6 +70,13 @@ class AuthProvider with ChangeNotifier {
   /// 是否已认证
   bool get isAuthenticated => _currentUser != null;
 
+  /// 添加错误处理方法
+  void _handleError(String operation, dynamic error) {
+    _error = '$operation失败: $error';
+    print(_error);
+  }
+
+  /// 优化登录方法的错误处理
   Future<void> login(String username, String password) async {
     try {
       _isLoading = true;
@@ -67,25 +84,28 @@ class AuthProvider with ChangeNotifier {
       notifyListeners();
 
       final response = await _authApi.login(username, password);
-      final token = response['token'].toString().trim();
-      final userData = Map<String, dynamic>.from(response['user'] as Map);
-
-      await _storage.saveToken(token);
-      await _storage.saveUser(userData);
-
-      _currentUser = User.fromJson(userData);
-      _setupTokenRefresh();
-
-      notifyListeners();
+      await _handleLoginResponse(response);
     } catch (e) {
-      _error = e.toString();
+      _handleError('登录', e);
       _currentUser = null;
-      notifyListeners();
       rethrow;
     } finally {
       _isLoading = false;
       notifyListeners();
     }
+  }
+
+  /// 抽取登录响应处理逻辑
+  Future<void> _handleLoginResponse(Map<String, dynamic> response) async {
+    final token = response['token'].toString().trim();
+    final userData = Map<String, dynamic>.from(response['user'] as Map);
+
+    await _storage.saveToken(token);
+    await _storage.saveUser(userData);
+
+    _currentUser = User.fromJson(userData);
+    _setupTokenRefresh();
+    notifyListeners();
   }
 
   Future<void> register(String username, String password, String email) async {
@@ -144,6 +164,8 @@ class AuthProvider with ChangeNotifier {
     }
   }
 
+  /// 设置令牌自动刷新
+  /// 每30分钟自动刷新一次令牌，确保用户会话持续有效
   Future<void> _setupTokenRefresh() async {
     _refreshTimer?.cancel();
     _refreshTimer = Timer.periodic(
@@ -152,6 +174,8 @@ class AuthProvider with ChangeNotifier {
     );
   }
 
+  /// 刷新认证令牌
+  /// 如果刷新失败，将自动登出用户
   Future<void> _refreshToken() async {
     final token = await _storage.getToken();
     if (token != null) {
@@ -178,6 +202,19 @@ class AuthProvider with ChangeNotifier {
       } catch (e) {
         await logout();
       }
+    }
+  }
+
+  /// 添加会话有效性检查方法
+  Future<bool> isSessionValid() async {
+    final token = await _storage.getToken();
+    if (token == null) return false;
+
+    try {
+      await _authApi.validateToken(token);
+      return true;
+    } catch (e) {
+      return false;
     }
   }
 }

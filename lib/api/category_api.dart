@@ -26,7 +26,13 @@ class CategoryApi {
   Future<Category> createCategory(Map<String, dynamic> data) async {
     try {
       final response = await _client.post('/categories', data: data);
-      return Category.fromJson(response.data);
+      return Category(
+        id: response.data['id'] as int,
+        name: data['name'] as String,
+        color: data['color'] as String?,
+        createdAt: DateTime.now(),
+        updatedAt: DateTime.now(),
+      );
     } catch (e) {
       print('创建分类失败: $e');
       rethrow;

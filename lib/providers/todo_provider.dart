@@ -1,6 +1,7 @@
-import 'package:flutter/foundation.dart';
+import 'package:flutter/foundation.dart' hide Category;
 
 import '../api/todo_api.dart';
+import '../models/category.dart';
 import '../models/todo.dart';
 import '../models/todo_filter.dart';
 import '../providers/filter_provider.dart';
@@ -189,61 +190,72 @@ class TodoProvider with ChangeNotifier {
     }
   }
 
-  // 同步离线数据
+  // 添加错误处理方法
+  void _handleError(String operation, dynamic error) {
+    _error = '$operation失败: $error';
+    print(_error);
+  }
+
+  // 优化离线同步方法
   Future<void> syncOfflineChanges() async {
     if (!_network.hasConnection) return;
 
-    final pendingCreates = _offlineManager.getPendingChanges('todo_create');
-    for (final json in pendingCreates) {
-      try {
-        final todo = Todo.fromJson(json);
-        await _todoApi.createTodo(todo);
-      } catch (e) {
-        print('同步离线创建失败: $e');
-      }
-    }
-    _offlineManager.clearPendingChanges('todo_create');
-
-    // 重新加载数据
-    await loadTodos();
-  }
-
-  List<Todo> getFilteredTodos(FilterProvider filterProvider) {
-    return todos.where((todo) {
-      // Apply search filter
-      if (filterProvider.searchQuery.isNotEmpty) {
-        final query = filterProvider.searchQuery.toLowerCase();
-        if (!todo.title.toLowerCase().contains(query) &&
-            !(todo.description?.toLowerCase().contains(query) ?? false)) {
-          return false;
+    try {
+      final pendingCreates = _offlineManager.getPendingChanges('todo_create');
+      for (final json in pendingCreates) {
+        try {
+          final todo = Todo.fromJson(json);
+          await _todoApi.createTodo(todo);
+        } catch (e) {
+          _handleError('同步离线创建', e);
         }
       }
+      _offlineManager.clearPendingChanges('todo_create');
+      await loadTodos(); // 重新加载数据
+    } catch (e) {
+      _handleError('同步离线数据', e);
+    }
+  }
 
-      // Apply status filter
-      switch (filterProvider.filter) {
-        case TodoFilter.active:
-          if (todo.completed) return false;
-          break;
-        case TodoFilter.completed:
-          if (!todo.completed) return false;
-          break;
-        default:
-          break;
-      }
+  // 优化过滤方法
+  List<Todo> getFilteredTodos(FilterProvider filterProvider) {
+    return todos.where((todo) => _matchesFilter(todo, filterProvider)).toList();
+  }
 
-      // Apply category filter
-      if (filterProvider.selectedCategory != null &&
-          todo.categoryId != filterProvider.selectedCategory!.id) {
-        return false;
-      }
+  bool _matchesFilter(Todo todo, FilterProvider filter) {
+    if (!_matchesSearch(todo, filter.searchQuery)) return false;
+    if (!_matchesStatus(todo, filter.filter)) return false;
+    if (!_matchesCategory(todo, filter.selectedCategory)) return false;
+    if (!_matchesPriority(todo, filter.selectedPriority)) return false;
+    return true;
+  }
 
-      // Apply priority filter
-      if (filterProvider.selectedPriority != null &&
-          todo.priority != filterProvider.selectedPriority) {
-        return false;
-      }
+  bool _matchesSearch(Todo todo, String? searchQuery) {
+    if (searchQuery == null || searchQuery.isEmpty) return true;
+    final query = searchQuery.toLowerCase();
+    return todo.title.toLowerCase().contains(query) ||
+        (todo.description?.toLowerCase().contains(query) ?? false);
+  }
 
-      return true;
-    }).toList();
+  bool _matchesStatus(Todo todo, TodoFilter? filter) {
+    if (filter == null) return true;
+    switch (filter) {
+      case TodoFilter.active:
+        return !todo.completed;
+      case TodoFilter.completed:
+        return todo.completed;
+      default:
+        return true;
+    }
+  }
+
+  bool _matchesCategory(Todo todo, Category? category) {
+    if (category == null) return true;
+    return todo.categoryId == category.id;
+  }
+
+  bool _matchesPriority(Todo todo, String? priority) {
+    if (priority == null) return true;
+    return todo.priority == priority;
   }
 }

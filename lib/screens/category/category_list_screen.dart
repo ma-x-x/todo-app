@@ -242,16 +242,17 @@ class _CategoryListScreenState extends State<CategoryListScreen> {
           );
         },
       ),
-      floatingActionButton: FloatingActionButton.extended(
-        heroTag: 'category_add_fab',
+      floatingActionButton: FloatingActionButton(
         onPressed: () {
           Navigator.push(
             context,
             MaterialPageRoute(builder: (_) => const CategoryFormScreen()),
           );
         },
-        icon: const Icon(Icons.add),
-        label: Text(l10n.newCategory),
+        tooltip: l10n.newCategory,
+        elevation: 2,
+        shape: const CircleBorder(),
+        child: const Icon(Icons.add),
       ),
     );
   }

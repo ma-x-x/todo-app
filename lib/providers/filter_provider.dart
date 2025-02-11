@@ -5,6 +5,12 @@ import '../models/todo_filter.dart';
 
 /// 过滤器管理器
 /// 负责管理待办事项的过滤条件，包括完成状态、搜索关键词、分类和优先级
+///
+/// 支持的过滤条件：
+/// - 完成状态（全部/已完成/未完成）
+/// - 搜索关键词
+/// - 分类筛选
+/// - 优先级筛选
 class FilterProvider with ChangeNotifier {
   /// 完成状态过滤器
   TodoFilter _filter = TodoFilter.all;
@@ -22,6 +28,12 @@ class FilterProvider with ChangeNotifier {
   String get searchQuery => _searchQuery;
   Category? get selectedCategory => _selectedCategory;
   String? get selectedPriority => _selectedPriority;
+
+  bool get hasActiveFilters =>
+      _filter != TodoFilter.all ||
+      _searchQuery.isNotEmpty ||
+      _selectedCategory != null ||
+      _selectedPriority != null;
 
   void setFilter(TodoFilter filter) {
     _filter = filter;
@@ -45,6 +57,7 @@ class FilterProvider with ChangeNotifier {
 
   void clearFilters() {
     _filter = TodoFilter.all;
+    _searchQuery = '';
     _selectedCategory = null;
     _selectedPriority = null;
     notifyListeners();
