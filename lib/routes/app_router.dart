@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import '../models/category.dart';
 import '../models/reminder.dart';
 import '../models/todo.dart';
+import '../screens/auth/auth_wrapper.dart';
 import '../screens/auth/login_screen.dart';
 import '../screens/auth/register_screen.dart';
 import '../screens/category/category_form_screen.dart';
@@ -51,11 +52,17 @@ class AppRouter {
   /// 通知设置页面路由
   static const String notificationSettings = '/settings/notifications';
 
+  /// 添加根路由常量
+  static const String root = '/';
+
   /// 路由生成器
   /// 根据路由名称和参数生成对应的页面路由
   /// [settings] 包含路由名称和参数
   static Route<dynamic> generateRoute(RouteSettings settings) {
     switch (settings.name) {
+      case root: // 添加根路由处理
+        return MaterialPageRoute(builder: (_) => const AuthWrapper());
+
       case login:
         return MaterialPageRoute(builder: (_) => const LoginScreen());
 
