@@ -44,8 +44,19 @@ class ReminderApi {
 
   Future<Reminder> updateReminder(int id, Map<String, dynamic> data) async {
     try {
-      final response = await _client.put('/reminders/$id', data: data);
-      return Reminder.fromJson(response.data);
+      await _client.put('/reminders/$id', data: data);
+      return Reminder(
+        id: id,
+        todoId: data['todoId'] as int,
+        remindAt: DateTime.parse(data['remindAt'] as String),
+        remindType: data['remindType'] as String,
+        notifyType: data['notifyType'] as String,
+        status: data['status'] as bool? ?? false,
+        updatedAt: DateTime.now(),
+        createdAt: data['createdAt'] != null
+            ? DateTime.parse(data['createdAt'] as String)
+            : DateTime.now(),
+      );
     } catch (e) {
       print('更新提醒失败: $e');
       rethrow;

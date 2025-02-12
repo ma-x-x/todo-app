@@ -2,3 +2,8 @@ description: This file stores settings for Dart & Flutter DevTools.
 documentation: https://docs.flutter.dev/tools/devtools/extensions#configure-extension-enablement-states
 extensions:
   - provider: true
+framework:
+  # 启用性能叠加层
+  showPerformanceOverlay: true
+  # 启用 CPU 分析
+  profileMode: true

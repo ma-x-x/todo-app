@@ -13,7 +13,7 @@ class ApiClient {
 
   // 生产环境和开发环境的API基础URL
   static const String _prodBaseUrl = 'http://1.92.74.47:8081/api/v1';
-  static const String _devBaseUrl = 'http://1.92.74.47:8081/api/v1';
+  static const String _devBaseUrl = 'http://localhost:8080/api/v1';
 
   // 存储服务，用于管理token等本地存储数据
   final StorageService _storage = StorageService();
@@ -22,10 +22,6 @@ class ApiClient {
 
   // 离线请求队列，存储在离线状态下的请求
   final _offlineQueue = <Future<Response> Function()>[];
-
-  // 添加重试配置
-  static const _maxRetries = 3;
-  static const _retryDelays = [1, 3, 5]; // 重试延迟秒数
 
   CancelToken? _cancelToken;
 
@@ -206,7 +202,7 @@ class ApiClient {
     bool canQueue,
   ) async {
     try {
-      return await _retryRequest(request);
+      return await request();
     } catch (e) {
       if (e is DioException && !_network.hasConnection) {
         if (canQueue) {
@@ -253,35 +249,6 @@ class ApiClient {
       () => _dio.delete(path),
       true,
     );
-  }
-
-  Future<Response> _retryRequest(Future<Response> Function() request) async {
-    int retryCount = 0;
-
-    while (true) {
-      try {
-        return await request();
-      } on DioException catch (e) {
-        if (retryCount >= _maxRetries ||
-            !_shouldRetry(e) ||
-            !_network.hasConnection) {
-          rethrow;
-        }
-
-        // 指数退避重试
-        final delay = _retryDelays[retryCount];
-        print('请求失败，$delay秒后重试 (${retryCount + 1}/$_maxRetries)');
-        await Future.delayed(Duration(seconds: delay));
-        retryCount++;
-      }
-    }
-  }
-
-  bool _shouldRetry(DioException error) {
-    return error.type == DioExceptionType.connectionTimeout ||
-        error.type == DioExceptionType.receiveTimeout ||
-        error.type == DioExceptionType.sendTimeout ||
-        (error.response?.statusCode ?? 0) >= 500;
   }
 
   final _cache = <String, CachedResponse>{};

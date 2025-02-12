@@ -38,25 +38,30 @@ class _TodoFormScreenState extends State<TodoFormScreen> {
   /// 选中的优先级
   String _priority = 'medium';
 
-  late Future<void> _initFuture;
+  /// 移除 _initFuture
+  bool _isLoading = true;
+  String? _error;
 
   @override
   void initState() {
     super.initState();
-    _initFuture = _initialize();
+    // 使用 Future.microtask 来避免在 initState 中直接调用 setState
+    Future.microtask(() => _loadInitialData());
   }
 
-  Future<void> _initialize() async {
+  Future<void> _loadInitialData() async {
     try {
+      setState(() => _isLoading = true);
+
       final categoryProvider = context.read<CategoryProvider>();
       final todoProvider = context.read<TodoProvider>();
 
-      // 1. 如果分类未初始化，先加载分类
+      // 1. 加载分类数据
       if (!categoryProvider.isInitialized) {
         await categoryProvider.loadCategories();
       }
 
-      // 2. 如果是编辑模式，加载待办事项详情
+      // 2. 如果是编辑模式，加载待办详情
       if (widget.todo != null) {
         final todo = await todoProvider.getTodoDetail(widget.todo!.id!);
         if (!mounted) return;
@@ -65,15 +70,25 @@ class _TodoFormScreenState extends State<TodoFormScreen> {
         _descriptionController.text = todo.description ?? '';
         _priority = todo.priority;
 
-        // 3. 设置分类（使用已加载的分类数据）
         if (todo.categoryId != null) {
           _selectedCategory = categoryProvider.categories
               .firstWhereOrNull((c) => c.id == todo.categoryId);
         }
       }
+
+      if (mounted) {
+        setState(() {
+          _isLoading = false;
+          _error = null;
+        });
+      }
     } catch (e) {
-      print('初始化失败: $e');
-      rethrow;
+      if (mounted) {
+        setState(() {
+          _isLoading = false;
+          _error = e.toString();
+        });
+      }
     }
   }
 
@@ -83,37 +98,32 @@ class _TodoFormScreenState extends State<TodoFormScreen> {
       appBar: AppBar(
         title: Text(widget.todo == null ? '新建待办' : '编辑待办'),
       ),
-      body: FutureBuilder(
-        future: _initFuture,
-        builder: (context, snapshot) {
-          if (snapshot.connectionState == ConnectionState.waiting) {
-            return const Center(child: CircularProgressIndicator());
-          }
-
-          if (snapshot.hasError) {
-            return Center(
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Text('加载失败: ${snapshot.error}'),
-                  const SizedBox(height: 16),
-                  FilledButton(
-                    onPressed: () {
-                      setState(() {
-                        _initFuture = _initialize();
-                      });
-                    },
-                    child: const Text('重试'),
-                  ),
-                ],
-              ),
-            );
-          }
-
-          return _buildForm(context);
-        },
-      ),
+      body: _buildBody(),
     );
+  }
+
+  Widget _buildBody() {
+    if (_isLoading) {
+      return const Center(child: CircularProgressIndicator());
+    }
+
+    if (_error != null) {
+      return Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Text('加载失败: $_error'),
+            const SizedBox(height: 16),
+            FilledButton(
+              onPressed: _loadInitialData,
+              child: const Text('重试'),
+            ),
+          ],
+        ),
+      );
+    }
+
+    return _buildForm(context);
   }
 
   Widget _buildForm(BuildContext context) {
@@ -269,6 +279,8 @@ class _TodoFormScreenState extends State<TodoFormScreen> {
     if (!_formKey.currentState!.validate()) return;
 
     try {
+      setState(() => _isLoading = true);
+
       final todo = Todo(
         id: widget.todo?.id,
         title: _titleController.text,
@@ -280,11 +292,11 @@ class _TodoFormScreenState extends State<TodoFormScreen> {
         updatedAt: DateTime.now(),
       );
 
-      final provider = context.read<TodoProvider>();
+      final todoProvider = context.read<TodoProvider>();
       if (widget.todo == null) {
-        await provider.createTodo(todo);
+        await todoProvider.createTodo(todo);
       } else {
-        await provider.updateTodo(todo);
+        await todoProvider.updateTodo(todo);
       }
 
       if (mounted) {
@@ -292,6 +304,10 @@ class _TodoFormScreenState extends State<TodoFormScreen> {
       }
     } catch (e) {
       if (mounted) {
+        setState(() {
+          _isLoading = false;
+          _error = e.toString();
+        });
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text(e.toString())),
         );

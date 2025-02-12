@@ -43,7 +43,8 @@
         "macos"
     ],
     "dart.flutterRunAdditionalArgs": [
-        "--profile"
+        "--profile",
+        "--trace-skia"
     ],
     "dart.vmAdditionalArgs": [
         "--profile-vm"

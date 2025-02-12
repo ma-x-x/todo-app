@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_gen/gen_l10n/app_localizations.dart';
@@ -56,11 +57,18 @@ void main() async {
     },
   );
 
-  // 初始化服务
+  // 初始化基础服务
   final storage = StorageService();
-  await storage.init();
+  await storage.init(); // 确保完成初始化
+
   final apiClient = ApiClient();
   final notificationService = NotificationService();
+  final networkService = NetworkService();
+  final offlineManager = OfflineManager();
+  final updateService = UpdateService();
+
+  // 创建并初始化通知设置
+  final notificationSettings = NotificationSettingsProvider();
 
   // 创建认证提供者
   final authProvider = AuthProvider(
@@ -68,30 +76,27 @@ void main() async {
     storage: storage,
   );
 
-  // 创建通知设置提供者
-  final notificationSettings = NotificationSettingsProvider();
-  // 加载通知设置
-  await notificationSettings.loadSettings();
-
-  // 设置到通知服务
-  notificationService.setSettingsProvider(notificationSettings);
-
-  // 初始化离线支持
-  final networkService = NetworkService();
-  await networkService.checkConnection();
-
-  final offlineManager = OfflineManager();
-  await offlineManager.init();
-
-  // 初始化更新服务
-  final updateService = UpdateService();
-  await updateService.init();
-
-  // 使用 runApp 之前进行必要的初始化
+  // 等待所有服务初始化完成
   await Future.wait([
     notificationService.requestPermissions(),
-    // 其他需要异步初始化的服务...
+    networkService.checkConnection(),
+    offlineManager.init(),
+    updateService.init(),
+    notificationSettings.loadSettings(),
   ]);
+
+  // 设置通知服务
+  notificationService.setSettingsProvider(notificationSettings);
+
+  // 添加性能监控
+  if (kDebugMode) {
+    debugPrintRebuildDirtyWidgets = true;
+    debugPrint = (String? message, {int? wrapWidth}) {
+      if (message?.contains('rebuild') ?? false) {
+        print(message);
+      }
+    };
+  }
 
   runApp(MultiProvider(
     providers: [

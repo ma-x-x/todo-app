@@ -11,8 +11,29 @@ import '../../services/statistics_service.dart';
 /// 统计分析页面
 /// 显示待办事项的各项统计数据
 /// 包括总数、完成率、分类分布、优先级分布等
-class StatisticsScreen extends StatelessWidget {
+class StatisticsScreen extends StatefulWidget {
   const StatisticsScreen({super.key});
+
+  @override
+  _StatisticsScreenState createState() => _StatisticsScreenState();
+}
+
+class _StatisticsScreenState extends State<StatisticsScreen> {
+  // 缓存计算结果
+  late TodoStatistics _statistics;
+  Map<String, List<PieChartSectionData>>? _cachedPieSections;
+
+  List<PieChartSectionData> _buildPrioritySections() {
+    return _cachedPieSections?['priority'] ?? _computePrioritySections();
+  }
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    _cachedPieSections = null; // 清除缓存
+    final todos = context.watch<TodoProvider>().todos;
+    _statistics = StatisticsService().calculateStatistics(todos);
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -26,69 +47,10 @@ class StatisticsScreen extends StatelessWidget {
       ),
       body: Consumer2<TodoProvider, CategoryProvider>(
         builder: (context, todoProvider, categoryProvider, child) {
-          final statistics =
-              StatisticsService().calculateStatistics(todoProvider.todos);
-
           return ListView(
             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 20),
             children: [
-              Card(
-                elevation: 0,
-                color: theme.colorScheme.surfaceContainer,
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(16),
-                ),
-                child: Padding(
-                  padding: const EdgeInsets.all(20),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        l10n.overview,
-                        style: theme.textTheme.titleLarge?.copyWith(
-                          fontWeight: FontWeight.w600,
-                        ),
-                      ),
-                      const SizedBox(height: 20),
-                      _buildStatRow(
-                        context,
-                        l10n.totalTodos,
-                        statistics.totalTodos.toString(),
-                        Icons.format_list_bulleted,
-                        theme.colorScheme.primary,
-                      ),
-                      _buildStatRow(
-                        context,
-                        l10n.completedTodos,
-                        statistics.completedTodos.toString(),
-                        Icons.check_circle_outline,
-                        theme.colorScheme.tertiary,
-                      ),
-                      _buildStatRow(
-                        context,
-                        l10n.activeTodos,
-                        statistics.activeTodos.toString(),
-                        Icons.pending_outlined,
-                        theme.colorScheme.error,
-                      ),
-                      _buildStatRow(
-                        context,
-                        l10n.completionRate,
-                        '${statistics.completionRate.toStringAsFixed(1)}%',
-                        Icons.percent,
-                        theme.colorScheme.secondary,
-                      ),
-                      _buildStatRow(
-                        context,
-                        l10n.averageCompletionTime,
-                        '${statistics.averageCompletionTime.toStringAsFixed(1)} ${l10n.hours}',
-                        Icons.timer_outlined,
-                        theme.colorScheme.primary,
-                      ),
-                    ],
-                  ),
-                ),
-              ),
+              _buildOverviewCard(context, _statistics),
               const SizedBox(height: 16),
               Card(
                 elevation: 0,
@@ -110,13 +72,14 @@ class StatisticsScreen extends StatelessWidget {
                       const SizedBox(height: 20),
                       SizedBox(
                         height: 200,
-                        child: PieChart(
-                          PieChartData(
-                            sections:
-                                _buildPrioritySections(context, statistics),
-                            sectionsSpace: 2,
-                            centerSpaceRadius: 40,
-                            startDegreeOffset: -90,
+                        child: RepaintBoundary(
+                          child: PieChart(
+                            PieChartData(
+                              sections: _buildPrioritySections(),
+                              sectionsSpace: 2,
+                              centerSpaceRadius: 40,
+                              startDegreeOffset: -90,
+                            ),
                           ),
                         ),
                       ),
@@ -147,29 +110,31 @@ class StatisticsScreen extends StatelessWidget {
                       const SizedBox(height: 20),
                       SizedBox(
                         height: 200,
-                        child: BarChart(
-                          BarChartData(
-                            alignment: BarChartAlignment.spaceAround,
-                            maxY: statistics.todosByCategory.values
-                                .fold(0,
-                                    (max, value) => value > max ? value : max)
-                                .toDouble(),
-                            gridData: FlGridData(
-                              show: true,
-                              drawVerticalLine: false,
-                              horizontalInterval: 1,
-                              getDrawingHorizontalLine: (value) {
-                                return FlLine(
-                                  color: theme.colorScheme.outlineVariant,
-                                  strokeWidth: 1,
-                                );
-                              },
+                        child: RepaintBoundary(
+                          child: BarChart(
+                            BarChartData(
+                              alignment: BarChartAlignment.spaceAround,
+                              maxY: _statistics.todosByCategory.values
+                                  .fold(0,
+                                      (max, value) => value > max ? value : max)
+                                  .toDouble(),
+                              gridData: FlGridData(
+                                show: true,
+                                drawVerticalLine: false,
+                                horizontalInterval: 1,
+                                getDrawingHorizontalLine: (value) {
+                                  return FlLine(
+                                    color: theme.colorScheme.outlineVariant,
+                                    strokeWidth: 1,
+                                  );
+                                },
+                              ),
+                              titlesData: _buildCategoryTitles(context,
+                                  _statistics, categoryProvider, theme),
+                              borderData: FlBorderData(show: false),
+                              barGroups: _buildCategoryGroups(
+                                  _statistics, theme, categoryProvider),
                             ),
-                            titlesData: _buildCategoryTitles(
-                                context, statistics, categoryProvider, theme),
-                            borderData: FlBorderData(show: false),
-                            barGroups: _buildCategoryGroups(
-                                statistics, theme, categoryProvider),
                           ),
                         ),
                       ),
@@ -198,46 +163,48 @@ class StatisticsScreen extends StatelessWidget {
                       const SizedBox(height: 20),
                       SizedBox(
                         height: 200,
-                        child: LineChart(
-                          LineChartData(
-                            lineBarsData: [
-                              LineChartBarData(
-                                spots: _buildTrendSpots(statistics),
-                                isCurved: true,
-                                color: theme.colorScheme.primary,
-                                barWidth: 2,
-                                isStrokeCapRound: true,
-                                dotData: FlDotData(
-                                  show: true,
-                                  getDotPainter: (spot, percent, bar, index) {
-                                    return FlDotCirclePainter(
-                                      radius: 4,
-                                      color: theme.colorScheme.primary,
-                                      strokeWidth: 2,
-                                      strokeColor: theme.colorScheme.surface,
-                                    );
-                                  },
+                        child: RepaintBoundary(
+                          child: LineChart(
+                            LineChartData(
+                              lineBarsData: [
+                                LineChartBarData(
+                                  spots: _buildTrendSpots(_statistics),
+                                  isCurved: true,
+                                  color: theme.colorScheme.primary,
+                                  barWidth: 2,
+                                  isStrokeCapRound: true,
+                                  dotData: FlDotData(
+                                    show: true,
+                                    getDotPainter: (spot, percent, bar, index) {
+                                      return FlDotCirclePainter(
+                                        radius: 4,
+                                        color: theme.colorScheme.primary,
+                                        strokeWidth: 2,
+                                        strokeColor: theme.colorScheme.surface,
+                                      );
+                                    },
+                                  ),
+                                  belowBarData: BarAreaData(
+                                    show: true,
+                                    color: theme.colorScheme.primary
+                                        .withAlpha((0.1 * 255).round()),
+                                  ),
                                 ),
-                                belowBarData: BarAreaData(
-                                  show: true,
-                                  color: theme.colorScheme.primary
-                                      .withAlpha((0.1 * 255).round()),
-                                ),
+                              ],
+                              gridData: FlGridData(
+                                show: true,
+                                drawVerticalLine: false,
+                                horizontalInterval: 1,
+                                getDrawingHorizontalLine: (value) {
+                                  return FlLine(
+                                    color: theme.colorScheme.outlineVariant,
+                                    strokeWidth: 1,
+                                  );
+                                },
                               ),
-                            ],
-                            gridData: FlGridData(
-                              show: true,
-                              drawVerticalLine: false,
-                              horizontalInterval: 1,
-                              getDrawingHorizontalLine: (value) {
-                                return FlLine(
-                                  color: theme.colorScheme.outlineVariant,
-                                  strokeWidth: 1,
-                                );
-                              },
+                              titlesData: _buildTrendTitles(context, theme),
+                              borderData: FlBorderData(show: false),
                             ),
-                            titlesData: _buildTrendTitles(context, theme),
-                            borderData: FlBorderData(show: false),
                           ),
                         ),
                       ),
@@ -346,8 +313,7 @@ class StatisticsScreen extends StatelessWidget {
   /// [context] 构建上下文
   /// [statistics] 统计数据
   /// 返回优先级分布的饼图段列表
-  List<PieChartSectionData> _buildPrioritySections(
-      BuildContext context, TodoStatistics statistics) {
+  List<PieChartSectionData> _computePrioritySections() {
     // 定义优先级对应的颜色
     final priorityColors = {
       'low': Colors.green,
@@ -356,7 +322,7 @@ class StatisticsScreen extends StatelessWidget {
     };
 
     // 转换数据为饼图段
-    return statistics.todosByPriority.entries.map((entry) {
+    final sections = _statistics.todosByPriority.entries.map((entry) {
       return PieChartSectionData(
         value: entry.value.toDouble(),
         title: '${AppLocalizations.of(context)!.priority}${entry.value}',
@@ -369,6 +335,8 @@ class StatisticsScreen extends StatelessWidget {
         ),
       );
     }).toList();
+    _cachedPieSections = {'priority': sections};
+    return sections;
   }
 
   /// 构建优先级分布图例
@@ -476,6 +444,70 @@ class StatisticsScreen extends StatelessWidget {
       ),
       topTitles: const AxisTitles(
         sideTitles: SideTitles(showTitles: false),
+      ),
+    );
+  }
+
+  /// 构建概览卡片
+  Widget _buildOverviewCard(BuildContext context, TodoStatistics statistics) {
+    final l10n = AppLocalizations.of(context)!;
+    final theme = Theme.of(context);
+
+    return Card(
+      elevation: 0,
+      color: theme.colorScheme.surfaceContainer,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(16),
+      ),
+      child: Padding(
+        padding: const EdgeInsets.all(20),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              l10n.overview,
+              style: theme.textTheme.titleLarge?.copyWith(
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+            const SizedBox(height: 20),
+            _buildStatRow(
+              context,
+              l10n.totalTodos,
+              statistics.totalTodos.toString(),
+              Icons.format_list_bulleted,
+              theme.colorScheme.primary,
+            ),
+            _buildStatRow(
+              context,
+              l10n.completedTodos,
+              statistics.completedTodos.toString(),
+              Icons.check_circle_outline,
+              theme.colorScheme.tertiary,
+            ),
+            _buildStatRow(
+              context,
+              l10n.activeTodos,
+              statistics.activeTodos.toString(),
+              Icons.pending_outlined,
+              theme.colorScheme.error,
+            ),
+            _buildStatRow(
+              context,
+              l10n.completionRate,
+              '${statistics.completionRate.toStringAsFixed(1)}%',
+              Icons.percent,
+              theme.colorScheme.secondary,
+            ),
+            _buildStatRow(
+              context,
+              l10n.averageCompletionTime,
+              '${statistics.averageCompletionTime.toStringAsFixed(1)} ${l10n.hours}',
+              Icons.timer_outlined,
+              theme.colorScheme.primary,
+            ),
+          ],
+        ),
       ),
     );
   }

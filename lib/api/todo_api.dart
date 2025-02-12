@@ -40,11 +40,19 @@ class TodoApi extends ApiBase {
 
   Future<Todo> updateTodo(Todo todo) async {
     return handleApiCall('updateTodo', () async {
-      final response = await _client.put(
+      await _client.put(
         '/todos/${todo.id}',
         data: todo.toJson(),
       );
-      return Todo.fromJson(response.data);
+      return Todo(
+        id: todo.id,
+        title: todo.title,
+        description: todo.description,
+        categoryId: todo.categoryId,
+        priority: todo.priority,
+        createdAt: todo.createdAt,
+        updatedAt: todo.updatedAt,
+      );
     });
   }
 

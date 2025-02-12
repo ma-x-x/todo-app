@@ -16,26 +16,17 @@ class HomeScreen extends StatefulWidget {
   State<HomeScreen> createState() => _HomeScreenState();
 }
 
-class _HomeScreenState extends State<HomeScreen>
-    with AutomaticKeepAliveClientMixin {
+class _HomeScreenState extends State<HomeScreen> {
   /// 当前选中的底部导航项索引
   int _currentIndex = 0;
 
-  /// 用于保存页面状态的存储桶
-  final PageStorageBucket _bucket = PageStorageBucket();
-
   /// 懒加载的页面列表
-  /// 使用 PageStorageKey 确保页面状态被保存
   late final List<Widget> _pages = [
-    const TodoListScreen(key: PageStorageKey('todos')),
-    const CategoryListScreen(key: PageStorageKey('categories')),
-    const StatisticsScreen(key: PageStorageKey('statistics')),
-    const SettingsScreen(key: PageStorageKey('settings')),
+    const TodoListScreen(),
+    const CategoryListScreen(),
+    const StatisticsScreen(),
+    const SettingsScreen(),
   ];
-
-  // 保持页面状态
-  @override
-  bool get wantKeepAlive => true;
 
   void _onTabChanged(int index) {
     setState(() {
@@ -45,26 +36,10 @@ class _HomeScreenState extends State<HomeScreen>
 
   @override
   Widget build(BuildContext context) {
-    super.build(context);
     final theme = Theme.of(context);
 
     return Scaffold(
-      body: Container(
-        decoration: BoxDecoration(
-          gradient: LinearGradient(
-            begin: Alignment.topCenter,
-            end: Alignment.bottomCenter,
-            colors: [
-              theme.colorScheme.surface,
-              theme.colorScheme.surfaceContainerHighest,
-            ],
-          ),
-        ),
-        child: PageStorage(
-          bucket: _bucket,
-          child: _pages[_currentIndex],
-        ),
-      ),
+      body: _pages[_currentIndex],
       bottomNavigationBar: Container(
         decoration: BoxDecoration(
           color: theme.colorScheme.surface,

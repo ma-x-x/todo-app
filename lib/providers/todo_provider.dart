@@ -43,6 +43,12 @@ class TodoProvider with ChangeNotifier {
   /// 添加自动加载标志
   bool _isInitialized = false;
 
+  DateTime? _lastNotification;
+
+  // 添加批量更新支持
+  bool _batchNotify = false;
+  final List<void Function()> _pendingUpdates = [];
+
   TodoProvider({required TodoApi todoApi}) : _todoApi = todoApi;
 
   Future<void> ensureInitialized() async {
@@ -157,14 +163,15 @@ class TodoProvider with ChangeNotifier {
 
   Future<void> toggleTodoStatus(Todo todo) async {
     try {
-      final updatedTodo = await _todoApi.updateTodo(todo.copyWith(
+      final newTodo = todo.copyWith(
         completed: !todo.completed,
         updatedAt: DateTime.now(),
-      ));
+      );
+      await _todoApi.updateTodo(newTodo);
 
       final index = _todos.indexWhere((t) => t.id == todo.id);
       if (index != -1) {
-        _todos[index] = updatedTodo;
+        _todos[index] = newTodo;
         await _storage.saveTodos(_todos);
         notifyListeners();
       }
@@ -257,5 +264,34 @@ class TodoProvider with ChangeNotifier {
   bool _matchesPriority(Todo todo, String? priority) {
     if (priority == null) return true;
     return todo.priority == priority;
+  }
+
+  void beginBatchUpdate() {
+    _batchNotify = true;
+  }
+
+  void endBatchUpdate() {
+    _batchNotify = false;
+    if (_pendingUpdates.isNotEmpty) {
+      for (final update in _pendingUpdates) {
+        update();
+      }
+      _pendingUpdates.clear();
+      notifyListeners();
+    }
+  }
+
+  @override
+  void notifyListeners() {
+    if (_batchNotify) {
+      return;
+    }
+
+    if (_lastNotification == null ||
+        DateTime.now().difference(_lastNotification!) >
+            const Duration(milliseconds: 16)) {
+      super.notifyListeners();
+      _lastNotification = DateTime.now();
+    }
   }
 }
