@@ -92,7 +92,7 @@ class TodoProvider with ChangeNotifier {
     }
   }
 
-  Future<void> createTodo(Todo todo) async {
+  Future<void> createTodo(Todo todo, Category? category) async {
     try {
       if (!_network.hasConnection) {
         // 离线模式：保存到本地
@@ -118,7 +118,7 @@ class TodoProvider with ChangeNotifier {
     }
   }
 
-  Future<void> updateTodo(Todo todo) async {
+  Future<void> updateTodo(Todo todo, Category? category) async {
     try {
       // 保存原有的待办对象
       final index = _todos.indexWhere((t) => t.id == todo.id);
@@ -126,9 +126,11 @@ class TodoProvider with ChangeNotifier {
         final originalTodo = _todos[index];
 
         // 调用API更新
-        final updatedTodo = await _todoApi.updateTodo(todo.copyWith(
-          createdAt: originalTodo.createdAt,
-        ));
+        final updatedTodo = await _todoApi.updateTodo(
+            todo.copyWith(
+              createdAt: originalTodo.createdAt,
+            ),
+            category);
 
         // 更新本地数据
         _todos[index] = updatedTodo;
@@ -161,13 +163,13 @@ class TodoProvider with ChangeNotifier {
     }
   }
 
-  Future<void> toggleTodoStatus(Todo todo) async {
+  Future<void> toggleTodoStatus(Todo todo, Category? category) async {
     try {
       final newTodo = todo.copyWith(
         completed: !todo.completed,
         updatedAt: DateTime.now(),
       );
-      await _todoApi.updateTodo(newTodo);
+      await _todoApi.updateTodo(newTodo, category);
 
       final index = _todos.indexWhere((t) => t.id == todo.id);
       if (index != -1) {

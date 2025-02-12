@@ -1,4 +1,5 @@
 import '../api/api_client.dart';
+import '../models/category.dart';
 import '../models/todo.dart';
 import 'api_base.dart';
 
@@ -38,7 +39,7 @@ class TodoApi extends ApiBase {
     });
   }
 
-  Future<Todo> updateTodo(Todo todo) async {
+  Future<Todo> updateTodo(Todo todo, Category? category) async {
     return handleApiCall('updateTodo', () async {
       await _client.put(
         '/todos/${todo.id}',
@@ -52,6 +53,7 @@ class TodoApi extends ApiBase {
         priority: todo.priority,
         createdAt: todo.createdAt,
         updatedAt: todo.updatedAt,
+        category: category,
       );
     });
   }

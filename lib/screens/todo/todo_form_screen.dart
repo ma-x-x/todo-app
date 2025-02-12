@@ -294,9 +294,9 @@ class _TodoFormScreenState extends State<TodoFormScreen> {
 
       final todoProvider = context.read<TodoProvider>();
       if (widget.todo == null) {
-        await todoProvider.createTodo(todo);
+        await todoProvider.createTodo(todo, _selectedCategory);
       } else {
-        await todoProvider.updateTodo(todo);
+        await todoProvider.updateTodo(todo, _selectedCategory);
       }
 
       if (mounted) {

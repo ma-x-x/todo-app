@@ -78,7 +78,9 @@ class TodoItemCard extends StatelessWidget {
         color: Colors.transparent,
         child: InkWell(
           customBorder: const CircleBorder(),
-          onTap: () => context.read<TodoProvider>().toggleTodoStatus(todo),
+          onTap: () => context
+              .read<TodoProvider>()
+              .toggleTodoStatus(todo, todo.category),
           child: Center(
             child: AnimatedSwitcher(
               duration: const Duration(milliseconds: 200),
