@@ -41,5 +41,13 @@
         "windows",
         "linux",
         "macos"
-    ]
+    ],
+    "dart.flutterRunAdditionalArgs": [
+        "--profile"
+    ],
+    "dart.vmAdditionalArgs": [
+        "--profile-vm"
+    ],
+    "dart.enableDevTools": true,
+    "dart.openDevTools": "flutter"
 }
