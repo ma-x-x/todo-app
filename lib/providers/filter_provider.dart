@@ -29,11 +29,12 @@ class FilterProvider with ChangeNotifier {
   Category? get selectedCategory => _selectedCategory;
   String? get selectedPriority => _selectedPriority;
 
-  bool get hasActiveFilters =>
-      _filter != TodoFilter.all ||
-      _searchQuery.isNotEmpty ||
-      _selectedCategory != null ||
-      _selectedPriority != null;
+  bool get hasActiveFilters {
+    return searchQuery.isNotEmpty == true ||
+        filter != null ||
+        selectedCategory != null ||
+        selectedPriority != null;
+  }
 
   void setFilter(TodoFilter filter) {
     _filter = filter;

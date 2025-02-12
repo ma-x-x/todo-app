@@ -171,8 +171,11 @@
     "@noAccount": {
         "description": "注册链接文本"
     },
-    "noTodosHint": "创建你的第一个待办事项开始使用",
+    "noTodosHint": "点击 + 按钮创建第一个待办事项",
 
     "noReminders": "暂无提醒",
-    "noRemindersHint": "点击右下角添加提醒"
+    "noRemindersHint": "点击右下角添加提醒",
+
+    "noFilteredTodos": "没有匹配的待办事项",
+    "noFilteredTodosHint": "尝试调整过滤条件以查看更多待办事项"
 } 

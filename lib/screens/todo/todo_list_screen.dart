@@ -116,6 +116,43 @@ class _TodoListScreenState extends State<TodoListScreen>
           return Consumer2<TodoProvider, FilterProvider>(
             builder: (context, todoProvider, filterProvider, child) {
               final todos = todoProvider.getFilteredTodos(filterProvider);
+
+              if (todos.isEmpty) {
+                return Center(
+                  child: Padding(
+                    padding: const EdgeInsets.all(24),
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Icon(
+                          Icons.task_outlined,
+                          size: 48,
+                          color: theme.colorScheme.primary
+                              .withAlpha((0.5 * 255).round()),
+                        ),
+                        const SizedBox(height: 16),
+                        Text(
+                          filterProvider.hasActiveFilters
+                              ? l10n.noFilteredTodos
+                              : l10n.noTodos,
+                          style: theme.textTheme.titleMedium,
+                        ),
+                        const SizedBox(height: 8),
+                        Text(
+                          filterProvider.hasActiveFilters
+                              ? l10n.noFilteredTodosHint
+                              : l10n.noTodosHint,
+                          textAlign: TextAlign.center,
+                          style: theme.textTheme.bodyMedium?.copyWith(
+                            color: theme.textTheme.bodySmall?.color,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                );
+              }
+
               return ListView.separated(
                 padding:
                     const EdgeInsets.symmetric(horizontal: 16, vertical: 20),

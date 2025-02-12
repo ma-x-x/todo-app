@@ -1,3 +1,5 @@
+import 'dart:async' show unawaited;
+
 import 'package:flutter/foundation.dart' hide Category;
 
 import '../api/todo_api.dart';
@@ -49,26 +51,64 @@ class TodoProvider with ChangeNotifier {
   bool _batchNotify = false;
   final List<void Function()> _pendingUpdates = [];
 
+  // 添加缓存过期时间
+  static const Duration _cacheExpiry = Duration(minutes: 30);
+  DateTime? _lastLoadTime;
+
   TodoProvider({required TodoApi todoApi}) : _todoApi = todoApi;
 
+  /// 优化初始化加载
   Future<void> ensureInitialized() async {
     if (_isInitialized) return;
 
     try {
       _isLoading = true;
-      notifyListeners();
+      // 先加载缓存数据，避免白屏
+      _loadCachedTodos();
 
-      final todos = await _todoApi.getTodos();
-      _todos.clear();
-      _todos.addAll(todos);
+      // 检查是否需要从服务器刷新数据
+      if (_shouldRefreshData()) {
+        // 使用异步加载避免阻塞UI
+        unawaited(_refreshDataInBackground());
+      }
+
       _isInitialized = true;
-      _error = null;
     } catch (e) {
       _error = e.toString();
       print('加载待办事项失败: $e');
     } finally {
       _isLoading = false;
       notifyListeners();
+    }
+  }
+
+  /// 从缓存加载数据
+  void _loadCachedTodos() {
+    final cached = _storage.getTodos();
+    if (cached != null) {
+      _todos.clear();
+      _todos.addAll(cached);
+      notifyListeners();
+    }
+  }
+
+  /// 判断是否需要刷新数据
+  bool _shouldRefreshData() {
+    if (_lastLoadTime == null) return true;
+    return DateTime.now().difference(_lastLoadTime!) > _cacheExpiry;
+  }
+
+  // 后台刷新数据
+  Future<void> _refreshDataInBackground() async {
+    try {
+      final todos = await _todoApi.getTodos();
+      beginBatchUpdate();
+      _todos.clear();
+      _todos.addAll(todos);
+      await _storage.saveTodos(_todos);
+      _lastLoadTime = DateTime.now();
+    } finally {
+      endBatchUpdate();
     }
   }
 
@@ -183,11 +223,16 @@ class TodoProvider with ChangeNotifier {
     }
   }
 
+  /// 批量导入待办事项
   Future<void> importTodos(List<dynamic> todosData) async {
-    _todos.clear();
-    _todos.addAll(todosData.map((json) => Todo.fromJson(json)).toList());
-    await _storage.saveTodos(_todos);
-    notifyListeners();
+    try {
+      beginBatchUpdate();
+      _todos.clear();
+      _todos.addAll(todosData.map((json) => Todo.fromJson(json)).toList());
+      await _storage.saveTodos(_todos);
+    } finally {
+      endBatchUpdate();
+    }
   }
 
   Future<Todo> getTodoDetail(int id) async {
@@ -283,17 +328,54 @@ class TodoProvider with ChangeNotifier {
     }
   }
 
+  /// 优化批量通知逻辑
   @override
   void notifyListeners() {
     if (_batchNotify) {
       return;
     }
 
+    // 添加节流，避免频繁刷新
     if (_lastNotification == null ||
         DateTime.now().difference(_lastNotification!) >
-            const Duration(milliseconds: 16)) {
+            const Duration(milliseconds: 100)) {
       super.notifyListeners();
       _lastNotification = DateTime.now();
+    }
+  }
+
+  /// 批量删除待办事项
+  Future<void> deleteTodos(List<int> ids) async {
+    try {
+      beginBatchUpdate();
+      for (final id in ids) {
+        _todos.removeWhere((todo) => todo.id == id);
+        await _todoApi.deleteTodo(id);
+      }
+      await _storage.saveTodos(_todos);
+    } finally {
+      endBatchUpdate();
+    }
+  }
+
+  /// 批量更新待办事项状态
+  Future<void> updateTodosStatus(List<Todo> todos, bool completed) async {
+    try {
+      beginBatchUpdate();
+      for (final todo in todos) {
+        final newTodo = todo.copyWith(
+          completed: completed,
+          updatedAt: DateTime.now(),
+        );
+        await _todoApi.updateTodo(newTodo, todo.category);
+        final index = _todos.indexWhere((t) => t.id == todo.id);
+        if (index != -1) {
+          _todos[index] = newTodo;
+        }
+      }
+      await _storage.saveTodos(_todos);
+    } finally {
+      endBatchUpdate();
     }
   }
 }

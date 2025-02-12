@@ -58,7 +58,7 @@ class _TodoFormScreenState extends State<TodoFormScreen> {
 
       // 1. 加载分类数据
       if (!categoryProvider.isInitialized) {
-        await categoryProvider.loadCategories();
+        await categoryProvider.ensureInitialized();
       }
 
       // 2. 如果是编辑模式，加载待办详情

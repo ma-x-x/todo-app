@@ -1,3 +1,6 @@
+import 'dart:async';
+import 'dart:convert';
+
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -57,18 +60,41 @@ void main() async {
     },
   );
 
-  // 初始化基础服务
+  // 预加载存储服务
   final storage = StorageService();
-  await storage.init(); // 确保完成初始化
+  await storage.init();
+
+  // 预缓存路由状态
+  final token = await storage.getToken();
+  if (token != null) {
+    await storage.setValue('cached_route', AppRouter.home);
+  }
+
+  // 预加载关键数据
+  final notificationSettings = NotificationSettingsProvider();
+  unawaited(notificationSettings.loadSettings());
+
+  // 延迟启动非关键服务
+  Future.delayed(const Duration(seconds: 1), () {
+    Timer.periodic(const Duration(minutes: 30), (_) {
+      storage.cleanExpiredCache();
+      storage.cleanInfrequentlyUsedCache();
+    });
+  });
+
+  if (kDebugMode) {
+    // 每5分钟打印一次性能统计
+    Timer.periodic(const Duration(minutes: 5), (_) {
+      final stats = storage.getDetailedStats();
+      print('Cache Stats: ${jsonEncode(stats)}');
+    });
+  }
 
   final apiClient = ApiClient();
   final notificationService = NotificationService();
   final networkService = NetworkService();
   final offlineManager = OfflineManager();
   final updateService = UpdateService();
-
-  // 创建并初始化通知设置
-  final notificationSettings = NotificationSettingsProvider();
 
   // 创建认证提供者
   final authProvider = AuthProvider(
@@ -82,7 +108,6 @@ void main() async {
     networkService.checkConnection(),
     offlineManager.init(),
     updateService.init(),
-    notificationSettings.loadSettings(),
   ]);
 
   // 设置通知服务

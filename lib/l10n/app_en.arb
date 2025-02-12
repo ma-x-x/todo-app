@@ -367,7 +367,7 @@
     "@completed": {
         "description": "Completed filter option"
     },
-    "noTodos": "No todos found",
+    "noTodos": "No todos yet",
     "@noTodos": {
         "description": "Empty todo list message"
     },
@@ -540,7 +540,9 @@
     "noCategories": "No Categories",
     "noCategoriesHint": "Create your first category to get started",
     "confirmDeleteCategory": "Are you sure you want to delete this category?",
-    "noTodosHint": "Create your first todo to get started",
+    "noTodosHint": "Create your first todo by tapping the + button",
     "noReminders": "No Reminders",
-    "noRemindersHint": "Create your first reminder to get started"
+    "noRemindersHint": "Create your first reminder to get started",
+    "noFilteredTodos": "No matching todos",
+    "noFilteredTodosHint": "Try adjusting your filters to see more todos"
 } 

@@ -33,7 +33,7 @@ class _CategoryListScreenState extends State<CategoryListScreen> {
     if (!mounted) return;
     final categoryProvider =
         Provider.of<CategoryProvider>(context, listen: false);
-    await categoryProvider.loadCategories();
+    await categoryProvider.ensureInitialized();
   }
 
   /// 解析颜色字符串
